@@ -1,0 +1,17 @@
+{
+	"name": "holonet/common",
+	"autoload": {
+		"psr-4" : {
+			"holonet\\common\\" : "src/",
+			"holonet\\common\\tests\\" : "tests/"
+		},
+		"files": ["src/functions.php"]
+	},
+	"authors": [
+		{
+			"name": "matthias.lantsch",
+			"email": "matthias.lantsch@bluewin.ch"
+		}
+	],
+	"require": {}
+}

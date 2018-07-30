@@ -126,11 +126,11 @@ class ChangeAwareCollection implements ArrayAccess, Countable, IteratorAggregate
 	 * @param  mixed $entry Either the key or the value that changes
 	 * @return reference to the value or null if it doesn't exist
 	 */
-	public function change($entry) {
+	public function &change($entry) {
 		$key = $this->findKeyForKeyOrEntry($entry);
 		if($key !== null) {
 			$this->changed[] = $key;
-			$ret = &$this->all[$key];
+			return $this->all[$key];
 		} else {
 			return null;
 		}

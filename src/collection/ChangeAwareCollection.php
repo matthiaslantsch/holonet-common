@@ -88,7 +88,7 @@ class ChangeAwareCollection implements ArrayAccess, Countable, IteratorAggregate
 		if(is_object($val) && is_subclass_of($val, IChangeAware::class)) {
 			$val->belongsTo($this);
 			//not every change aware object can know about a unique key
-			if(method_exists($val, "uniqKey") && $key !== null) {
+			if(method_exists($val, "uniqKey") && $key === null) {
 				$key = $val->uniqKey();
 			}
 		}
@@ -232,6 +232,28 @@ class ChangeAwareCollection implements ArrayAccess, Countable, IteratorAggregate
 		$this->apply();
 		$this->removed = array_keys($this->all);
 		$this->addAll($values);
+	}
+
+	/**
+	 * function that can be used to check if a given value exists
+	 * in the internal data array
+	 *
+	 * @access public
+	 * @param  mixed $value The value to be checked for
+	 * @return true or false if the given value is contained or not
+	 */
+	public function has($value) {
+		//if the given value is comparable, we can use that to find it
+		if(is_object($value) && $value instanceof IComparable) {
+			foreach ($this->getAll("current") as $entry) {
+				if(is_object($entry) && $entry instanceof IComparable && $entry->compareTo($value)) {
+					return true;
+				}
+			}
+		} else {
+			return in_array($value, $this->getAll("current"), true);
+		}
+		return false;
 	}
 
 	/**

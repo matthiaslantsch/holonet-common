@@ -120,7 +120,19 @@ final class Registry {
 			}
 		}
 
-		//resolve placeholders in the variable
+		//resolve placeholders in the variable(s)
+		return $this->replacePlaceholder($position);
+	}
+
+	/**
+	 * sreplaces place holders in values of the registry
+	 * recursively calls this function if we are talking an array
+	 *
+	 * @access public
+	 * @param  mixed $position The value to be searched for placeholders
+	 * @return void
+	 */
+	private function replacePlaceholder($position) {
 		if(is_string($position) && strpos($position, "%") !== false) {
 			$matches = array();
 			preg_match_all("/%([^%]+)%/", $position, $matches, PREG_SET_ORDER);
@@ -128,8 +140,11 @@ final class Registry {
 				//if the placeholder is a value in the registry, replace it, otherwise leave it with the % signs
 				$position = str_replace($placeholderPair[0], $this->getVal($placeholderPair[1], $placeholderPair[0]), $position);
 			}
+		} elseif(is_array($position)) {
+			foreach ($position as $key => $val) {
+				$position[$key] = $this->replacePlaceholder($val);
+			}
 		}
-
 		return $position;
 	}
 

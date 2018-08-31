@@ -152,3 +152,32 @@ if(!function_exists(__NAMESPACE__."\\rrmdir")) {
 		}
 	}
 }
+
+if(!function_exists(__NAMESPACE__."\\dir_should_exist")) {
+	/**
+	 * function used to make sure a dir exists
+	 * creates it if it doesn't
+	 *
+	 * @param  string $directory The path to check/create
+	 * @return void
+	 */
+	function dir_should_exist($directory) {
+		if(!file_exists($directory) || !is_dir($directory)) {
+			mkdir($directory, 0755, true);
+		}
+	}
+}
+
+if(!function_exists(__NAMESPACE__."\\indentText")) {
+	/**
+	 * function used to indent a text with newlines in it
+	 * used to indent multiline text evenly
+	 *
+	 * @param  string $text The text to indent
+	 * @param  int $number The number of tabs to indent
+	 * @return string the string with the applied indent
+	 */
+	function indentText(string $text, int $number = 1) {
+		return str_replace("\n", "\n".str_repeat("\t", $number), $text);
+	}
+}

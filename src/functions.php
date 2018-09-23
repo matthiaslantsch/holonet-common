@@ -181,3 +181,19 @@ if(!function_exists(__NAMESPACE__."\\indentText")) {
 		return str_replace("\n", "\n".str_repeat("\t", $number), $text);
 	}
 }
+
+if(!function_exists(__NAMESPACE__."\\isAssoc")) {
+	/**
+	 * function used to check if an array is associative
+	 *
+	 * @param  array $arr The array to check
+	 * @return true or false on is associative or not
+	 */
+	 function isAssoc(array $arr) {
+		if (array() === $arr) {
+			return false;
+		}
+		ksort($arr);
+		return array_keys($arr) !== range(0, count($arr) - 1);
+	}
+}

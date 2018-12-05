@@ -12,6 +12,8 @@
 
 namespace holonet\common;
 
+use DirectoryIterator;
+
 if(!function_exists(__NAMESPACE__."\\registry")) {
 	/**
 	 * function used as getter/setter shorthand function for the registry
@@ -150,6 +152,33 @@ if(!function_exists(__NAMESPACE__."\\rrmdir")) {
 				throw new \Exception("Could not unlink '{$directory}'", 100);
 			}
 		}
+	}
+}
+
+if(!function_exists(__NAMESPACE__."\\rmove")) {
+	/**
+	 * Recursively move files from one directory to another
+	 *
+	 * @param String $src Source of files being moved
+	 * @param String $dest Destination of files being moved
+	 */
+	function rmove(string $src, string $dest) {
+		// If source is not a directory just simply move it
+		if(!is_dir($src)) {
+			return rename($src, $dest);
+		}
+
+		// Open the source directory to read in files
+		$i = new DirectoryIterator($src);
+		foreach($i as $f) {
+			if($f->isFile()) {
+				dir_should_exist(dirname("$dest/" . $f->getFilename()));
+				rename($f->getRealPath(), "$dest/" . $f->getFilename());
+			} else if(!$f->isDot() && $f->isDir()) {
+				rmove($f->getRealPath(), "$dest/$f");
+			}
+		}
+		rmdir($src);
 	}
 }
 

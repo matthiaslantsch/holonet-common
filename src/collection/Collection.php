@@ -169,7 +169,7 @@ class Collection implements IteratorAggregate, ArrayAccess, Countable {
 	 * @return mixed reference to the value for the key
 	 */
 	public function &__get($key) {
-		if(is_object($this->data[$key])) {
+		if(is_object($this->data[$key]) || is_null($this->data[$key])) {
 			//only variable variables should be returned by reference
 			return $this->data[$key];
 		} else {

@@ -373,6 +373,16 @@ class ChangeAwareCollection implements ArrayAccess, Countable, IteratorAggregate
 	}
 
 	/**
+	 * Small method returning true if this collection contains no data
+	 *
+	 * @access public
+	 * @return true or false if the internal array is empty or not
+	 */
+	public function empty() {
+		return empty($this->all);
+	}
+
+	/**
 	 * Get the aggregate iterator
 	 * IteratorAggregate interface required method
 	 *

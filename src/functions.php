@@ -218,11 +218,41 @@ if(!function_exists(__NAMESPACE__."\\isAssoc")) {
 	 * @param  array $arr The array to check
 	 * @return true or false on is associative or not
 	 */
-	 function isAssoc(array $arr) {
+	function isAssoc(array $arr) {
 		if (array() === $arr) {
 			return false;
 		}
 		ksort($arr);
 		return array_keys($arr) !== range(0, count($arr) - 1);
+	}
+}
+
+
+if(!function_exists(__NAMESPACE__."\\readableDurationString")) {
+	/**
+	 * function used to transform a duration into a human readable string
+	 *
+	 * @param  numeric $time The duration in seconds
+	 * @return string with the duration in a human readable format
+	 */
+	function readableDurationString($time) {
+		 if($time >= 86400) {
+	 		if($time % 86400 == 0) {
+	 			return $time / 86400 . "days";
+	 		}
+	 		return (int)($time / 86400) . 'days ' . (int)($time % 86400 / 3600) . 'h';
+	 	} elseif($time >= 3600) {
+	 		if($time % 3600 == 0) {
+	 			return $time / 3600 . "h";
+	 		}
+	 		return (int)($time / 3600) . 'h ' . (int)($time % 3600 / 60) . 'min';
+	 	} if($time >= 60) {
+	 		if($time % 60 == 0) {
+	 			return $time / 60 . "min";
+	 		}
+	 		return (int)($time / 60) . 'min ' . (int)($time % 60) . 's';
+	 	} else {
+	 		return $time . 's';
+	 	}
 	}
 }

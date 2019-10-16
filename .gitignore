@@ -1,2 +1,4 @@
 /vendor/
 /phpdoc/
+/.php_cs
+/.php_cs.cache

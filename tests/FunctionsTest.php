@@ -1,11 +1,10 @@
 <?php
 /**
  * This file is part of the hdev common library package
- * (c) Matthias Lantsch
+ * (c) Matthias Lantsch.
  *
  * PHPUnit test class for the utility functions in the functions.php file
  *
- * @package common
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -13,69 +12,56 @@
 namespace holonet\common\tests;
 
 use holonet\common as co;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Tests the functionality of utility functions in functions.php
- * 
- * @author  matthias.lantsch
- * @package holonet\common\tests
+ * Tests the functionality of utility functions in functions.php.
+ *
+ * @internal
+ *
+ * @small
+ * @coversNothing
  */
-class FunctionsTest extends \PHPUnit_Framework_TestCase {
-
+class FunctionsTest extends TestCase {
 	/**
-	 * @covers registry()
-	 * @uses   Registry
+	 * @covers \holonet\common\dirpath()
+	 * @covers \holonet\common\filepath()
 	 */
-	public function testRegistry() {
-		$data = ["one" => 1, "two" => 2];
-		co\Registry::setAll($data);
+	public function testAbsolutePaths(): void {
+		$expected = implode(DIRECTORY_SEPARATOR, array(__DIR__, 'subfolder', 'subsubfolder')).DIRECTORY_SEPARATOR;
+		static::assertSame($expected, co\dirpath(__DIR__, 'subfolder', 'subsubfolder'));
 
-		co\registry("one", "one");
-		$this->assertEquals("one", co\Registry::get("one"));
-
-		$this->assertEquals(co\registry("one"), co\Registry::get("one"));
+		$expected .= 'test.txt';
+		static::assertSame($expected, co\filepath(__DIR__, 'subfolder', 'subsubfolder', 'test.txt'));
 	}
 
 	/**
-	 * @covers trigger_error_context()
+	 * @covers \holonet\common\dirpath()
+	 * @covers \holonet\common\filepath()
+	 * @covers \holonet\common\reldirpath()
+	 * @covers \holonet\common\relfilepath()
 	 */
-	public function testTrigger_error_context() {
-		$msg = "";
+	public function testRelativePaths(): void {
+		$expected = implode(DIRECTORY_SEPARATOR, array(__DIR__, 'subfolder', 'subsubfolder')).DIRECTORY_SEPARATOR;
+		static::assertSame($expected, co\reldirpath('subfolder', 'subsubfolder'));
+
+		$expected .= 'test.txt';
+		static::assertSame($expected, co\relfilepath('subfolder', 'subsubfolder', 'test.txt'));
+	}
+
+	/**
+	 * @covers \holonet\common\trigger_error_context()
+	 */
+	public function testTriggerErrorContext(): void {
+		$msg = '';
 
 		try {
-			co\trigger_error_context("oh nos");
-		} catch (\PHPUnit_Framework_Error $e) {
+			co\trigger_error_context('oh nos');
+		} catch (\PHPUnit\Exception $e) {
 			$msg = $e->getMessage();
 		}
 
-		$expected = "oh nos in file ".__FILE__." on line 46";
-		$this->assertEquals($expected, $msg);
+		$expected = 'oh nos in file '.__FILE__.' on line 59';
+		static::assertSame($expected, $msg);
 	}
-
-	/**
-	 * @covers reldirpath()
-	 * @covers relfilepath()
-	 * @covers dirpath()
-	 * @covers filepath()
-	 */
-	public function testRelativePaths() {
-		$expected = implode(DIRECTORY_SEPARATOR, [__DIR__, "subfolder", "subsubfolder"]).DIRECTORY_SEPARATOR;
-		$this->assertEquals($expected, co\reldirpath("subfolder", "subsubfolder"));
-
-		$expected .= "test.txt";
-		$this->assertEquals($expected, co\relfilepath("subfolder", "subsubfolder", "test.txt"));
-	}
-
-	/**
-	 * @covers dirpath()
-	 * @covers filepath()
-	 */
-	public function testAbsolutePaths() {
-		$expected = implode(DIRECTORY_SEPARATOR, [__DIR__, "subfolder", "subsubfolder"]).DIRECTORY_SEPARATOR;
-		$this->assertEquals($expected, co\dirpath(__DIR__, "subfolder", "subsubfolder"));
-
-		$expected .= "test.txt";
-		$this->assertEquals($expected, co\filepath(__DIR__, "subfolder", "subsubfolder", "test.txt"));
-	}
-
 }

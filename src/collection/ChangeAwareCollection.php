@@ -1,99 +1,94 @@
 <?php
 /**
  * This file is part of the hdev common library package
- * (c) Matthias Lantsch
+ * (c) Matthias Lantsch.
  *
  * class file for the ChangeAwareCollection class
  *
- * @package common
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
 namespace holonet\common\collection;
 
-use ArrayAccess;
 use Countable;
+use ArrayAccess;
 use ArrayIterator;
 use IteratorAggregate;
-use holonet\common\IComparable;
+use holonet\common\ComparableInterface;
 
 /**
  * The ChangeAwareCollection is used as a wrapper around an array
- * it keeps track internally on how it's data changed
- *
- * @author  matthias.lantsch
- * @package holonet\common\collection
+ * it keeps track internally on how it's data changed.
  */
-class ChangeAwareCollection implements ArrayAccess, Countable, IteratorAggregate, IComparable {
+class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countable, IteratorAggregate {
+	/**
+	 * holds an array with keys to the $all property array
+	 * used to mark data entries as newly added.
+	 * @var array An array containing the keys of newly added entries
+	 */
+	protected $added = array();
 
 	/**
-	 * holds all the data entries, not only the current/deleted/changed
-	 *
-	 * @access protected
-	 * @var    array $all An array containing all entries
+	 * holds all the data entries, not only the current/deleted/changed.
+	 * @var array An array containing all entries
 	 */
 	protected $all = array();
 
 	/**
 	 * holds an array with keys to the $all property array
-	 * used to mark data entries as changed
-	 *
-	 * @access protected
-	 * @var    array $changed An array containing the keys of changed entries
+	 * used to mark data entries as changed.
+	 * @var array An array containing the keys of changed entries
 	 */
 	protected $changed = array();
 
 	/**
 	 * holds an array with keys to the $all property array
-	 * used to mark data entries as newly added
-	 *
-	 * @access protected
-	 * @var    array $added An array containing the keys of newly added entries
-	 */
-	protected $added = array();
-
-	/**
-	 * holds an array with keys to the $all property array
-	 * used to mark data entries as removed
-	 *
-	 * @access protected
-	 * @var    array $removed An array containing the keys of removed entries
+	 * used to mark data entries as removed.
+	 * @var array An array containing the keys of removed entries
 	 */
 	protected $removed = array();
 
 	/**
 	 * constructor for the collection, allowing the user to give a set of
-	 * initial entries
-	 *
-	 * @access public
-	 * @param  array $initial Array with initial data entries
-	 * @return void
+	 * initial entries.
+	 * @param array $initial Array with initial data entries
 	 */
 	public function __construct(array $initial = array()) {
 		$this->addAll($initial, false);
 	}
 
 	/**
-	 * adder function for an entry to the data array
-	 * allows for specifying the key yourself as well as flagging the entry as not new
-	 *
-	 * @access public
-	 * @param  mixed $value The data entry to be saved
-	 * @param  string|int $key The key to save the entry under
-	 * @param  bool $new Flag marking this entry as not new (not to be saved into $this->added)
-	 * @return void
+	 * change function to change an entry (add to $this->changed).
+	 * @param mixed $entry Either the key or the value that changes
+	 * @return mixed reference to the value or null if it doesn't exist
 	 */
-	public function add($val, $key = null, bool $new = true) {
-		if(is_object($val) && is_subclass_of($val, IChangeAware::class)) {
+	public function &change($entry) {
+		$key = $this->findKeyForKeyOrEntry($entry);
+		if ($key !== null) {
+			$this->changed[] = $key;
+
+			return $this->all[$key];
+		}
+	}
+
+	/**
+	 * adder function for an entry to the data array
+	 * allows for specifying the key yourself as well as flagging the entry as not new.
+	 * @param mixed $val The data entry to be saved
+	 * @param int|string|null $key The key to save the entry under
+	 * @param bool $new Flag marking this entry as not new (not to be saved into $this->added)
+	 */
+	public function add($val, $key = null, bool $new = true): void {
+		if (is_object($val) && is_subclass_of($val, ChangeAwareInterface::class)) {
 			$val->belongsTo($this);
 			//not every change aware object can know about a unique key
-			if(method_exists($val, "uniqKey") && $key === null) {
+			if (method_exists($val, 'uniqKey') && $key === null) {
 				$key = $val->uniqKey();
 			}
 		}
 
-		if($key === null) {
+		if ($key === null) {
 			$this->all[] = $val;
 			$key = array_search($val, $this->all);
 		} else {
@@ -101,182 +96,103 @@ class ChangeAwareCollection implements ArrayAccess, Countable, IteratorAggregate
 		}
 
 		//if the override flag wasn't given, mark the entry as newly added
-		if($new) {
+		if ($new) {
 			$this->added[] = $key;
 		}
 	}
 
 	/**
 	 * adder function for multiple entries to the data array
-	 * allows for flagging the entries as not new
-	 *
-	 * @access public
-	 * @param  array $values The data entries to be saved
-	 * @param  bool $new Flag marking these entries as not new (not to be saved into $this->added)
-	 * @return void
+	 * allows for flagging the entries as not new.
+	 * @param array $values The data entries to be saved
+	 * @param bool $new Flag marking these entries as not new (not to be saved into $this->added)
 	 */
-	public function addAll(array $values, bool $new = true) {
-		array_walk($values, array($this, "add"), $new);
+	public function addAll(array $values, bool $new = true): void {
+		array_walk($values, array($this, 'add'), $new);
 	}
 
 	/**
-	 * change function to change an entry (add to $this->changed)
-	 *
-	 * @access public
-	 * @param  mixed $entry Either the key or the value that changes
-	 * @return reference to the value or null if it doesn't exist
+	 * function used to "reset" the internal change arrays and removing all the removed entries.
 	 */
-	public function &change($entry) {
-		$key = $this->findKeyForKeyOrEntry($entry);
-		if($key !== null) {
-			$this->changed[] = $key;
-			return $this->all[$key];
-		} else {
-			return null;
-		}
+	public function apply(): void {
+		$this->all = $this->getAll('current');
+		$this->removed = array();
+		$this->changed = array();
+		$this->added = array();
 	}
 
 	/**
-	 * change function to remove an entry (add to $this->removed)
-	 *
-	 * @access public
-	 * @param  mixed $entry Either the key or the value that changes
-	 * @return true or false on success or not
+	 * function used to check if the collection has any changes recorded.
+	 * @return bool true on changed or not
 	 */
-	public function remove($entry) {
-		$key = $this->findKeyForKeyOrEntry($entry);
-		if($key !== null) {
-			$this->removed[] = $key;
-			return true;
-		} else {
+	public function changed(): bool {
+		return !empty($this->added) || !empty($this->removed) || !empty($this->changed);
+	}
+
+	/**
+	 * compare this attribute set to another attribute set.
+	 * @param ComparableInterface $other The other object to compare this one to
+	 * @return bool if this object should be considered the same attribute set as the other one
+	 */
+	public function compareTo(ComparableInterface $other): bool {
+		if (!$other instanceof self) {
 			return false;
 		}
+
+		return $this->compareToCollection($other);
 	}
 
 	/**
-	 * helper function to figure out what an argument is
-	 * first assumes the argument is a key
-	 * then assumes the argument is a value
-	 * and return the key for the value or null if not found
-	 *
-	 * @access public
-	 * @param  mixed $entry Either the key or the value
-	 * @return string|int the key of the value/the key if it's a key
+	 * Count the attributes via a simple "count" call.
+	 * @return int number of items in the internal data array
 	 */
-	private function findKeyForKeyOrEntry($entry) {
-		//check if $entry is an array key (allow null, so no isset)
-		if(is_scalar($entry) && array_key_exists($entry, $this->all)) {
-			return $entry;
-		} elseif(is_object($entry) && $entry instanceof IComparable) {
-			foreach ($this->all as $key => $value) {
-				if($value instanceof IComparable && $entry->compareTo($value)) {
-					return $key;
-				}
-			}
-		} elseif(($key = array_search($entry, $this->all)) !== false) {
-			return $key;
-		} else {
-			return null;
-		}
+	public function count(): int {
+		return count($this->all);
+	}
+
+	/**
+	 * Small method returning true if this collection contains no data.
+	 * @return bool true or false if the internal array is empty or not
+	 */
+	public function empty(): bool {
+		return empty($this->all);
 	}
 
 	/**
 	 * getter function to return a value by its key
-	 * does not return "removed" items
-	 *
-	 * @access public
-	 * @param  string|int $key The key for the value
-	 * @return the value from the $this->all array or null if not found
+	 * does not return "removed" items.
+	 * @param int|string $key The key for the value
+	 * @return mixed the value from the $this->all array or null if not found
 	 */
 	public function get($key) {
-		if(isset($this->all[$key]) && !in_array($key, $this->removed)) {
+		if (isset($this->all[$key]) && !in_array($key, $this->removed)) {
 			return $this->all[$key];
-		} else {
-			return null;
 		}
-	}
-
-	/**
-	 * setter function to set a value by its key
-	 * either calls the add function or set the value
-	 *
-	 * @access public
-	 * @param  string|int $key The key for the value
-	 * @param  mixed $value The value that is to be set
-	 * @return the value from the $this->all array or null if not found
-	 */
-	public function set($key, $value) {
-		if($key === null || !array_key_exists($key, $this->all)) {
-			$this->add($value, $key);
-		} else {
-			if($this->all[$key] !== $value) {
-				$this->change($key);
-			}
-
-			if(is_object($value) && is_subclass_of($value, IChangeAware::class)) {
-				$value->belongsTo($this);
-			}
-
-			$this->all[$key] = $value;
-		}
-	}
-
-	/**
-	 * function that can be used to replace all internal values with a new set
-	 *
-	 * @access public
-	 * @param  array $values An array with new values
-	 * @return void
-	 */
-	public function replace(array $values) {
-		$this->apply();
-		$this->removed = array_keys($this->all);
-		$this->addAll($values);
-	}
-
-	/**
-	 * function that can be used to check if a given value exists
-	 * in the internal data array
-	 *
-	 * @access public
-	 * @param  mixed $value The value to be checked for
-	 * @return true or false if the given value is contained or not
-	 */
-	public function has($value) {
-		//if the given value is comparable, we can use that to find it
-		if(is_object($value) && $value instanceof IComparable) {
-			foreach ($this->getAll("current") as $entry) {
-				if(is_object($entry) && $entry instanceof IComparable && $entry->compareTo($value)) {
-					return true;
-				}
-			}
-		} else {
-			return in_array($value, $this->getAll("current"), true);
-		}
-		return false;
 	}
 
 	/**
 	 * getter function to return all the values that match a specification
-	 * does not return "removed" items, except the "removed" key is given
-	 *
-	 * @access public
-	 * @param  string $what Determinges what set of data should be returned
+	 * does not return "removed" items, except the "removed" key is given.
+	 * @param string $what Determines what set of data should be returned
 	 * @return array with all the values that match the specification
 	 */
-	public function getAll($what = "current") {
-		if($what === "current") {
+	public function getAll($what = 'current'): array {
+		if ($what === 'current') {
 			return array_diff_key(
 				$this->all, //all our values
 				array_intersect_key($this->all, array_flip($this->removed)) //the removed values
 			);
-		} elseif($what === "new") {
+		}
+		if ($what === 'new') {
 			return array_intersect_key($this->all, array_flip($this->added));
-		} elseif($what === "removed") {
+		}
+		if ($what === 'removed') {
 			return array_intersect_key($this->all, array_flip($this->removed));
-		} elseif($what === "changed") {
+		}
+		if ($what === 'changed') {
 			return array_intersect_key($this->all, array_flip($this->changed));
-		} elseif($what === "unchanged") {
+		}
+		if ($what === 'unchanged') {
 			return array_diff_key(
 				$this->all, //all our values
 				array_intersect_key($this->all, array_merge(
@@ -285,125 +201,160 @@ class ChangeAwareCollection implements ArrayAccess, Countable, IteratorAggregate
 					array_flip($this->added) //the new values
 				))
 			);
-		} elseif($what === "all") {
-			return $this->all;
 		}
+
+		return $this->all;
 	}
 
 	/**
-	 * function used to "reset" the internal change arrays and removing all the removed entries
-	 *
-	 * @access public
-	 * @return void
+	 * Get the aggregate iterator.
+	 * @return ArrayIterator to iterate over our internal data
 	 */
-	public function apply() {
-		$this->all = $this->getAll("current");
-		$this->removed = array();
-		$this->changed = array();
-		$this->added = array();
+	public function getIterator(): ArrayIterator {
+		return new ArrayIterator($this->getAll());
 	}
 
 	/**
-	 * function used to check if the collection has any changes recorded
-	 *
-	 * @access public
-	 * @return boolean true on changed or not
+	 * function that can be used to check if a given value exists
+	 * in the internal data array.
+	 * @param mixed $value The value to be checked for
+	 * @return bool true or false if the given value is contained or not
 	 */
-	public function changed() {
-		return !empty($this->added) || !empty($this->removed) || !empty($this->changed);
-	}
+	public function has($value): bool {
+		//if the given value is comparable, we can use that to find it
+		if (is_object($value) && $value instanceof ComparableInterface) {
+			foreach ($this->getAll('current') as $entry) {
+				if (is_object($entry) && $entry instanceof ComparableInterface && $entry->compareTo($value)) {
+					return true;
+				}
+			}
+		} else {
+			return in_array($value, $this->getAll('current'), true);
+		}
 
-	/**
-	 * function used to set an entry via the array syntax
-	 * marks the entry as either added or not
-	 *
-	 * @access public
-	 * @param  mixed $offset The key to save the value under
-	 * @param  mixed $value The value to be saved
-	 * @return void
-	 */
-	public function offsetSet($offset, $value) {
-		$this->set($offset, $value);
+		return false;
 	}
 
 	/**
 	 * function used to check if an entry exists via isset()
-	 * does not return true for "removed" entries
-	 *
-	 * @access public
-	 * @param  mixed $offset The key to check if it exists
-	 * @return true or false on exists or not
+	 * does not return true for "removed" entries.
+	 * @param mixed $offset The key to check if it exists
+	 * @return bool true or false on exists or not
 	 */
-	public function offsetExists($offset) {
+	public function offsetExists($offset): bool {
 		return isset($this->all[$offset]) && !in_array($offset, $this->removed);
 	}
 
 	/**
-	 * function used to unset an entry via unset()
-	 * does only add the entry to "removed"
-	 *
-	 * @access public
-	 * @param  mixed $offset The key to unset
-	 * @return void
-	 */
-	public function offsetUnset($offset) {
-		$this->remove($offset);
-	}
-
-	/**
 	 * function used to get an entry via the array syntax
-	 * does only return values that aren't "removed"
-	 *
-	 * @access public
-	 * @param  mixed $offset The key to get the value for
-	 * @return void
+	 * does only return values that aren't "removed".
+	 * @param mixed $offset The key to get the value for
+	 * @return mixed value from our internal array
 	 */
 	public function offsetGet($offset) {
 		return $this->get($offset);
 	}
 
 	/**
-	 * Count the attributes via a simple "count" call
-	 *
-	 * @access public
-	 * @return number of items in the internal data array
+	 * function used to set an entry via the array syntax
+	 * marks the entry as either added or not.
+	 * @param mixed $offset The key to save the value under
+	 * @param mixed $value The value to be saved
 	 */
-	public function count() {
-		return count($this->all);
+	public function offsetSet($offset, $value): void {
+		$this->set($offset, $value);
 	}
 
 	/**
-	 * Small method returning true if this collection contains no data
-	 *
-	 * @access public
-	 * @return true or false if the internal array is empty or not
+	 * function used to unset an entry via unset()
+	 * does only add the entry to "removed".
+	 * @param mixed $offset The key to unset
 	 */
-	public function empty() {
-		return empty($this->all);
+	public function offsetUnset($offset): void {
+		$this->remove($offset);
 	}
 
 	/**
-	 * Get the aggregate iterator
-	 * IteratorAggregate interface required method
-	 *
-	 * @access public
-	 * @return ArrayIterator to iterate over our internal data
+	 * change function to remove an entry (add to $this->removed).
+	 * @param mixed $entry Either the key or the value that changes
+	 * @return bool true or false on success or not
 	 */
-	public function getIterator() {
-		return new ArrayIterator($this->getAll());
+	public function remove($entry): bool {
+		$key = $this->findKeyForKeyOrEntry($entry);
+		if ($key !== null) {
+			$this->removed[] = $key;
+
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
-	 * compare this attribute set to another attribute set
-	 *
-	 * @access public
-	 * @param  IComparable $other The other object to compare this one to
-	 * @return boolean if this object should be considered the same attribute set as the other one
+	 * function that can be used to replace all internal values with a new set.
+	 * @param array $values An array with new values
 	 */
-	public function compareTo(IComparable $other) {
-		return get_called_class() == get_class($other) //make sure it's the same class
-			&& $this->all == $other->all && $this->changed == $other->changed
-			&& $this->added == $other->added && $this->removed == $other->removed;
+	public function replace(array $values): void {
+		$this->apply();
+		$this->removed = array_keys($this->all);
+		$this->addAll($values);
 	}
 
+	/**
+	 * setter function to set a value by its key
+	 * either calls the add function or set the value.
+	 * @param int|string|null $key The key for the value
+	 * @param mixed $value The value that is to be set
+	 */
+	public function set($key, $value): void {
+		if ($key === null || !array_key_exists($key, $this->all)) {
+			$this->add($value, $key);
+		} else {
+			if ($this->all[$key] !== $value) {
+				$this->change($key);
+			}
+
+			if (is_object($value) && is_subclass_of($value, ChangeAwareInterface::class)) {
+				$value->belongsTo($this);
+			}
+
+			$this->all[$key] = $value;
+		}
+	}
+
+	/**
+	 * compare this attribute set to another attribute set.
+	 * @param ChangeAwareCollection $other The other object to compare this one to
+	 * @return bool if this object should be considered the same attribute set as the other one
+	 */
+	private function compareToCollection(self $other) {
+		return $this->all === $other->all && $this->changed === $other->changed
+			&& $this->added === $other->added && $this->removed === $other->removed;
+	}
+
+	/**
+	 * helper function to figure out what an argument is
+	 * first assumes the argument is a key
+	 * then assumes the argument is a value
+	 * and return the key for the value or null if not found.
+	 * @param mixed $entry Either the key or the value
+	 * @return mixed|null the key of the value/the key if it's a key
+	 */
+	private function findKeyForKeyOrEntry($entry) {
+		//check if $entry is an array key (allow null, so no isset)
+		if ((is_string($entry) || is_int($entry)) && array_key_exists($entry, $this->all)) {
+			return $entry;
+		}
+		if (is_object($entry) && $entry instanceof ComparableInterface) {
+			foreach ($this->all as $key => $value) {
+				if ($value instanceof ComparableInterface && $entry->compareTo($value)) {
+					return $key;
+				}
+			}
+		} elseif (($key = array_search($entry, $this->all)) !== false) {
+			return $key;
+		} else {
+			return null;
+		}
+	}
 }

@@ -1,9 +1,9 @@
 {
 	"name": "holonet/common",
+	"description": "commonly used code in hn projects",
 	"autoload": {
 		"psr-4" : {
-			"holonet\\common\\" : "src/",
-			"holonet\\common\\tests\\" : "tests/"
+			"holonet\\common\\" : "src/"
 		},
 		"files": ["src/functions.php"]
 	},
@@ -32,9 +32,9 @@
 		],
 		"test": [
 			"@composer validate",
-			"@php -d memory_limit=-1 vendor/bin/phpunit",
+			"@php -d memory_limit=-1 vendor/phpunit/phpunit/phpunit",
 			"@php -d memory_limit=-1 vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --verbose --dry-run --ansi",
-			"@php -d memory_limit=-1 vendor/bin/psalm"
+			"@php -d memory_limit=-1 vendor/vimeo/psalm/psalm"
 		]
 	}
 }

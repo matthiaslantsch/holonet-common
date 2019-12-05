@@ -1,72 +1,52 @@
 <?php
 /**
  * This file is part of the holonet common library
- * (c) Matthias Lantsch
+ * (c) Matthias Lantsch.
  *
  * Class file for the BitwiseFlag class
  *
- * @package holonet common code library
  * @license http://opensource.org/licenses/gpl-license.php  GNU Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
 namespace holonet\common;
 
-use holonet\common as co;
-
 /**
  * BitwiseFlag wraps around an integer and allows for easy flag setting and checking
- * while not touching the other bits in the integer
- *
- * @author  matthias.lantsch
- * @package holonet\common
+ * while not touching the other bits in the integer.
  */
 abstract class BitwiseFlag {
-
 	/**
-	 * Property holding the actual flags values in an integer
+	 * Property holding the actual flags values in an integer.
 	 *
-	 * @access public
-	 * @var    int $flags The integer mask that holds the flags enclosed
+	 * @var int The integer mask that holds the flags enclosed
 	 */
 	public $flags;
 
 	/**
-	 * constructor method taking the integer mask as an argument
-	 *
-	 * @access public
-	 * @param  integer $mask The flags mask we are working with
-	 * @return void
+	 * @param int $mask The flags mask we are working with
 	 */
-	public function __construct($mask) {
-		$this->flags = intval($mask);
+	public function __construct(int $mask) {
+		$this->flags = $mask;
 	}
 
 	/**
-	 * small helper method that can be used to selectively check a single bit in our integer
-	 *
-	 * @access protected
-	 * @param  int $flag The flag that should be checked for
-	 * @return boolean true or false if the flag is set or not
+	 * @param int $flag The flag that should be checked for
+	 * @return bool true or false if the flag is set or not
 	 */
-	protected function isFlagSet(int $flag) {
-      return (($this->flags & $flag) == $flag);
-    }
+	protected function isFlagSet(int $flag): bool {
+		return ($this->flags & $flag) === $flag;
+	}
 
 	/**
-	 * small helper method that can be used to selectively set a single bit in our integer
-	 *
-	 * @access protected
-	 * @param  int $flag The flag to be set in our integer mask
-	 * @param  boolean $value The boolean value to be set, if the flag should be true or not
-	 * @return void
+	 * @param int $flag The flag to be set in our integer mask
+	 * @param bool $value The boolean value to be set, if the flag should be true or not
 	 */
-    protected function setFlag(int $flag, bool $value) {
-    	if($value) {
-        	$this->flags |= $flag;
-    	} else {
-        	$this->flags &= ~$flag;
-    	}
-    }
-
+	protected function setFlag(int $flag, bool $value): void {
+		if ($value) {
+			$this->flags |= $flag;
+		} else {
+			$this->flags &= ~$flag;
+		}
+	}
 }

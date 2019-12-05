@@ -1,11 +1,10 @@
 <?php
 /**
  * This file is part of the hdev common library package
- * (c) Matthias Lantsch
+ * (c) Matthias Lantsch.
  *
  * class file for the ErrorHandler base class
  *
- * @package common
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -13,54 +12,21 @@
 namespace holonet\common\error;
 
 /**
- * The ErrorHandler should be extended by an application that needs it's errors handled
+ * The ErrorHandler should be extended by an application that needs it's errors handled.
  *
  * @author  matthias.lantsch
- * @package holonet\common\error
  */
 abstract class ErrorHandler {
-
-	/**
-	 * registers the static methods as error_handler/exception_handler with the SPL
-	 *
-	 * @access public
-	 * @return void
-	 */
-	public static function register() {
-		set_error_handler(array(static::class, 'handleError'));
-		set_exception_handler(array(static::class, 'handleException'));
-	}
-
-	/**
-	 * static method called by the spl when an exception is thrown that isn't caught
-	 * now if an exeception gets here, it's a server side error
-	 *
-	 * @access public
-	 * @param  \Exception $exception Exception that was thrown but wasn't caught
-	 * @return void
-	 */
-	public static function handleException($exception) {
-		$error = new Error(
-			Error::ERROR, $exception->getCode(),
-			$exception->getMessage(), $exception->getFile(),
-			$exception->getLine()
-		);
-
-		self::onError($error);
-	}
-
 	/**
 	 * handles errors coming over the error_handler
-	 * maps php error levels to our internal error levels
+	 * maps php error levels to our internal error levels.
 	 *
-	 * @access public
-	 * @param  int $errno The error number of the thrown error
-	 * @param  string $msg The error message
-	 * @param  string $file The file the error was caused in
-	 * @param  int $line The line the error was caused on
-	 * @return void
+	 * @param int $errno The error number of the thrown error
+	 * @param string $msg The error message
+	 * @param string $file The file the error was caused in
+	 * @param string $line The line the error was caused on
 	 */
-	public static function handleError($errno, $msg = "", $file = "", $line = "") {
+	public static function handleError($errno, $msg = '', $file = '', $line = ''): void {
 		if (!(error_reporting() & $errno)) {
 			// This error code is not included in error_reporting
 			return;
@@ -84,7 +50,7 @@ abstract class ErrorHandler {
 			E_USER_DEPRECATED => Error::DEBUG,
 		);
 
-		if(!isset($levelLookup[$errno])) {
+		if (!isset($levelLookup[$errno])) {
 			$level = Error::ERROR;
 		} else {
 			$level = $levelLookup[$errno];
@@ -94,27 +60,45 @@ abstract class ErrorHandler {
 	}
 
 	/**
-	 * decide wheter to log the error or not, call child class processError method
+	 * static method called by the spl when an exception is thrown that isn't caught
+	 * now if an exeception gets here, it's a server side error.
 	 *
-	 * @access private
-	 * @param  Error $error The error that must be handled
-	 * @return void
+	 * @param \Exception $exception Exception that was thrown but wasn't caught
 	 */
-	private static function onError(Error $error) {
-		//call the processError() method of the implementing class
-		static::processError($error);
+	public static function handleException($exception): void {
+		$error = new Error(
+			Error::ERROR, $exception->getCode(),
+			$exception->getMessage(), $exception->getFile(),
+			$exception->getLine()
+		);
 
-
-		exit(1);
+		self::onError($error);
 	}
 
 	/**
-	 * force the child class to implement a method in which it reacts to an error
-	 *
-	 * @access protected
-	 * @param  Error $error The error that must be handled
-	 * @return void
+	 * registers the static methods as error_handler/exception_handler with the SPL.
 	 */
-	protected abstract static function processError(Error $error);
+	public static function register(): void {
+		set_error_handler(array(static::class, 'handleError'));
+		set_exception_handler(array(static::class, 'handleException'));
+	}
 
+	/**
+	 * force the child class to implement a method in which it reacts to an error.
+	 *
+	 * @param Error $error The error that must be handled
+	 */
+	abstract protected static function processError(Error $error): void;
+
+	/**
+	 * decide wheter to log the error or not, call child class processError method.
+	 *
+	 * @param Error $error The error that must be handled
+	 */
+	private static function onError(Error $error): void {
+		//call the processError() method of the implementing class
+		static::processError($error);
+
+		exit(1);
+	}
 }

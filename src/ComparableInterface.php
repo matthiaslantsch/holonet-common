@@ -3,16 +3,17 @@
  * This file is part of the hdev common library package
  * (c) Matthias Lantsch.
  *
- * class file for the BadEnvironmentException exception class
+ * class file for the ComparableInterface interface
  *
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
-namespace holonet\common\error;
+namespace holonet\common;
 
 /**
- * exception to be thrown to show errors with the users php setup.
+ * The IComparable interface forces the implementing class to define a comparison.
  */
-class BadEnvironmentException extends \RuntimeException {
+interface ComparableInterface {
+	public function compareTo(self $other): bool;
 }

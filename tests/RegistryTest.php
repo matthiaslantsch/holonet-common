@@ -1,98 +1,100 @@
 <?php
 /**
  * This file is part of the hdev common library package
- * (c) Matthias Lantsch
+ * (c) Matthias Lantsch.
  *
  * PHPUnit test class for the Registry class
  *
- * @package common
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
 namespace holonet\common\tests;
 
-use holonet\common\Registry;
+use PHPUnit\Framework\TestCase;
+use holonet\common\collection\Registry;
 
 /**
- * Tests the functionality of the Registry class
- * 
- * @author  matthias.lantsch
- * @package holonet\common\tests
+ * Tests the functionality of the Registry class.
+ *
+ * @covers  \holonet\common\collection\Registry
+ *
+ * @internal
+ *
+ * @small
  */
-class RegistryTest extends \PHPUnit_Framework_TestCase {
+class RegistryTest extends TestCase {
+	public function testGetMultilevel(): void {
+		$registry = new Registry();
 
-	/**
-	 * sets up the test environment for each test method
-	 * we have to clear the Registry every time because of the way it's supposed to work
-	 * (one Registry reachable globally)
-	 * 
-	 * @access protected
-	 * @return void
-	 */
-	protected function setUp() {
-		Registry::clear();
+		$data = array(
+			'array' => array(
+				'lowerval' => 'lower',
+				'arrayarray' => array(
+					'lowestval' => 'lowest'
+				)
+			)
+		);
+		$registry->setAll($data);
+
+		static::assertSame('lower', $registry->get('array.lowerval'));
+		static::assertNull($registry->get('array.notexisting'));
+		static::assertSame('lowest', $registry->get('array.arrayarray.lowestval'));
+		static::assertNull($registry->get('array.lowerval.stillnotexisting'));
 	}
 
-	/**
-	 * @covers Registry::set()
-	 * @covers Registry::setInternal()
-	 * @covers Registry::get()
-	 * @covers Registry::getInternal()
-	 * @uses   Registry
-	 */
-	public function testSimplePair() {
-		Registry::set("test", "value");
+	public function testPlaceholders(): void {
+		$registry = new Registry();
 
-		$this->assertEquals(["test" => "value"], Registry::getAll());
+		$registry->set('app.name', 'coolapp');
+		$registry->set('app.environment', '%app.name%-test');
+		$registry->set('app.testing', 'inside-%not-existing-placeholder%-testing');
 
-		$this->assertEquals("value", Registry::get("test"));
-
-		$this->assertEquals(null, Registry::get("notexisting"));
+		static::assertSame('coolapp-test', $registry->get('app.environment'));
+		static::assertSame('inside-%not-existing-placeholder%-testing', $registry->get('app.testing'));
+		static::assertSame(array('app' => array('name' => 'coolapp', 'environment' => 'coolapp-test', 'testing' => 'inside-%not-existing-placeholder%-testing')), $registry->getAll());
 	}
 
-	/**
-	 * @covers Registry::set()
-	 * @covers Registry::setInternal()
-	 * @uses   Registry
-	 */
-	public function testSetMultilevel() {
+	public function testSetMultilevel(): void {
+		$registry = new Registry();
+
 		//test multi level set
-		Registry::set("test.subone.sub2", "subvalue");
-		$expected["test"]["subone"]["sub2"] = "subvalue";
-		$this->assertEquals($expected, Registry::getAll());
+		$registry->set('test.subone.sub2', 'subvalue');
+		$expected['test']['subone']['sub2'] = 'subvalue';
+		static::assertSame($expected, $registry->getAll());
 
 		//test multi level set with overwrite
-		Registry::set("test.subone", "overwrite");
-		$expected["test"]["subone"] = "overwrite";
-		$this->assertEquals($expected, Registry::getAll());
+		$registry->set('test.subone', 'overwrite');
+		$expected['test']['subone'] = 'overwrite';
+		static::assertSame($expected, $registry->getAll());
 
 		//test same level 2 values set
-		Registry::set("test.subonebrother", "nexttoit");
-		$expected["test"] = ["subonebrother" => "nexttoit", "subone" => "overwrite"];
-		$this->assertEquals($expected, Registry::getAll());
+		$registry->set('test.subonebrother', 'nexttoit');
+		$expected['test'] = array('subone' => 'overwrite', 'subonebrother' => 'nexttoit');
+		static::assertSame($expected, $registry->getAll());
 	}
 
-	/**
-	 * @covers Registry::get()
-	 * @covers Registry::getInternal()
-	 * @uses   Registry
-	 */
-	public function testGetMultilevel() {
-		$data = [
-			"array" => [
-				"lowerval" => "lower",
-				"arrayarray" => [
-					"lowestval" => "lowest"
-				]
-			]
-		];
-		Registry::setAll($data);
+	public function testSetSublevelKeyWithoutOverwrite(): void {
+		$registry = new Registry();
+		$registry->set('app', array(
+			'db' => array('host' => '127.0.0.1', 'port' => '224')
+		));
+		$newConfigfile = array(
+			'app' => array(
+				'db' => array('host' => 'localhost')
+			)
+		);
+		$registry->setAll($newConfigfile);
 
-		$this->assertEquals("lower", Registry::get("array.lowerval"));
-		$this->assertEquals(null, Registry::get("array.notexisting"));
-		$this->assertEquals("lowest", Registry::get("array.arrayarray.lowestval"));
-		$this->assertEquals(null, Registry::get("array.lowerval.stillnotexisting"));
+		static::assertSame(array('host' => 'localhost', 'port' => '224'), $registry->get('app.db'));
 	}
 
+	public function testSimplePair(): void {
+		$registry = new Registry();
+		$registry->set('test', 'value');
+
+		static::assertSame('value', $registry->get('test'));
+		static::assertNull($registry->get('notexisting'));
+		static::assertSame(array('test' => 'value'), $registry->getAll());
+	}
 }

@@ -16,7 +16,7 @@ use Psr\Container\ContainerInterface;
 /**
  * Dependency Injection container conforming with PSR-11.
  */
-class Containers implements ContainerInterface {
+class Container implements ContainerInterface {
 	/**
 	 * @var string DI_PREFIX Prefix value for the injected class properties
 	 */

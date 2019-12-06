@@ -11,8 +11,10 @@
 
 namespace holonet\common\error;
 
+use RuntimeException;
+
 /**
  * exception to be thrown to show errors with the users php setup.
  */
-class BadEnvironmentException extends \RuntimeException {
+class BadEnvironmentException extends RuntimeException {
 }

@@ -11,47 +11,48 @@
 
 namespace holonet\common\error;
 
+use Exception;
+use Psr\Log\LogLevel;
+
 /**
- * The ErrorHandler should be extended by an application that needs it's errors handled.
- *
- * @author  matthias.lantsch
+ * Base ErrorHandler class with methods to be registered by php as error handling functions.
  */
 abstract class ErrorHandler {
 	/**
 	 * handles errors coming over the error_handler
-	 * maps php error levels to our internal error levels.
+	 * maps php error levels to psr-3 error levels.
 	 *
 	 * @param int $errno The error number of the thrown error
 	 * @param string $msg The error message
 	 * @param string $file The file the error was caused in
-	 * @param string $line The line the error was caused on
+	 * @param int $line The line the error was caused on
 	 */
-	public static function handleError($errno, $msg = '', $file = '', $line = ''): void {
+	public static function handleError($errno, $msg = '', $file = '', $line = null): void {
 		if (!(error_reporting() & $errno)) {
 			// This error code is not included in error_reporting
 			return;
 		}
 
 		$levelLookup = array(
-			E_ERROR => Error::ERROR,
-			E_WARNING => Error::WARNING,
-			E_PARSE => Error::ERROR,
-			E_NOTICE => Error::NOTICE,
-			E_CORE_ERROR => Error::ERROR,
-			E_CORE_WARNING => Error::WARNING,
-			E_COMPILE_ERROR => Error::ERROR,
-			E_COMPILE_WARNING => Error::WARNING,
-			E_USER_ERROR => Error::ERROR,
-			E_USER_WARNING => Error::WARNING,
-			E_USER_NOTICE => Error::NOTICE,
-			E_STRICT => Error::DEBUG,
-			E_RECOVERABLE_ERROR => Error::ERROR,
-			E_DEPRECATED => Error::DEBUG,
-			E_USER_DEPRECATED => Error::DEBUG,
+			E_ERROR => LogLevel::ERROR,
+			E_WARNING => LogLevel::WARNING,
+			E_PARSE => LogLevel::ERROR,
+			E_NOTICE => LogLevel::NOTICE,
+			E_CORE_ERROR => LogLevel::ERROR,
+			E_CORE_WARNING => LogLevel::WARNING,
+			E_COMPILE_ERROR => LogLevel::ERROR,
+			E_COMPILE_WARNING => LogLevel::WARNING,
+			E_USER_ERROR => LogLevel::ERROR,
+			E_USER_WARNING => LogLevel::WARNING,
+			E_USER_NOTICE => LogLevel::NOTICE,
+			E_STRICT => LogLevel::DEBUG,
+			E_RECOVERABLE_ERROR => LogLevel::ERROR,
+			E_DEPRECATED => LogLevel::DEBUG,
+			E_USER_DEPRECATED => LogLevel::DEBUG,
 		);
 
 		if (!isset($levelLookup[$errno])) {
-			$level = Error::ERROR;
+			$level = LogLevel::ERROR;
 		} else {
 			$level = $levelLookup[$errno];
 		}
@@ -61,13 +62,13 @@ abstract class ErrorHandler {
 
 	/**
 	 * static method called by the spl when an exception is thrown that isn't caught
-	 * now if an exeception gets here, it's a server side error.
+	 * if an exeception gets here, it's a server side error.
 	 *
-	 * @param \Exception $exception Exception that was thrown but wasn't caught
+	 * @param Exception $exception Uncaught exception
 	 */
 	public static function handleException($exception): void {
 		$error = new Error(
-			Error::ERROR, $exception->getCode(),
+			LogLevel::ERROR, $exception->getCode(),
 			$exception->getMessage(), $exception->getFile(),
 			$exception->getLine()
 		);
@@ -85,14 +86,12 @@ abstract class ErrorHandler {
 
 	/**
 	 * force the child class to implement a method in which it reacts to an error.
-	 *
 	 * @param Error $error The error that must be handled
 	 */
 	abstract protected static function processError(Error $error): void;
 
 	/**
 	 * decide wheter to log the error or not, call child class processError method.
-	 *
 	 * @param Error $error The error that must be handled
 	 */
 	private static function onError(Error $error): void {

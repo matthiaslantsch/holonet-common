@@ -3,7 +3,7 @@
  * This file is part of the holonet common library
  * (c) Matthias Lantsch.
  *
- * Class file for the Dependency Injection DependencyNotFoundException class
+ * Class file for the Dependency Injection DependencyInjectionException class
  *
  * @license http://opensource.org/licenses/gpl-license.php  GNU Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
@@ -12,10 +12,10 @@
 namespace holonet\common\di;
 
 use RuntimeException;
-use Psr\Container\NotFoundExceptionInterface;
+use Psr\Container\ContainerExceptionInterface;
 
 /**
- * Dependency Injection not found exception conforming with PSR-11.
+ * Dependency Injection general error exception conforming with PSR-11.
  */
-class DependencyNotFoundException extends RuntimeException implements NotFoundExceptionInterface {
+class DependencyInjectionException extends RuntimeException implements ContainerExceptionInterface {
 }

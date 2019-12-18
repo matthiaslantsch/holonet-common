@@ -9,8 +9,9 @@
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
-namespace holonet\common;
+namespace holonet\common\di;
 
+use TypeError;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -60,5 +61,35 @@ class Container implements ContainerInterface {
 				$dependencyUser->{$propertyName} = $this->get($depKey);
 			}
 		}
+	}
+
+	/**
+	 * Method used to set a dependency in this class.
+	 * If the given value is an object, it will get injected and saved under the key
+	 * If the given value is a string a class name is assumed and a new object will be created and automatically get injected.
+	 * @param string $id The key to save the dependency under
+	 * @param object|string $value The dependency to save
+	 * @param array ...$constructorArgs Arguments for the class instantiation
+	 */
+	public function set(string $id, $value, ...$constructorArgs): void {
+		if (is_string($value) && class_exists($value)) {
+			try {
+				$value = new $value(...$constructorArgs);
+			} catch (TypeError $e) {
+				throw new DependencyInjectionException(
+					"Cannot create dependency '{$id}' on Dependency Container: '{$e->getMessage()}'",
+					$e->getCode(), $e
+				);
+			}
+		}
+
+		if (!is_object($value)) {
+			throw new DependencyInjectionException(
+				"Cannot set dependency '{$id}' on Dependency Container, value must be object or class string"
+			);
+		}
+
+		$this->inject($value);
+		$this->dependencies[$id] = $value;
 	}
 }

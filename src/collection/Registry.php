@@ -77,7 +77,7 @@ class Registry implements ArrayAccess {
 	 * Offset to retrieve.
 	 * @see http://php.net/manual/en/arrayaccess.offsetget.php
 	 * @param string $offset
-	 * @return mixed can return all value types
+	 * @return mixed|null can return all value types or null if not found
 	 */
 	public function offsetGet($offset) {
 		$parts = explode('.', $offset);
@@ -85,7 +85,7 @@ class Registry implements ArrayAccess {
 
 		foreach ($parts as $sublevel) {
 			if (!isset($position[$sublevel])) {
-				return;
+				return null;
 			}
 			$position = $position[$sublevel];
 		}

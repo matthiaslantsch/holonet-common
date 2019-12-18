@@ -24,29 +24,29 @@ use PHPUnit\Framework\TestCase;
  */
 class FunctionsTest extends TestCase {
 	/**
-	 * @covers \holonet\common\dirpath()
-	 * @covers \holonet\common\filepath()
+	 * @covers \holonet\common\FilesystemUtils::dirpath()
+	 * @covers \holonet\common\FilesystemUtils::filepath()
 	 */
 	public function testAbsolutePaths(): void {
 		$expected = implode(DIRECTORY_SEPARATOR, array(__DIR__, 'subfolder', 'subsubfolder')).DIRECTORY_SEPARATOR;
-		static::assertSame($expected, co\dirpath(__DIR__, 'subfolder', 'subsubfolder'));
+		static::assertSame($expected, co\FilesystemUtils::dirpath(__DIR__, 'subfolder', 'subsubfolder'));
 
 		$expected .= 'test.txt';
-		static::assertSame($expected, co\filepath(__DIR__, 'subfolder', 'subsubfolder', 'test.txt'));
+		static::assertSame($expected, co\FilesystemUtils::filepath(__DIR__, 'subfolder', 'subsubfolder', 'test.txt'));
 	}
 
 	/**
-	 * @covers \holonet\common\dirpath()
-	 * @covers \holonet\common\filepath()
-	 * @covers \holonet\common\reldirpath()
-	 * @covers \holonet\common\relfilepath()
+	 * @covers \holonet\common\FilesystemUtils::dirpath()
+	 * @covers \holonet\common\FilesystemUtils::filepath()
+	 * @covers \holonet\common\FilesystemUtils::reldirpath()
+	 * @covers \holonet\common\FilesystemUtils::relfilepath()
 	 */
 	public function testRelativePaths(): void {
 		$expected = implode(DIRECTORY_SEPARATOR, array(__DIR__, 'subfolder', 'subsubfolder')).DIRECTORY_SEPARATOR;
-		static::assertSame($expected, co\reldirpath('subfolder', 'subsubfolder'));
+		static::assertSame($expected, co\FilesystemUtils::reldirpath('subfolder', 'subsubfolder'));
 
 		$expected .= 'test.txt';
-		static::assertSame($expected, co\relfilepath('subfolder', 'subsubfolder', 'test.txt'));
+		static::assertSame($expected, co\FilesystemUtils::relfilepath('subfolder', 'subsubfolder', 'test.txt'));
 	}
 
 	/**

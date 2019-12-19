@@ -11,13 +11,45 @@
 
 namespace holonet\common\error;
 
-use Exception;
+use Throwable;
 use Psr\Log\LogLevel;
+use Psr\Log\LoggerInterface;
 
 /**
- * Base ErrorHandler class with methods to be registered by php as error handling functions.
+ * ErrorHandler class with methods to be registered by php as error handling functions.
+ * Automatically logs if a logger is given during initialisation.
  */
-abstract class ErrorHandler {
+class ErrorHandler {
+	public const ERROR_LEVEL_LOOKUP = array(
+		E_ERROR => array('level' => LogLevel::CRITICAL, 'name' => 'E_ERROR'),
+		E_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_WARNING'),
+		E_PARSE => array('level' => LogLevel::ALERT, 'name' => 'E_PARSE'),
+		E_NOTICE => array('level' => LogLevel::NOTICE, 'name' => 'E_NOTICE'),
+		E_CORE_ERROR => array('level' => LogLevel::CRITICAL, 'name' => 'E_CORE_ERROR'),
+		E_CORE_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_CORE_WARNING'),
+		E_COMPILE_ERROR => array('level' => LogLevel::ALERT, 'name' => 'E_COMPILE_ERROR'),
+		E_COMPILE_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_COMPILE_WARNING'),
+		E_USER_ERROR => array('level' => LogLevel::ERROR, 'name' => 'E_USER_ERROR'),
+		E_USER_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_USER_WARNING'),
+		E_USER_NOTICE => array('level' => LogLevel::NOTICE, 'name' => 'E_USER_NOTICE'),
+		E_STRICT => array('level' => LogLevel::NOTICE, 'name' => 'E_STRICT'),
+		E_RECOVERABLE_ERROR => array('level' => LogLevel::ERROR, 'name' => 'E_RECOVERABLE_ERROR'),
+		E_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_DEPRECATED'),
+		E_USER_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_USER_DEPRECATED'),
+	);
+
+	/**
+	 * @var LoggerInterface|null Logger to automatically log errors
+	 */
+	private $logger;
+
+	/**
+	 * @param LoggerInterface $logger Allows the user to submit a logger to autolog errors
+	 */
+	public function __construct(LoggerInterface $logger = null) {
+		$this->logger = $logger;
+	}
+
 	/**
 	 * handles errors coming over the error_handler
 	 * maps php error levels to psr-3 error levels.
@@ -26,78 +58,59 @@ abstract class ErrorHandler {
 	 * @param string $msg The error message
 	 * @param string $file The file the error was caused in
 	 * @param int $line The line the error was caused on
+	 * @return bool|null To advise the spl to continue error handling or not
 	 */
-	public static function handleError($errno, $msg = '', $file = '', $line = null): void {
+	public function handleError($errno, $msg = '', $file = '', $line = null): ?bool {
 		if (!(error_reporting() & $errno)) {
 			// This error code is not included in error_reporting
-			return;
+			return null;
 		}
 
-		$levelLookup = array(
-			E_ERROR => LogLevel::ERROR,
-			E_WARNING => LogLevel::WARNING,
-			E_PARSE => LogLevel::ERROR,
-			E_NOTICE => LogLevel::NOTICE,
-			E_CORE_ERROR => LogLevel::ERROR,
-			E_CORE_WARNING => LogLevel::WARNING,
-			E_COMPILE_ERROR => LogLevel::ERROR,
-			E_COMPILE_WARNING => LogLevel::WARNING,
-			E_USER_ERROR => LogLevel::ERROR,
-			E_USER_WARNING => LogLevel::WARNING,
-			E_USER_NOTICE => LogLevel::NOTICE,
-			E_STRICT => LogLevel::DEBUG,
-			E_RECOVERABLE_ERROR => LogLevel::ERROR,
-			E_DEPRECATED => LogLevel::DEBUG,
-			E_USER_DEPRECATED => LogLevel::DEBUG,
-		);
+		$errorType = static::ERROR_LEVEL_LOOKUP[$errno] ?? static::ERROR_LEVEL_LOOKUP[E_ERROR];
 
-		if (!isset($levelLookup[$errno])) {
-			$level = LogLevel::ERROR;
-		} else {
-			$level = $levelLookup[$errno];
+		if ($this->logger !== null) {
+			$this->logger->log(
+				$errorType['level'],
+				$errorType['name'].': '.$msg,
+				array(
+					'code' => $errno,
+					'file' => $file,
+					'line' => $line,
+				)
+			);
 		}
 
-		self::onError(new Error($level, $errno, $msg, $file, $line));
+		return true;
 	}
 
 	/**
-	 * static method called by the spl when an exception is thrown that isn't caught
-	 * if an exeception gets here, it's a server side error.
+	 * handler method called by the spl when an exception is thrown that isn't caught
+	 * if an exception gets here, it's a server side error so we exit execution after.
 	 *
-	 * @param Exception $exception Uncaught exception
+	 * @param Throwable $exception Uncaught exception
 	 */
-	public static function handleException($exception): void {
-		$error = new Error(
-			LogLevel::ERROR, $exception->getCode(),
-			$exception->getMessage(), $exception->getFile(),
+	public function handleException(Throwable $exception): void {
+		$message = sprintf(
+			'Uncaught Exception %s: "%s" at %s line %s',
+			get_class($exception),
+			$exception->getMessage(),
+			$exception->getFile(),
 			$exception->getLine()
 		);
 
-		self::onError($error);
+		if ($this->logger !== null) {
+			$this->logger->log(LogLevel::ERROR, $message, array('exception' => $exception));
+		}
+
+		exit(255);
 	}
 
 	/**
-	 * registers the static methods as error_handler/exception_handler with the SPL.
+	 * handler method called by the spl as a shutdown function.
 	 */
-	public static function register(): void {
-		set_error_handler(array(static::class, 'handleError'));
-		set_exception_handler(array(static::class, 'handleException'));
-	}
-
-	/**
-	 * force the child class to implement a method in which it reacts to an error.
-	 * @param Error $error The error that must be handled
-	 */
-	abstract protected static function processError(Error $error): void;
-
-	/**
-	 * decide wheter to log the error or not, call child class processError method.
-	 * @param Error $error The error that must be handled
-	 */
-	private static function onError(Error $error): void {
-		//call the processError() method of the implementing class
-		static::processError($error);
-
-		exit(1);
+	public function handleShutdown(): void {
+		if ($this->logger !== null) {
+			$this->logger->log(LogLevel::ALERT, 'Unexpected shutdown');
+		}
 	}
 }

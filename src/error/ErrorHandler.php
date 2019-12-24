@@ -104,13 +104,4 @@ class ErrorHandler {
 
 		exit(255);
 	}
-
-	/**
-	 * handler method called by the spl as a shutdown function.
-	 */
-	public function handleShutdown(): void {
-		if ($this->logger !== null) {
-			$this->logger->log(LogLevel::ALERT, 'Unexpected shutdown');
-		}
-	}
 }

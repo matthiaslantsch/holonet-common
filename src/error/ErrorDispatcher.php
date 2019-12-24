@@ -39,7 +39,7 @@ class ErrorDispatcher {
 		$this->exceptionHandlers[] = $handler;
 	}
 
-	public function addShutdownHandlers(callable $handler): void {
+	public function addShutdownHandler(callable $handler): void {
 		$this->shutdownHandlers[] = $handler;
 	}
 

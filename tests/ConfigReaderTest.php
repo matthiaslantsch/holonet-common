@@ -46,7 +46,7 @@ class ConfigReaderTest extends TestCase {
 		} catch (\Exception $e) {
 			$msg = $e->getMessage();
 		}
-		static::assertSame("File 'iSurelyDon'tExist.ini' cannot be found/read", $msg);
+		static::assertSame("File path 'iSurelyDon'tExist.ini' does not exist", $msg);
 	}
 
 	/**
@@ -66,7 +66,7 @@ class ConfigReaderTest extends TestCase {
 
 	public function testUnknownType(): void {
 		$configreader = new ConfigReader();
-		$filename = 'config.blablabla';
+		$filename = __DIR__.'/data/configfile.blablabla';
 
 		try {
 			$configreader->read($filename);

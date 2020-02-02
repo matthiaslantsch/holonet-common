@@ -25,27 +25,27 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	/**
 	 * holds an array with keys to the $all property array
 	 * used to mark data entries as newly added.
-	 * @var array An array containing the keys of newly added entries
+	 * @var array $added An array containing the keys of newly added entries
 	 */
 	protected $added = array();
 
 	/**
 	 * holds all the data entries, not only the current/deleted/changed.
-	 * @var array An array containing all entries
+	 * @var array $all An array containing all entries
 	 */
 	protected $all = array();
 
 	/**
 	 * holds an array with keys to the $all property array
 	 * used to mark data entries as changed.
-	 * @var array An array containing the keys of changed entries
+	 * @var array $changed An array containing the keys of changed entries
 	 */
 	protected $changed = array();
 
 	/**
 	 * holds an array with keys to the $all property array
 	 * used to mark data entries as removed.
-	 * @var array An array containing the keys of removed entries
+	 * @var array $removed An array containing the keys of removed entries
 	 */
 	protected $removed = array();
 

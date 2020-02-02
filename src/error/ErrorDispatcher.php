@@ -17,17 +17,17 @@ namespace holonet\common\error;
  */
 class ErrorDispatcher {
 	/**
-	 * @var callable[]
+	 * @var callable[] $errorHandlers
 	 */
 	private $errorHandlers = array();
 
 	/**
-	 * @var callable[]
+	 * @var callable[] $exceptionHandlers
 	 */
 	private $exceptionHandlers = array();
 
 	/**
-	 * @var callable[]
+	 * @var callable[] $shutdownHandlers
 	 */
 	private $shutdownHandlers = array();
 

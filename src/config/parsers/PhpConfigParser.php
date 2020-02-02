@@ -18,8 +18,7 @@ use holonet\common\config\exception\FileAccessException;
  */
 class PhpConfigParser extends AbstractParser {
 	/**
-	 * @throws FileAccessException
-	 * @return array with parsed config data
+	 * {@inheritdoc}
 	 */
 	protected function readFile(string $filename): array {
 		/**

@@ -24,7 +24,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate {
 	/**
 	 * holds all the data entries.
 	 *
-	 * @var array An array containing all data entries
+	 * @var array $data An array containing all data entries
 	 */
 	protected $data = array();
 

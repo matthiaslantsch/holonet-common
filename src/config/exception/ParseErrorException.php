@@ -18,6 +18,7 @@ class ParseErrorException extends ConfigReaderException {
 	/**
 	 * ParseErrorException constructor.
 	 * Overwritten so we can submit the constant error code.
+	 * @param string $message Error message string
 	 */
 	public function __construct(string $message) {
 		parent::__construct($message, static::PARSE_ERROR);

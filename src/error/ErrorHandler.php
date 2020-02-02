@@ -39,7 +39,7 @@ class ErrorHandler {
 	);
 
 	/**
-	 * @var LoggerInterface|null Logger to automatically log errors
+	 * @var LoggerInterface|null $logger Logger to automatically log errors
 	 */
 	private $logger;
 
@@ -53,7 +53,6 @@ class ErrorHandler {
 	/**
 	 * handles errors coming over the error_handler
 	 * maps php error levels to psr-3 error levels.
-	 *
 	 * @param int $errno The error number of the thrown error
 	 * @param string $msg The error message
 	 * @param string $file The file the error was caused in
@@ -86,7 +85,6 @@ class ErrorHandler {
 	/**
 	 * handler method called by the spl when an exception is thrown that isn't caught
 	 * if an exception gets here, it's a server side error so we exit execution after.
-	 *
 	 * @param Throwable $exception Uncaught exception
 	 */
 	public function handleException(Throwable $exception): void {

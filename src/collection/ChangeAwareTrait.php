@@ -19,7 +19,7 @@ namespace holonet\common\collection;
 trait ChangeAwareTrait {
 	/**
 	 * holds a reference to the ChangeAwareCollection that is keeping track of this object.
-	 * @var ChangeAwareCollection|null Reference to a ChangeAwareCollection object
+	 * @var ChangeAwareCollection|null $partOfCollection Reference to a ChangeAwareCollection object
 	 */
 	private $partOfCollection;
 

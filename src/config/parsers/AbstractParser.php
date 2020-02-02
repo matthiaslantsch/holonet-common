@@ -21,7 +21,9 @@ abstract class AbstractParser {
 	/**
 	 * Read a path into an array.
 	 * Can be either a file or a directory.
+	 * @param string $filename The filename to be parsed
 	 * @throws ConfigReaderException
+	 * @throws FileAccessException
 	 * @return array with parsed config data
 	 */
 	public function read(string $filename): array {
@@ -34,6 +36,7 @@ abstract class AbstractParser {
 
 	/**
 	 * force the child class to implement a method to actually parse a file.
+	 * @param string $filename The filename to be parsed
 	 * @throws ConfigReaderException
 	 * @return array with parsed config data
 	 */

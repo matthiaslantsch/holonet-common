@@ -83,7 +83,7 @@ class ConfigReader {
 	private function readDir(string $filename, string $type = null): void {
 		if ($dh = opendir($filename)) {
 			while (($file = readdir($dh)) !== false) {
-				if ($file != "." && $file != "..") {
+				if ($file !== '.' && $file !== '..') {
 					$this->readFile("{$filename}{$file}", $type);
 				}
 			}

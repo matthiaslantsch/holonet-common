@@ -12,6 +12,7 @@
 namespace holonet\common\config;
 
 use holonet\common\collection\Registry;
+use holonet\common\collection\ConfigRegistry;
 use holonet\common\config\parsers\IniConfigParser;
 use holonet\common\config\parsers\PhpConfigParser;
 use holonet\common\config\parsers\JsonConfigParser;
@@ -44,7 +45,7 @@ class ConfigReader {
 		if ($registry !== null) {
 			$this->registry = $registry;
 		} else {
-			$this->registry = new Registry();
+			$this->registry = new ConfigRegistry();
 		}
 	}
 

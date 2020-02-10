@@ -26,8 +26,12 @@ class ConfigRegistry extends Registry {
 			foreach ($matches as $placeholderPair) {
 				//check if it is a $_ENV placeholder
 				if (mb_strpos($placeholderPair[0], '%env(') === 0) {
-					//if the placeholder is an offset in the $_ENV, replace it, otherwise use NULL
-					$position = str_replace($placeholderPair[0], $_ENV[$placeholderPair[1]] ?? 'NULL', $position);
+					//if the placeholder is an offset in the $_ENV, replace it, otherwise return null
+					if(isset($_ENV[$placeholderPair[1]])) {
+						$position = str_replace($placeholderPair[0], $_ENV[$placeholderPair[1]], $position);
+					} else {
+						return null;
+					}
 				} else {
 					//if the placeholder is a value in the registry, replace it, otherwise leave it with the % signs
 					$position = str_replace($placeholderPair[0], $this->get($placeholderPair[1], $placeholderPair[0]), $position);

@@ -69,7 +69,7 @@ class Container implements ContainerInterface {
 	 * If the given value is a string a class name is assumed and a new object will be created and automatically get injected.
 	 * @param string $id The key to save the dependency under
 	 * @param object|string $value The dependency to save
-	 * @param array ...$constructorArgs Arguments for the class instantiation
+	 * @param mixed ...$constructorArgs Arguments for the class instantiation
 	 */
 	public function set(string $id, $value, ...$constructorArgs): void {
 		if (is_string($value) && class_exists($value)) {

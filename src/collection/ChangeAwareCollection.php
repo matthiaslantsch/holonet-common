@@ -90,7 +90,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 
 		if ($key === null) {
 			$this->all[] = $val;
-			$key = array_search($val, $this->all);
+			$key = array_search($val, $this->all, true);
 		} else {
 			$this->all[$key] = $val;
 		}

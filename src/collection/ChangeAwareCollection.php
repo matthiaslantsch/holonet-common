@@ -108,7 +108,9 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	 * @param bool $new Flag marking these entries as not new (not to be saved into $this->added)
 	 */
 	public function addAll(array $values, bool $new = true): void {
-		array_walk($values, array($this, 'add'), $new);
+		foreach ($values as $val) {
+			$this->add($val, null, $new);
+		}
 	}
 
 	/**

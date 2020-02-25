@@ -82,7 +82,7 @@ class FilesystemUtils {
 	 * @param string $src Source of files being moved
 	 * @param string $dest Destination of files being moved
 	 */
-	public function rmove(string $src, string $dest): void {
+	public static function rmove(string $src, string $dest): void {
 		// If source is not a directory just simply move it
 		if (!is_dir($src)) {
 			rename($src, $dest);

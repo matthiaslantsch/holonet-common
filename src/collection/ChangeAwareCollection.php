@@ -192,7 +192,10 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 			return array_intersect_key($this->all, array_flip($this->removed));
 		}
 		if ($what === 'changed') {
-			return array_intersect_key($this->all, array_flip($this->changed));
+			return array_intersect_key($this->all, array_merge(
+				array_flip($this->changed), //the changed values
+				array_flip($this->added) //the new values
+			));
 		}
 		if ($what === 'unchanged') {
 			return array_diff_key(

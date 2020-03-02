@@ -75,12 +75,18 @@ class Container implements ContainerInterface {
 		if (is_string($value) && class_exists($value)) {
 			try {
 				$value = new $value(...$constructorArgs);
+				$this->inject($value);
+				if(method_exists($value, 'init')) {
+					$value->init();
+				}
 			} catch (TypeError $e) {
 				throw new DependencyInjectionException(
 					"Cannot create dependency '{$id}' on Dependency Container: '{$e->getMessage()}'",
 					$e->getCode(), $e
 				);
 			}
+		} else {
+			$this->inject($value);
 		}
 
 		if (!is_object($value)) {
@@ -89,7 +95,6 @@ class Container implements ContainerInterface {
 			);
 		}
 
-		$this->inject($value);
 		$this->dependencies[$id] = $value;
 	}
 }

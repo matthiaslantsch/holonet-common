@@ -86,6 +86,7 @@ class FilesystemUtils {
 		// If source is not a directory just simply move it
 		if (!is_dir($src)) {
 			rename($src, $dest);
+
 			return;
 		}
 

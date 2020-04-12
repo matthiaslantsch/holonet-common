@@ -1,6 +1,7 @@
 {
 	"name": "holonet/common",
 	"description": "commonly used code in hn projects",
+	"license": "WTFPL",
 	"autoload": {
 		"psr-4" : {
 			"holonet\\common\\" : "src/"

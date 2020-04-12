@@ -78,7 +78,7 @@ class Container implements ContainerInterface {
 			} catch (TypeError $e) {
 				throw new DependencyInjectionException(
 					"Cannot create dependency '{$id}' on Dependency Container: '{$e->getMessage()}'",
-					$e->getCode(), $e
+					(int)$e->getCode(), $e
 				);
 			}
 		}

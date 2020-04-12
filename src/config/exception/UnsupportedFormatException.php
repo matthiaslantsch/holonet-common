@@ -18,6 +18,7 @@ class UnsupportedFormatException extends ConfigReaderException {
 	/**
 	 * UnsupportedFormatException constructor.
 	 * Overwritten so we can submit the constant error code.
+	 * @param string $message String error message
 	 */
 	public function __construct(string $message) {
 		parent::__construct($message, static::UNSUPPORTED_FORMAT);

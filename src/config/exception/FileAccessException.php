@@ -18,6 +18,7 @@ class FileAccessException extends ConfigReaderException {
 	/**
 	 * FileNotFoundException constructor.
 	 * Overwritten so we can submit the constant error code.
+	 * @param string $message The error message
 	 */
 	public function __construct(string $message) {
 		parent::__construct($message, static::FILE_ACCESS);

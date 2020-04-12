@@ -24,19 +24,45 @@ class Container implements ContainerInterface {
 	public const DI_PREFIX = 'di_';
 
 	/**
-	 * @var array A key value storage with dependency objects
+	 * @var array $dependencies A key value storage with dependency objects
 	 */
 	private $dependencies = array();
 
 	/**
 	 * {@inheritdoc}
+	 * @param array $getFor Array used keep track of injections (to prevent recursive dependencies)
 	 */
-	public function get($id) {
+	public function get($id, array $getFor = array()) {
 		if (!$this->has($id)) {
 			throw new DependencyNotFoundException("Dependency '{$id}' does not exist on Dependency Container");
 		}
 
-		return $this->dependencies[$id];
+		if (in_array($id, $getFor)) {
+			throw new DependencyInjectionException('Recursive dependency definition detected: '.implode(' => ', $getFor));
+		}
+
+		$value = $this->dependencies[$id];
+		if (is_object($value)) {
+			return $value;
+		}
+
+		try {
+			list($class, $args) = $value;
+			$value = new $class(...$args);
+			$getFor[] = $id;
+			$this->inject($value, true, $getFor);
+			if (method_exists($value, 'init')) {
+				$value->init();
+			}
+			$this->dependencies[$id] = $value;
+		} catch (TypeError $e) {
+			throw new DependencyInjectionException(
+				"Cannot initialise dependency '{$id}' on Dependency Container: '{$e->getMessage()}'",
+				(int)($e->getCode()), $e
+			);
+		}
+
+		return $value;
 	}
 
 	/**
@@ -50,15 +76,16 @@ class Container implements ContainerInterface {
 	 * Method used to inject dependencies into an object, here called "the user of the dependencies".
 	 * @param object $dependencyUser The object to be injected
 	 * @param bool $forceInjection Whether to throw an exception if a dependency cannot be found
+	 * @param array $injectFor Array used keep track of injections (to prevent recursive dependencies)
 	 */
-	public function inject(object $dependencyUser, bool $forceInjection = true): void {
+	public function inject(object $dependencyUser, bool $forceInjection = true, array $injectFor = array()): void {
 		foreach ($dependencyUser as $propertyName => $propertyValue) {
 			if (mb_strpos($propertyName, static::DI_PREFIX) === 0) {
 				$depKey = str_replace(static::DI_PREFIX, '', $propertyName);
 				if (!$this->has($depKey) && $forceInjection) {
 					throw new DependencyNotFoundException("Dependency '{$depKey}' does not exist on Dependency Container");
 				}
-				$dependencyUser->{$propertyName} = $this->get($depKey);
+				$dependencyUser->{$propertyName} = $this->get($depKey, $injectFor);
 			}
 		}
 	}
@@ -66,30 +93,25 @@ class Container implements ContainerInterface {
 	/**
 	 * Method used to set a dependency in this class.
 	 * If the given value is an object, it will get injected and saved under the key
-	 * If the given value is a string a class name is assumed and a new object will be created and automatically get injected.
+	 * If the given value is a string a class name is assumed and the class / argument combination will be saved for later instantiation.
 	 * @param string $id The key to save the dependency under
 	 * @param object|string $value The dependency to save
-	 * @param array ...$constructorArgs Arguments for the class instantiation
+	 * @param mixed ...$constructorArgs Arguments for the class instantiation
 	 */
 	public function set(string $id, $value, ...$constructorArgs): void {
 		if (is_string($value) && class_exists($value)) {
-			try {
-				$value = new $value(...$constructorArgs);
-			} catch (TypeError $e) {
+			$value = array($value, $constructorArgs);
+		} else {
+			if (!is_object($value)) {
 				throw new DependencyInjectionException(
 					"Cannot create dependency '{$id}' on Dependency Container: '{$e->getMessage()}'",
 					(int)$e->getCode(), $e
 				);
 			}
+
+			$this->inject($value);
 		}
 
-		if (!is_object($value)) {
-			throw new DependencyInjectionException(
-				"Cannot set dependency '{$id}' on Dependency Container, value must be object or class string"
-			);
-		}
-
-		$this->inject($value);
 		$this->dependencies[$id] = $value;
 	}
 }

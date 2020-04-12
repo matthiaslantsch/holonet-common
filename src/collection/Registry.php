@@ -12,6 +12,7 @@
 namespace holonet\common\collection;
 
 use ArrayAccess;
+use RuntimeException;
 
 /**
  * Registry is a key value storage collection class that allows for multilevel keys and placeholders
@@ -20,9 +21,21 @@ use ArrayAccess;
  */
 class Registry implements ArrayAccess {
 	/**
-	 * @var array Multilevel array with key=value pairs
+	 * @var array $data Multilevel array with key=value pairs
 	 */
 	private $data = array();
+
+	/**
+	 * @var string $separator Multilevel separator string
+	 */
+	private $separator;
+
+	/**
+	 * @param string $separator Allow the user to override the default level separator
+	 */
+	public function __construct(string $separator = '.') {
+		$this->separator = $separator;
+	}
 
 	/**
 	 * Clear all values from the registry.
@@ -33,7 +46,8 @@ class Registry implements ArrayAccess {
 
 	/**
 	 * Return the value for a certain key or a default.
-	 * @param mixed|null $default
+	 * @param string $key The to get the value for
+	 * @param mixed|null $default Default to return of the key cannot be found
 	 * @return mixed value
 	 */
 	public function get(string $key, $default = null) {
@@ -41,7 +55,8 @@ class Registry implements ArrayAccess {
 	}
 
 	/**
-	 * If $replace is given and false, no place holders will be replaced.
+	 * @param bool $replace if given and false, no place holders will be replaced
+	 * @return array with the data
 	 */
 	public function getAll(bool $replace = true): array {
 		return $replace ? $this->replacePlaceholder($this->data) : $this->data;
@@ -49,6 +64,7 @@ class Registry implements ArrayAccess {
 
 	/**
 	 * Check if the registry has a certain key.
+	 * @param string $key The string key offset to check for
 	 */
 	public function has(string $key): bool {
 		return $this->offsetExists($key);
@@ -61,7 +77,7 @@ class Registry implements ArrayAccess {
 	 * @return bool true on success or false on failure
 	 */
 	public function offsetExists($offset): bool {
-		$parts = explode('.', $offset);
+		$parts = explode($this->separator, $offset);
 		$position = $this->data;
 		foreach ($parts as $sublevel) {
 			if (!isset($position[$sublevel])) {
@@ -80,7 +96,7 @@ class Registry implements ArrayAccess {
 	 * @return mixed|null can return all value types or null if not found
 	 */
 	public function offsetGet($offset) {
-		$parts = explode('.', $offset);
+		$parts = explode($this->separator, $offset);
 		$position = $this->data;
 
 		foreach ($parts as $sublevel) {
@@ -97,10 +113,9 @@ class Registry implements ArrayAccess {
 	 * Offset to set.
 	 * @see http://php.net/manual/en/arrayaccess.offsetset.php
 	 * @param string $offset
-	 * @param $value
 	 */
 	public function offsetSet($offset, $value): void {
-		$parts = explode('.', $offset);
+		$parts = explode($this->separator, $offset);
 		$position = &$this->data;
 		foreach ($parts as $key => $sublevel) {
 			if ($key === array_key_last($parts)) {
@@ -120,7 +135,7 @@ class Registry implements ArrayAccess {
 	 * @param string $offset
 	 */
 	public function offsetUnset($offset): void {
-		$parts = explode('.', $offset);
+		$parts = explode($this->separator, $offset);
 		$position = &$this->data;
 		foreach ($parts as $key => $sublevel) {
 			if (!isset($position[$sublevel])) {
@@ -137,6 +152,7 @@ class Registry implements ArrayAccess {
 
 	/**
 	 * Set the value for a certain key.
+	 * @param string $key The key to set the value for
 	 * @param mixed $value The value to be set
 	 */
 	public function set(string $key, $value): void {
@@ -144,11 +160,16 @@ class Registry implements ArrayAccess {
 	}
 
 	public function setAll(array $data): void {
-		$this->data = array_replace_recursive($this->data, $data);
+		$replace = array_replace_recursive($this->data, $data);
+		if ($replace === null) {
+			throw new RuntimeException('Failed to array_replace_recursive() data array in Registry');
+		}
+		$this->data = $replace;
 	}
 
 	/**
 	 * Clear the value for a certain key.
+	 * @param string $key The string key to unset
 	 */
 	public function unset(string $key): void {
 		$this->offsetUnset($key);
@@ -160,7 +181,7 @@ class Registry implements ArrayAccess {
 	 * @param mixed $position The value to be searched for placeholders
 	 * @return mixed the updated value
 	 */
-	private function replacePlaceholder($position) {
+	protected function replacePlaceholder($position) {
 		if (is_string($position) && mb_strpos($position, '%') !== false) {
 			$matches = array();
 			preg_match_all('/%([^%]+)%/', $position, $matches, PREG_SET_ORDER);

@@ -12,6 +12,7 @@
 namespace holonet\common\config;
 
 use holonet\common\collection\Registry;
+use holonet\common\collection\ConfigRegistry;
 use holonet\common\config\parsers\IniConfigParser;
 use holonet\common\config\parsers\PhpConfigParser;
 use holonet\common\config\parsers\JsonConfigParser;
@@ -23,7 +24,7 @@ use holonet\common\config\exception\ConfigReaderException;
  */
 class ConfigReader {
 	/**
-	 * @var array An array with parser classes / active cached parsers
+	 * @var array $parsers An array with parser classes / active cached parsers
 	 */
 	public $parsers = array(
 		'ini' => IniConfigParser::class,
@@ -32,18 +33,19 @@ class ConfigReader {
 	);
 
 	/**
-	 * @var Registry Collection keeping the data while parsing
+	 * @var Registry $registry Collection keeping the data while parsing
 	 */
 	public $registry;
 
 	/**
 	 * Initialises the internal Registry collection for the data or uses the given one.
+	 * @param Registry|null $registry Registry collection to write to
 	 */
 	public function __construct(Registry $registry = null) {
 		if ($registry !== null) {
 			$this->registry = $registry;
 		} else {
-			$this->registry = new Registry();
+			$this->registry = new ConfigRegistry();
 		}
 	}
 
@@ -62,10 +64,16 @@ class ConfigReader {
 			foreach ($input as $file) {
 				$this->read($file, $type);
 			}
-		} elseif (is_dir($input)) {
-			$this->readDir($input, $type);
 		} else {
-			$this->readFile($input, $type);
+			if (!file_exists($input)) {
+				throw new ConfigReaderException("File path '{$input}' does not exist");
+			}
+
+			if (is_dir($input)) {
+				$this->readDir($input, $type);
+			} else {
+				$this->readFile($input, $type);
+			}
 		}
 	}
 
@@ -75,10 +83,12 @@ class ConfigReader {
 	 */
 	private function readDir(string $filename, string $type = null): void {
 		if ($dh = opendir($filename)) {
-			$ret = array();
 			while (($file = readdir($dh)) !== false) {
-				$this->readFile($filename, $type);
+				if ($file !== '.' && $file !== '..') {
+					$this->readFile("{$filename}{$file}", $type);
+				}
 			}
+			closedir($dh);
 		} else {
 			throw new FileAccessException("Could not opendir directory '{$filename}");
 		}

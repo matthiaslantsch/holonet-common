@@ -16,27 +16,27 @@ namespace holonet\common\error;
  */
 class Error {
 	/**
-	 * @var string the path to the file where the error was triggered
+	 * @var string $errorfile the path to the file where the error was triggered
 	 */
 	public $errorfile;
 
 	/**
-	 * @var string The psr-3 error level
+	 * @var string $errorlevel The psr-3 error level
 	 */
 	public $errorlevel;
 
 	/**
-	 * @var int|null error line number inside the file where the error was triggered
+	 * @var int|null $errorline error line number inside the file where the error was triggered
 	 */
 	public $errorline;
 
 	/**
-	 * @var string the error message describing the error
+	 * @var string $errormsg the error message describing the error
 	 */
 	public $errormsg;
 
 	/**
-	 * @var int|string the error code used to identify the error
+	 * @var int|string $errorno the error code used to identify the error
 	 */
 	public $errorno;
 

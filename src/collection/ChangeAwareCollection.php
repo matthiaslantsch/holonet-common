@@ -25,27 +25,27 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	/**
 	 * holds an array with keys to the $all property array
 	 * used to mark data entries as newly added.
-	 * @var array An array containing the keys of newly added entries
+	 * @var array $added An array containing the keys of newly added entries
 	 */
 	protected $added = array();
 
 	/**
 	 * holds all the data entries, not only the current/deleted/changed.
-	 * @var array An array containing all entries
+	 * @var array $all An array containing all entries
 	 */
 	protected $all = array();
 
 	/**
 	 * holds an array with keys to the $all property array
 	 * used to mark data entries as changed.
-	 * @var array An array containing the keys of changed entries
+	 * @var array $changed An array containing the keys of changed entries
 	 */
 	protected $changed = array();
 
 	/**
 	 * holds an array with keys to the $all property array
 	 * used to mark data entries as removed.
-	 * @var array An array containing the keys of removed entries
+	 * @var array $removed An array containing the keys of removed entries
 	 */
 	protected $removed = array();
 
@@ -90,7 +90,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 
 		if ($key === null) {
 			$this->all[] = $val;
-			$key = array_search($val, $this->all);
+			$key = array_search($val, $this->all, true);
 		} else {
 			$this->all[$key] = $val;
 		}
@@ -108,7 +108,9 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	 * @param bool $new Flag marking these entries as not new (not to be saved into $this->added)
 	 */
 	public function addAll(array $values, bool $new = true): void {
-		array_walk($values, array($this, 'add'), $new);
+		foreach ($values as $val) {
+			$this->add($val, null, $new);
+		}
 	}
 
 	/**
@@ -190,7 +192,15 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 			return array_intersect_key($this->all, array_flip($this->removed));
 		}
 		if ($what === 'changed') {
-			return array_intersect_key($this->all, array_flip($this->changed));
+			return array_intersect_key($this->all, array_merge(
+				array_flip($this->changed), //the changed values
+				array_flip($this->added) //the new values
+			));
+		}
+		if ($what === 'updated') {
+			return array_intersect_key($this->all, array_merge(
+				array_flip($this->changed), //the changed values
+			));
 		}
 		if ($what === 'unchanged') {
 			return array_diff_key(

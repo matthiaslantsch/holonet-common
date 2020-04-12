@@ -12,15 +12,13 @@
 namespace holonet\common\config\parsers;
 
 use holonet\common\config\exception\FileAccessException;
-use holonet\common\config\exception\ConfigReaderException;
 
 /**
  * Parse ini config files.
  */
 class IniConfigParser extends AbstractParser {
 	/**
-	 * @throws ConfigReaderException
-	 * @return array with parsed config data
+	 * {@inheritdoc}
 	 */
 	protected function readFile(string $filename): array {
 		$contents = @parse_ini_file($filename, true, INI_SCANNER_TYPED);

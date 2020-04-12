@@ -17,9 +17,7 @@ namespace holonet\common;
  */
 abstract class BitwiseFlag {
 	/**
-	 * Property holding the actual flags values in an integer.
-	 *
-	 * @var int The integer mask that holds the flags enclosed
+	 * @var int $flags The integer mask that holds the flags enclosed
 	 */
 	public $flags;
 

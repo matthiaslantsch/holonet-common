@@ -104,8 +104,7 @@ class Container implements ContainerInterface {
 		} else {
 			if (!is_object($value)) {
 				throw new DependencyInjectionException(
-					"Cannot create dependency '{$id}' on Dependency Container: '{$e->getMessage()}'",
-					(int)$e->getCode(), $e
+					"Cannot create dependency '{$id}' on Dependency Container"
 				);
 			}
 

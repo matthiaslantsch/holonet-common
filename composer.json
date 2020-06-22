@@ -2,17 +2,6 @@
 	"name": "holonet/common",
 	"description": "commonly used code in hn projects",
 	"license": "WTFPL",
-	"autoload": {
-		"psr-4" : {
-			"holonet\\common\\" : "src/"
-		},
-		"files": ["src/functions.php"]
-	},
-	"autoload-dev": {
-		"psr-4": {
-			"holonet\\common\\tests\\": "tests/"
-		}
-	},
 	"authors": [
 		{
 			"name": "matthias.lantsch",
@@ -21,23 +10,39 @@
 	],
 	"require": {
 		"php": ">=7.3",
-		"psr/container": "1.0.0",
-		"monolog/monolog": "^2.0"
-	},
-	"require-dev": {
-		"friendsofphp/php-cs-fixer": "^2.11",
-		"vimeo/psalm": "^3.5",
-		"phpunit/phpunit": "^8.4.1"
+		"monolog/monolog": "^2.0",
+		"psr/container": "1.0.0"
 	},
 	"provide": {
 		"psr/container-implementation": "1.0.0"
 	},
+	"require-dev": {
+		"ergebnis/composer-normalize": "^2.5",
+		"friendsofphp/php-cs-fixer": "^2.11",
+		"phpunit/phpunit": "^8.4.1",
+		"vimeo/psalm": "^3.5"
+	},
+	"autoload": {
+		"psr-4": {
+			"holonet\\common\\": "src/"
+		},
+		"files": [
+			"src/functions.php"
+		]
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"holonet\\common\\tests\\": "tests/"
+		}
+	},
 	"scripts": {
 		"fix": [
+			"@composer normalize --diff",
 			"@php -d memory_limit=-1 vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --verbose --ansi"
 		],
 		"test": [
 			"@composer validate",
+			"@composer normalize --dry-run --diff",
 			"@php -d memory_limit=-1 vendor/phpunit/phpunit/phpunit",
 			"@php -d memory_limit=-1 vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --verbose --dry-run --ansi",
 			"@php -d memory_limit=-1 vendor/vimeo/psalm/psalm"

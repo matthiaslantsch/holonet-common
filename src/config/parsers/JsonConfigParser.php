@@ -3,8 +3,6 @@
  * This file is part of the hdev common library package
  * (c) Matthias Lantsch.
  *
- * class file for the JsonConfigParser class
- *
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -25,6 +23,10 @@ class JsonConfigParser extends AbstractParser {
 		$contents = @file_get_contents($filename);
 		if ($contents === false) {
 			throw new FileAccessException("Could not file_get_contents() '{$filename}'");
+		}
+
+		if (!function_exists('json_decode')) {
+			throw new ParseErrorException("Could not read json config file '{$filename}' without json extension enabled");
 		}
 
 		$data = json_decode($contents, true);

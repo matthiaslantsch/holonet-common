@@ -3,8 +3,6 @@
  * This file is part of the hdev common library package
  * (c) Matthias Lantsch.
  *
- * class file for the ChangeAwareCollection class
- *
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -23,37 +21,25 @@ use holonet\common\ComparableInterface;
  */
 class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countable, IteratorAggregate {
 	/**
-	 * holds an array with keys to the $all property array
-	 * used to mark data entries as newly added.
-	 * @var array $added An array containing the keys of newly added entries
+	 * Array with $all keys of newly added entries.
 	 */
-	protected $added = array();
+	protected array $added = array();
 
 	/**
-	 * holds all the data entries, not only the current/deleted/changed.
-	 * @var array $all An array containing all entries
+	 * @var array<int|string, mixed> $all An array containing all entries
 	 */
-	protected $all = array();
+	protected array $all = array();
 
 	/**
-	 * holds an array with keys to the $all property array
-	 * used to mark data entries as changed.
-	 * @var array $changed An array containing the keys of changed entries
+	 * Array containing the $all keys of changed entries.
 	 */
-	protected $changed = array();
+	protected array $changed = array();
 
 	/**
-	 * holds an array with keys to the $all property array
-	 * used to mark data entries as removed.
-	 * @var array $removed An array containing the keys of removed entries
+	 * Array containing the $all keys of removed entries.
 	 */
-	protected $removed = array();
+	protected array $removed = array();
 
-	/**
-	 * constructor for the collection, allowing the user to give a set of
-	 * initial entries.
-	 * @param array $initial Array with initial data entries
-	 */
 	public function __construct(array $initial = array()) {
 		$this->addAll($initial, false);
 	}
@@ -70,16 +56,16 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 
 			return $this->all[$key];
 		}
+
+		return null;
 	}
 
 	/**
-	 * adder function for an entry to the data array
-	 * allows for specifying the key yourself as well as flagging the entry as not new.
 	 * @param mixed $val The data entry to be saved
-	 * @param int|string|null $key The key to save the entry under
+	 * @param string|null $key The key to save the entry under
 	 * @param bool $new Flag marking this entry as not new (not to be saved into $this->added)
 	 */
-	public function add($val, $key = null, bool $new = true): void {
+	public function add($val, ?string $key = null, bool $new = true): void {
 		if (is_object($val) && is_subclass_of($val, ChangeAwareInterface::class)) {
 			$val->belongsTo($this);
 			//not every change aware object can know about a unique key
@@ -102,8 +88,6 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	}
 
 	/**
-	 * adder function for multiple entries to the data array
-	 * allows for flagging the entries as not new.
 	 * @param array $values The data entries to be saved
 	 * @param bool $new Flag marking these entries as not new (not to be saved into $this->added)
 	 */
@@ -123,10 +107,6 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 		$this->added = array();
 	}
 
-	/**
-	 * function used to check if the collection has any changes recorded.
-	 * @return bool true on changed or not
-	 */
 	public function changed(): bool {
 		return !empty($this->added) || !empty($this->removed) || !empty($this->changed);
 	}
@@ -145,40 +125,36 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	}
 
 	/**
-	 * Count the attributes via a simple "count" call.
-	 * @return int number of items in the internal data array
+	 * Only counts the "current" entries
+	 * {@inheritdoc}
 	 */
 	public function count(): int {
-		return count($this->all);
+		return count($this->getAll('current'));
 	}
 
-	/**
-	 * Small method returning true if this collection contains no data.
-	 * @return bool true or false if the internal array is empty or not
-	 */
 	public function empty(): bool {
 		return empty($this->all);
 	}
 
 	/**
-	 * getter function to return a value by its key
-	 * does not return "removed" items.
-	 * @param int|string $key The key for the value
+	 * Does not return "removed" items.
+	 * @param string $key The key for the value
 	 * @return mixed the value from the $this->all array or null if not found
 	 */
-	public function get($key) {
+	public function get(string $key) {
 		if (isset($this->all[$key]) && !in_array($key, $this->removed)) {
 			return $this->all[$key];
 		}
+
+		return null;
 	}
 
 	/**
-	 * getter function to return all the values that match a specification
-	 * does not return "removed" items, except the "removed" key is given.
+	 * Does not return "removed" items, except the "removed" key is given.
 	 * @param string $what Determines what set of data should be returned
 	 * @return array with all the values that match the specification
 	 */
-	public function getAll($what = 'current'): array {
+	public function getAll(string $what = 'current'): array {
 		if ($what === 'current') {
 			return array_diff_key(
 				$this->all, //all our values
@@ -217,19 +193,12 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	}
 
 	/**
-	 * Get the aggregate iterator.
-	 * @return ArrayIterator to iterate over our internal data
+	 * {@inheritdoc}
 	 */
 	public function getIterator(): ArrayIterator {
 		return new ArrayIterator($this->getAll());
 	}
 
-	/**
-	 * function that can be used to check if a given value exists
-	 * in the internal data array.
-	 * @param mixed $value The value to be checked for
-	 * @return bool true or false if the given value is contained or not
-	 */
 	public function has($value): bool {
 		//if the given value is comparable, we can use that to find it
 		if (is_object($value) && $value instanceof ComparableInterface) {
@@ -246,39 +215,34 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	}
 
 	/**
-	 * function used to check if an entry exists via isset()
-	 * does not return true for "removed" entries.
-	 * @param mixed $offset The key to check if it exists
-	 * @return bool true or false on exists or not
+	 * Does not return true for "removed" entries.
+	 * {@inheritdoc}
 	 */
 	public function offsetExists($offset): bool {
 		return isset($this->all[$offset]) && !in_array($offset, $this->removed);
 	}
 
 	/**
-	 * function used to get an entry via the array syntax
-	 * does only return values that aren't "removed".
-	 * @param mixed $offset The key to get the value for
-	 * @return mixed value from our internal array
+	 * Does only return values that aren't "removed".
+	 * {@inheritdoc}
+	 * @see self::get()
 	 */
 	public function offsetGet($offset) {
 		return $this->get($offset);
 	}
 
 	/**
-	 * function used to set an entry via the array syntax
-	 * marks the entry as either added or not.
-	 * @param mixed $offset The key to save the value under
-	 * @param mixed $value The value to be saved
+	 * {@inheritdoc}
+	 * @see self::set()
 	 */
 	public function offsetSet($offset, $value): void {
 		$this->set($offset, $value);
 	}
 
 	/**
-	 * function used to unset an entry via unset()
-	 * does only add the entry to "removed".
-	 * @param mixed $offset The key to unset
+	 * Does only add the entry to "removed".
+	 * {@inheritdoc}
+	 * @see self::remove()
 	 */
 	public function offsetUnset($offset): void {
 		$this->remove($offset);
@@ -313,10 +277,10 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	/**
 	 * setter function to set a value by its key
 	 * either calls the add function or set the value.
-	 * @param int|string|null $key The key for the value
+	 * @param string|null $key The key for the value
 	 * @param mixed $value The value that is to be set
 	 */
-	public function set($key, $value): void {
+	public function set(?string $key, $value): void {
 		if ($key === null || !array_key_exists($key, $this->all)) {
 			$this->add($value, $key);
 		} else {
@@ -337,7 +301,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	 * @param ChangeAwareCollection $other The other object to compare this one to
 	 * @return bool if this object should be considered the same attribute set as the other one
 	 */
-	private function compareToCollection(self $other) {
+	private function compareToCollection(self $other): bool {
 		return $this->all === $other->all && $this->changed === $other->changed
 			&& $this->added === $other->added && $this->removed === $other->removed;
 	}
@@ -363,8 +327,8 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 			}
 		} elseif (($key = array_search($entry, $this->all)) !== false) {
 			return $key;
-		} else {
-			return null;
 		}
+
+		return null;
 	}
 }

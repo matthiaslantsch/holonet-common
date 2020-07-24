@@ -3,8 +3,6 @@
  * This file is part of the holonet common library
  * (c) Matthias Lantsch.
  *
- * Class file for the Dependency Injection DependencyNotFoundException class
- *
  * @license http://opensource.org/licenses/gpl-license.php  GNU Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */

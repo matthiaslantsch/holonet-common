@@ -3,8 +3,6 @@
  * This file is part of the hdev common library package
  * (c) Matthias Lantsch.
  *
- * class file for the ConfigReader class
- *
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -23,24 +21,14 @@ use holonet\common\config\exception\ConfigReaderException;
  * Center class to be used to parse.
  */
 class ConfigReader {
-	/**
-	 * @var array $parsers An array with parser classes / active cached parsers
-	 */
-	public $parsers = array(
+	public array $parsers = array(
 		'ini' => IniConfigParser::class,
 		'json' => JsonConfigParser::class,
 		'php' => PhpConfigParser::class
 	);
 
-	/**
-	 * @var Registry $registry Collection keeping the data while parsing
-	 */
-	public $registry;
+	public Registry $registry;
 
-	/**
-	 * Initialises the internal Registry collection for the data or uses the given one.
-	 * @param Registry|null $registry Registry collection to write to
-	 */
 	public function __construct(Registry $registry = null) {
 		if ($registry !== null) {
 			$this->registry = $registry;

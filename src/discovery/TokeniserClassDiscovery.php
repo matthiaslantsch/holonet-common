@@ -12,13 +12,10 @@ namespace holonet\common\discovery;
 use RuntimeException;
 
 /**
- * Class discovery utility class.
- * Uses the php token parser system to discover class and namespace.
+ * Uses the php token parser system to discover class and namespace by tokenising the source code of a file.
  */
 class TokeniserClassDiscovery extends ClassDiscovery {
 	/**
-	 * @psalm-suppress LessSpecificReturnStatement
-	 * @psalm-suppress MoreSpecificReturnType
 	 * {@inheritdoc}
 	 * @see https://stackoverflow.com/a/7153391 Courtesy of stackoverflow
 	 */

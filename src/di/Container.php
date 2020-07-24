@@ -3,8 +3,6 @@
  * This file is part of the holonet common library
  * (c) Matthias Lantsch.
  *
- * Class file for the Dependency Injection Container class
- *
  * @license http://opensource.org/licenses/gpl-license.php  GNU Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -24,52 +22,56 @@ class Container implements ContainerInterface {
 	public const DI_PREFIX = 'di_';
 
 	/**
-	 * @var array $dependencies A key value storage with dependency objects
+	 * @var array<string, object> $dependencies A key value storage with dependency objects
 	 */
-	private $dependencies = array();
+	private array $dependencies = array();
+
+	/**
+	 * @var array<string, array{class: class-string, args: array}> $lazyLoadedDeps Lazily loaded dependency objects
+	 */
+	private array $lazyLoadedDeps = array();
 
 	/**
 	 * {@inheritdoc}
-	 * @param array $getFor Array used keep track of injections (to prevent recursive dependencies)
+	 * @param string[] $getFor Array used keep track of injections (to prevent recursive dependencies)
 	 */
 	public function get($id, array $getFor = array()) {
-		if (!$this->has($id)) {
-			throw new DependencyNotFoundException("Dependency '{$id}' does not exist on Dependency Container");
-		}
-
 		if (in_array($id, $getFor)) {
 			throw new DependencyInjectionException('Recursive dependency definition detected: '.implode(' => ', $getFor));
 		}
 
-		$value = $this->dependencies[$id];
-		if (is_object($value)) {
-			return $value;
+		if (isset($this->dependencies[$id])) {
+			return $this->dependencies[$id];
 		}
+		if (isset($this->lazyLoadedDeps[$id])) {
+			try {
+				list('class' => $class, 'args' => $args) = $this->lazyLoadedDeps[$id];
+				/** @psalm-suppress MixedMethodCall */
+				$value = new $class(...$args);
+				$getFor[] = $id;
+				$this->inject($value, true, $getFor);
+				if (method_exists($value, 'init')) {
+					$value->init();
+				}
+				$this->dependencies[$id] = $value;
 
-		try {
-			list($class, $args) = $value;
-			$value = new $class(...$args);
-			$getFor[] = $id;
-			$this->inject($value, true, $getFor);
-			if (method_exists($value, 'init')) {
-				$value->init();
+				return $value;
+			} catch (TypeError $e) {
+				throw new DependencyInjectionException(
+					"Cannot initialise dependency '{$id}' on Dependency Container: '{$e->getMessage()}'",
+					(int)($e->getCode()), $e
+				);
 			}
-			$this->dependencies[$id] = $value;
-		} catch (TypeError $e) {
-			throw new DependencyInjectionException(
-				"Cannot initialise dependency '{$id}' on Dependency Container: '{$e->getMessage()}'",
-				(int)($e->getCode()), $e
-			);
+		} else {
+			throw new DependencyNotFoundException("Dependency '{$id}' does not exist on Dependency Container");
 		}
-
-		return $value;
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
 	public function has($id) {
-		return isset($this->dependencies[$id]);
+		return isset($this->dependencies[$id]) || isset($this->lazyLoadedDeps[$id]);
 	}
 
 	/**
@@ -79,9 +81,10 @@ class Container implements ContainerInterface {
 	 * @param array $injectFor Array used keep track of injections (to prevent recursive dependencies)
 	 */
 	public function inject(object $dependencyUser, bool $forceInjection = true, array $injectFor = array()): void {
-		foreach ($dependencyUser as $propertyName => $propertyValue) {
-			if (mb_strpos($propertyName, static::DI_PREFIX) === 0) {
-				$depKey = str_replace(static::DI_PREFIX, '', $propertyName);
+		foreach (array_keys(get_class_vars(get_class($dependencyUser))) as $propertyName) {
+			$propertyName = (string)$propertyName;
+			if (mb_strpos($propertyName, self::DI_PREFIX) === 0) {
+				$depKey = str_replace(self::DI_PREFIX, '', $propertyName);
 				if (!$this->has($depKey) && $forceInjection) {
 					throw new DependencyNotFoundException("Dependency '{$depKey}' does not exist on Dependency Container");
 				}
@@ -95,12 +98,12 @@ class Container implements ContainerInterface {
 	 * If the given value is an object, it will get injected and saved under the key
 	 * If the given value is a string a class name is assumed and the class / argument combination will be saved for later instantiation.
 	 * @param string $id The key to save the dependency under
-	 * @param object|string $value The dependency to save
+	 * @param mixed $value The dependency to save
 	 * @param mixed ...$constructorArgs Arguments for the class instantiation
 	 */
 	public function set(string $id, $value, ...$constructorArgs): void {
 		if (is_string($value) && class_exists($value)) {
-			$value = array($value, $constructorArgs);
+			$this->lazyLoadedDeps[$id] = array('class' => $value, 'args' => $constructorArgs);
 		} else {
 			if (!is_object($value)) {
 				throw new DependencyInjectionException(
@@ -109,8 +112,7 @@ class Container implements ContainerInterface {
 			}
 
 			$this->inject($value);
+			$this->dependencies[$id] = $value;
 		}
-
-		$this->dependencies[$id] = $value;
 	}
 }

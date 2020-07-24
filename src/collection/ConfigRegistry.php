@@ -3,8 +3,6 @@
  * This file is part of the hdev common library package
  * (c) Matthias Lantsch.
  *
- * class file for the ConfigRegistry class
- *
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -16,7 +14,7 @@ namespace holonet\common\collection;
  */
 class ConfigRegistry extends Registry {
 	/**
-	 * Extend base placeholder logic to replace $_ENV variables in config values
+	 * Extend base placeholder logic to replace env variables in config values
 	 * {@inheritdoc}
 	 */
 	protected function replacePlaceholder($position) {

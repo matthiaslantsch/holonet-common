@@ -3,8 +3,6 @@
  * This file is part of the hdev common library package
  * (c) Matthias Lantsch.
  *
- * class file for the ErrorDispatcher class
- *
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -19,17 +17,17 @@ class ErrorDispatcher {
 	/**
 	 * @var callable[] $errorHandlers
 	 */
-	private $errorHandlers = array();
+	private array $errorHandlers = array();
 
 	/**
 	 * @var callable[] $exceptionHandlers
 	 */
-	private $exceptionHandlers = array();
+	private array $exceptionHandlers = array();
 
 	/**
 	 * @var callable[] $shutdownHandlers
 	 */
-	private $shutdownHandlers = array();
+	private array $shutdownHandlers = array();
 
 	public function addErrorHandler(callable $handler): void {
 		$this->errorHandlers[] = $handler;

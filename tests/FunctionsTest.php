@@ -3,8 +3,6 @@
  * This file is part of the hdev common library package
  * (c) Matthias Lantsch.
  *
- * PHPUnit test class for the utility functions in the functions.php file
- *
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -61,7 +59,7 @@ class FunctionsTest extends TestCase {
 			$msg = $e->getMessage();
 		}
 
-		$expected = 'oh nos in file '.__FILE__.' on line 59';
+		$expected = 'oh nos in file '.__FILE__.' on line 57';
 		static::assertSame($expected, $msg);
 	}
 }

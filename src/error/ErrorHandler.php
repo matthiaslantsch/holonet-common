@@ -3,8 +3,6 @@
  * This file is part of the hdev common library package
  * (c) Matthias Lantsch.
  *
- * class file for the ErrorHandler base class
- *
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -20,6 +18,9 @@ use Psr\Log\LoggerInterface;
  * Automatically logs if a logger is given during initialisation.
  */
 class ErrorHandler {
+	/**
+	 * @psalm-var array<int, array{level: string, name: string}>
+	 */
 	public const ERROR_LEVEL_LOOKUP = array(
 		E_ERROR => array('level' => LogLevel::CRITICAL, 'name' => 'E_ERROR'),
 		E_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_WARNING'),
@@ -38,14 +39,8 @@ class ErrorHandler {
 		E_USER_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_USER_DEPRECATED'),
 	);
 
-	/**
-	 * @var LoggerInterface|null $logger Logger to automatically log errors
-	 */
-	private $logger;
+	private ?LoggerInterface $logger;
 
-	/**
-	 * @param LoggerInterface $logger Allows the user to submit a logger to autolog errors
-	 */
 	public function __construct(LoggerInterface $logger = null) {
 		$this->logger = $logger;
 	}
@@ -59,18 +54,18 @@ class ErrorHandler {
 	 * @param int $line The line the error was caused on
 	 * @return bool|null To advise the spl to continue error handling or not
 	 */
-	public function handleError($errno, $msg = '', $file = '', $line = null): ?bool {
+	public function handleError(int $errno, string $msg = '', string $file = '', int $line = null): ?bool {
 		if (!(error_reporting() & $errno)) {
 			// This error code is not included in error_reporting
 			return null;
 		}
 
-		$errorType = static::ERROR_LEVEL_LOOKUP[$errno] ?? static::ERROR_LEVEL_LOOKUP[E_ERROR];
+		list('type' => $type, 'name' => $name) = (self::ERROR_LEVEL_LOOKUP[$errno] ?? self::ERROR_LEVEL_LOOKUP[E_ERROR]);
 
 		if ($this->logger !== null) {
 			$this->logger->log(
-				$errorType['level'],
-				$errorType['name'].': '.$msg,
+				$type,
+				"{$name}: {$msg}",
 				array(
 					'code' => $errno,
 					'file' => $file,

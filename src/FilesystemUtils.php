@@ -3,8 +3,6 @@
  * This file is part of the holonet common library
  * (c) Matthias Lantsch.
  *
- * Class file for the FilesystemUtils class
- *
  * @license http://opensource.org/licenses/gpl-license.php  GNU Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -22,15 +20,14 @@ class FilesystemUtils {
 	 * @param string ...$parts variable number of path elements
 	 * @return string system independent absolute directory path with a trailing separator
 	 */
-	public static function dirpath(...$parts) {
+	public static function dirpath(...$parts): string {
 		return static::filepath(...$parts).DIRECTORY_SEPARATOR;
 	}
 
 	/**
 	 * check if a directory exist and create it if it doesn't.
-	 * @param string $directory The path to check/create
 	 */
-	public static function dirShouldExist($directory): void {
+	public static function dirShouldExist(string $directory): void {
 		if (!file_exists($directory) || !is_dir($directory)) {
 			mkdir($directory, 0755, true);
 		}
@@ -40,7 +37,7 @@ class FilesystemUtils {
 	 * @param string ...$parts variable number of path elements
 	 * @return string system independent absolute path using the given path parts
 	 */
-	public static function filepath(...$parts) {
+	public static function filepath(...$parts): string {
 		$ret = implode(DIRECTORY_SEPARATOR, $parts);
 		//prepend a / on linux
 		if ($ret[0] !== DIRECTORY_SEPARATOR && DIRECTORY_SEPARATOR === '/') {
@@ -59,7 +56,7 @@ class FilesystemUtils {
 	 * @param string ...$parts variable number of path elements
 	 * @return string system independent directory path relative to the calling file with a trailing separator
 	 */
-	public static function reldirpath(...$parts) {
+	public static function reldirpath(...$parts): string {
 		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 		array_unshift($parts, dirname($bt[0]['file']));
 
@@ -70,7 +67,7 @@ class FilesystemUtils {
 	 * @param string ...$parts variable number of path elements
 	 * @return string system independent file path relative to the calling file
 	 */
-	public static function relfilepath(...$parts) {
+	public static function relfilepath(...$parts): string {
 		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 		array_unshift($parts, dirname($bt[0]['file']));
 
@@ -108,7 +105,7 @@ class FilesystemUtils {
 	 * @param bool $throw Boolean flag marking whether to throw an exception or not
 	 * @throws Exception if a path could not be deleted and the throw flag is given
 	 */
-	public static function rrmdir($directory, $throw = false): void {
+	public static function rrmdir(string $directory, bool $throw = false): void {
 		if (!file_exists($directory)) {
 			return;
 		}

@@ -19,17 +19,19 @@ use InvalidArgumentException;
  */
 abstract class ClassDiscovery {
 	/**
-	 * @var bool $ensureClassExists Boolean flag that can be used to check if the discovered class truly exists
+	 * Boolean flag to enable checking if the loaded class actually exists or not.
 	 */
-	public $ensureClassExists = true;
+	public bool $ensureClassExists = true;
 
 	/**
-	 * @var string $scannedExtension File extension to limit what files to scan for classes
+	 * File extension to limit what files to scan for classes.
 	 */
-	public $scannedExtension = 'php';
+	public string $scannedExtension = 'php';
 
 	/**
 	 * Loop through all files in a directory and attempt to discover classes from it.
+	 * @psalm-suppress LessSpecificReturnStatement
+	 * @psalm-suppress MoreSpecificReturnType
 	 * @param string $directory The path to the directory to scan
 	 * @param bool $throwOnFailure Boolean flag whether to throw an exception if a file does not contain a valid class
 	 * @return array<class-string>
@@ -59,8 +61,6 @@ abstract class ClassDiscovery {
 
 	/**
 	 * Autodiscover a fully qualified class name from the given php code file.
-	 * @param string $filename The path to the php file
-	 * @psalm-return class-string
 	 */
-	abstract public function fromFile(string $filename): string;
+	abstract public function fromFile(string $filename): ?string;
 }

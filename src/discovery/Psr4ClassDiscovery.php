@@ -18,19 +18,15 @@ use holonet\common\FilesystemUtils;
  */
 class Psr4ClassDiscovery extends ClassDiscovery {
 	/**
-	 * @var string|null $baseNamespace Namespace basis for all namespaces below the psr4 directory structure
+	 * Namespace basis for all namespaces below the psr4 directory structure.
 	 */
-	private $baseNamespace;
+	private ?string $baseNamespace;
 
 	/**
-	 * @var string $srcDirectory The directory at which the root of the psr4 namespace starts
+	 * The directory at which the root of the psr4 namespace starts.
 	 */
-	private $srcDirectory;
+	private string $srcDirectory;
 
-	/**
-	 * @param string $srcDirectory The directory at which the root of the psr4 namespace starts
-	 * @param string|null $baseNamespace Namespace basis for all namespaces below the psr4 directory structure
-	 */
 	public function __construct(string $srcDirectory, ?string $baseNamespace = null) {
 		if (!is_dir($srcDirectory) || !is_readable($srcDirectory)) {
 			throw new InvalidArgumentException("Could not find / read directory '{$srcDirectory}'");
@@ -40,8 +36,6 @@ class Psr4ClassDiscovery extends ClassDiscovery {
 	}
 
 	/**
-	 * @psalm-suppress LessSpecificReturnStatement
-	 * @psalm-suppress MoreSpecificReturnType
 	 * {@inheritdoc}
 	 */
 	public function fromFile(string $filename): string {

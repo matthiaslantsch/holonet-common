@@ -3,8 +3,6 @@
  * This file is part of the hdev common library package
  * (c) Matthias Lantsch.
  *
- * class file for the Registry class
- *
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -23,58 +21,42 @@ class Registry implements ArrayAccess {
 	/**
 	 * @var array $data Multilevel array with key=value pairs
 	 */
-	private $data = array();
+	private array $data = array();
 
 	/**
 	 * @var string $separator Multilevel separator string
 	 */
-	private $separator;
+	private string $separator;
 
-	/**
-	 * @param string $separator Allow the user to override the default level separator
-	 */
 	public function __construct(string $separator = '.') {
 		$this->separator = $separator;
 	}
 
-	/**
-	 * Clear all values from the registry.
-	 */
 	public function clear(): void {
 		$this->data = array();
 	}
 
 	/**
-	 * Return the value for a certain key or a default.
-	 * @param string $key The to get the value for
-	 * @param mixed|null $default Default to return of the key cannot be found
-	 * @return mixed value
+	 * @see self::offsetGet()
+	 * @param mixed|null $default
 	 */
 	public function get(string $key, $default = null) {
 		return $this->offsetGet($key) ?? $default;
 	}
 
-	/**
-	 * @param bool $replace if given and false, no place holders will be replaced
-	 * @return array with the data
-	 */
 	public function getAll(bool $replace = true): array {
 		return $replace ? $this->replacePlaceholder($this->data) : $this->data;
 	}
 
 	/**
-	 * Check if the registry has a certain key.
-	 * @param string $key The string key offset to check for
+	 * @see self::offsetExists()
 	 */
 	public function has(string $key): bool {
 		return $this->offsetExists($key);
 	}
 
 	/**
-	 * Whether an offset exists.
-	 * @see http://php.net/manual/en/arrayaccess.offsetexists.php
-	 * @param string $offset
-	 * @return bool true on success or false on failure
+	 * {@inheritdoc}
 	 */
 	public function offsetExists($offset): bool {
 		$parts = explode($this->separator, $offset);
@@ -90,10 +72,7 @@ class Registry implements ArrayAccess {
 	}
 
 	/**
-	 * Offset to retrieve.
-	 * @see http://php.net/manual/en/arrayaccess.offsetget.php
-	 * @param string $offset
-	 * @return mixed|null can return all value types or null if not found
+	 * {@inheritdoc}
 	 */
 	public function offsetGet($offset) {
 		$parts = explode($this->separator, $offset);
@@ -110,9 +89,7 @@ class Registry implements ArrayAccess {
 	}
 
 	/**
-	 * Offset to set.
-	 * @see http://php.net/manual/en/arrayaccess.offsetset.php
-	 * @param string $offset
+	 * {@inheritdoc}
 	 */
 	public function offsetSet($offset, $value): void {
 		$parts = explode($this->separator, $offset);
@@ -130,9 +107,7 @@ class Registry implements ArrayAccess {
 	}
 
 	/**
-	 * Offset to unset.
-	 * @see http://php.net/manual/en/arrayaccess.offsetunset.php
-	 * @param string $offset
+	 * {@inheritdoc}
 	 */
 	public function offsetUnset($offset): void {
 		$parts = explode($this->separator, $offset);
@@ -151,9 +126,7 @@ class Registry implements ArrayAccess {
 	}
 
 	/**
-	 * Set the value for a certain key.
-	 * @param string $key The key to set the value for
-	 * @param mixed $value The value to be set
+	 * @see self::offsetSet()
 	 */
 	public function set(string $key, $value): void {
 		$this->offsetSet($key, $value);
@@ -168,15 +141,14 @@ class Registry implements ArrayAccess {
 	}
 
 	/**
-	 * Clear the value for a certain key.
-	 * @param string $key The string key to unset
+	 * @see self::offsetUnset()
 	 */
 	public function unset(string $key): void {
 		$this->offsetUnset($key);
 	}
 
 	/**
-	 * sreplaces place holders in values of the registry
+	 * replaces place holders in values of the registry
 	 * recursively calls this function if we are talking an array.
 	 * @param mixed $position The value to be searched for placeholders
 	 * @return mixed the updated value

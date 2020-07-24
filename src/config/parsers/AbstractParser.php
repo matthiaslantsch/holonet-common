@@ -3,8 +3,6 @@
  * This file is part of the hdev common library package
  * (c) Matthias Lantsch.
  *
- * class file for the AbstractParser base class
- *
  * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
@@ -35,7 +33,6 @@ abstract class AbstractParser {
 	}
 
 	/**
-	 * force the child class to implement a method to actually parse a file.
 	 * @param string $filename The filename to be parsed
 	 * @throws ConfigReaderException
 	 * @return array with parsed config data

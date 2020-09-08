@@ -25,7 +25,7 @@ class ConfigRegistry extends Registry {
 				//check if it is a $_ENV placeholder
 				if (mb_strpos($placeholderPair[0], '%env(') === 0) {
 					//if the placeholder is an offset in the $_ENV, replace it, otherwise return null
-					if (($envval = getenv($placeholderPair[1])) !== false) {
+					if (($envval = $_ENV[$placeholderPair[1]] ?? getenv($placeholderPair[1])) !== false) {
 						$position = str_replace($placeholderPair[0], $envval, $position);
 					} else {
 						return null;

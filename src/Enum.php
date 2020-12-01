@@ -60,7 +60,7 @@ abstract class Enum extends \MyCLabs\Enum\Enum {
 	 * @psalm-suppress MissingImmutableAnnotation
 	 */
 	public static function search($value): ?string {
-		$toArray = static::toArray();
+		$toArray = parent::toArray();
 		foreach ($toArray as $name => $constValue) {
 			if (is_array($constValue)) {
 				$constValue = array_shift($constValue);
@@ -74,12 +74,29 @@ abstract class Enum extends \MyCLabs\Enum\Enum {
 	}
 
 	/**
+	 * {@inheritdoc}
+	 * In order to not break any code outside relying on this method, we will reorganise to only return the
+	 * base values not the basic constant array.
+	 * @psalm-suppress MissingImmutableAnnotation
+	 */
+	public static function toArray() {
+		$array = parent::toArray();
+		foreach ($array as &$value) {
+			if (is_array($value)) {
+				$value = array_shift($value);
+			}
+		}
+
+		return $array;
+	}
+
+	/**
 	 * Try to get the enum implementation closer to a useful one
 	 * By ensuring all enum objects are singletons, we can just use reference comparison in
 	 * userland code.
 	 */
 	public static function valueOf(string $name): self {
-		$array = static::toArray();
+		$array = parent::toArray();
 		$class = get_called_class();
 		if (isset($array[$name]) || array_key_exists($name, $array)) {
 			if (!isset(static::$instances[$class][$name])) {

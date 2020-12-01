@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
  * @internal
  *
  * @small
- * @coversNothing
+ * @covers \holonet\common\Enum
  */
 class EnumTest extends TestCase {
 	public function testEnumExtraFeatures(): void {
@@ -31,6 +31,19 @@ class EnumTest extends TestCase {
 		// no matter how it's accessed (static method or from dynamic value) it should always be the same instance
 		static::assertSame($value1, TestEnum::fromValue('value1'));
 		static::assertSame($value1, TestEnum::valueOf('VALUE1'));
+	}
+
+	/**
+	 * @covers \holonet\common\Enum::toArray()
+	 */
+	public function testToArrayMethod(): void {
+		$array = TestEnum::toArray();
+		static::assertSame(array(
+			'VALUE1' => 'value1',
+			'VALUE2' => 'value2',
+			'VALUE3' => 'value3',
+			'VALUE4' => 'value4'
+		), $array);
 	}
 
 	/**

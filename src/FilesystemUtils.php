@@ -122,11 +122,13 @@ class FilesystemUtils {
 				}
 			}
 			if (!@rmdir($directory) && $throw) {
-				throw new Exception("Could not rmdir '{$directory}'", 100);
+				$msg = error_get_last()['message'];
+				throw new Exception("Could not rmdir '{$directory}': {$msg}", 100);
 			}
 		} else {
-			if (!@unlink($directory) && $throw) {
-				throw new Exception("Could not unlink '{$directory}'", 100);
+			if ((!@unlink($directory) && $throw) || file_exists($directory)) {
+				$msg = error_get_last()['message'];
+				throw new Exception("Could not unlink '{$directory}': {$msg}", 100);
 			}
 		}
 	}

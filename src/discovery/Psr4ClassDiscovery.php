@@ -36,7 +36,7 @@ class Psr4ClassDiscovery extends ClassDiscovery {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	public function fromFile(string $filename): string {
 		if (mb_strpos($filename, $this->srcDirectory) !== 0) {

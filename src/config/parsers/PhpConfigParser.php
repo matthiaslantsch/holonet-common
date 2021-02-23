@@ -16,7 +16,7 @@ use holonet\common\config\exception\FileAccessException;
  */
 class PhpConfigParser extends AbstractParser {
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	protected function readFile(string $filename): array {
 		/**
@@ -25,14 +25,10 @@ class PhpConfigParser extends AbstractParser {
 		$ret = require $filename;
 		//either the user sets a variable called "config" or returns an array
 		if (!isset($config) && ($config = $ret) !== 1) {
-			throw new FileAccessException(
-				"Could not parse php config file '{$filename}'; File must either return an array or define the variable \$config"
-			);
+			throw new FileAccessException("Could not parse php config file '{$filename}'; File must either return an array or define the variable \$config");
 		}
 		if (!is_array($config)) {
-			throw new FileAccessException(
-				"Could not parse php config file '{$filename}'; Value defined by the config file must be an array"
-			);
+			throw new FileAccessException("Could not parse php config file '{$filename}'; Value defined by the config file must be an array");
 		}
 
 		return $config;

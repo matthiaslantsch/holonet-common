@@ -16,7 +16,7 @@ use RuntimeException;
  */
 class TokeniserClassDiscovery extends ClassDiscovery {
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @see https://stackoverflow.com/a/7153391 Courtesy of stackoverflow
 	 */
 	public function fromFile(string $filename): string {
@@ -36,9 +36,9 @@ class TokeniserClassDiscovery extends ClassDiscovery {
 			}
 
 			for (; $i < count($tokens); $i++) {
-				if ($tokens[$i][0] === T_NAMESPACE) {
+				if ($tokens[$i][0] === \T_NAMESPACE) {
 					for ($j = $i + 1; $j < count($tokens); $j++) {
-						if ($tokens[$j][0] === T_STRING) {
+						if ($tokens[$j][0] === \T_STRING) {
 							$namespace .= '\\'.$tokens[$j][1];
 						} elseif ($tokens[$j] === '{' || $tokens[$j] === ';') {
 							break;
@@ -46,7 +46,7 @@ class TokeniserClassDiscovery extends ClassDiscovery {
 					}
 				}
 
-				if ($tokens[$i][0] === T_CLASS) {
+				if ($tokens[$i][0] === \T_CLASS) {
 					for ($j = $i + 1; $j < count($tokens); $j++) {
 						if ($tokens[$j] === '{') {
 							$class = $tokens[$i + 2][1];

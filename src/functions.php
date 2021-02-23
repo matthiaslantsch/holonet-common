@@ -15,8 +15,8 @@ if (!function_exists(__NAMESPACE__.'\\trigger_error_context')) {
 	 * @param string $message The message to throw in the error
 	 * @param int $level Error level integer, defaults to E_USER_ERROR
 	 */
-	function trigger_error_context(string $message, int $level = E_USER_ERROR): void {
-		$caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0];
+	function trigger_error_context(string $message, int $level = \E_USER_ERROR): void {
+		$caller = debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0];
 		trigger_error("{$message} in file {$caller['file']} on line {$caller['line']}", $level);
 	}
 }
@@ -41,7 +41,7 @@ if (!function_exists(__NAMESPACE__.'\\isAssoc')) {
 	 * @return bool true or false on is associative or not
 	 */
 	function isAssoc(array $arr): bool {
-		if (array() === $arr) {
+		if ($arr === array()) {
 			return false;
 		}
 		ksort($arr);

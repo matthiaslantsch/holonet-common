@@ -56,8 +56,6 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 
 			return $this->all[$key];
 		}
-
-		return null;
 	}
 
 	/**
@@ -126,7 +124,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 
 	/**
 	 * Only counts the "current" entries
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	public function count(): int {
 		return count($this->getAll('current'));
@@ -145,8 +143,6 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 		if (isset($this->all[$key]) && !in_array($key, $this->removed)) {
 			return $this->all[$key];
 		}
-
-		return null;
 	}
 
 	/**
@@ -193,7 +189,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	public function getIterator(): ArrayIterator {
 		return new ArrayIterator($this->getAll());
@@ -216,7 +212,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 
 	/**
 	 * Does not return true for "removed" entries.
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	public function offsetExists($offset): bool {
 		return isset($this->all[$offset]) && !in_array($offset, $this->removed);
@@ -224,7 +220,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 
 	/**
 	 * Does only return values that aren't "removed".
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @see self::get()
 	 */
 	public function offsetGet($offset) {
@@ -232,7 +228,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @see self::set()
 	 */
 	public function offsetSet($offset, $value): void {
@@ -241,7 +237,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 
 	/**
 	 * Does only add the entry to "removed".
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @see self::remove()
 	 */
 	public function offsetUnset($offset): void {
@@ -328,7 +324,5 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 		} elseif (($key = array_search($entry, $this->all)) !== false) {
 			return $key;
 		}
-
-		return null;
 	}
 }

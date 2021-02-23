@@ -10,6 +10,8 @@
 namespace holonet\common\di;
 
 use TypeError;
+use ReflectionClass;
+use ReflectionException;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -27,12 +29,12 @@ class Container implements ContainerInterface {
 	private array $dependencies = array();
 
 	/**
-	 * @var array<string, array{class: class-string, args: array}> $lazyLoadedDeps Lazily loaded dependency objects
+	 * @var array<string, array> $lazyLoadedDeps Lazily loaded dependency objects
 	 */
 	private array $lazyLoadedDeps = array();
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @param string[] $getFor Array used keep track of injections (to prevent recursive dependencies)
 	 */
 	public function get($id, array $getFor = array()) {
@@ -46,21 +48,21 @@ class Container implements ContainerInterface {
 		if (isset($this->lazyLoadedDeps[$id])) {
 			try {
 				list('class' => $class, 'args' => $args) = $this->lazyLoadedDeps[$id];
-				/** @psalm-suppress MixedMethodCall */
-				$value = new $class(...$args);
+				$rfc = new ReflectionClass($class);
+				$value = $rfc->newInstanceWithoutConstructor();
 				$getFor[] = $id;
 				$this->inject($value, true, $getFor);
+				if (method_exists($value, '__construct')) {
+					$value->__construct(...$args);
+				}
 				if (method_exists($value, 'init')) {
-					$value->init();
+					trigger_error('Relying on init() to initialise dependency objects after injecting is no longer required and deprecated', \E_USER_DEPRECATED);
 				}
 				$this->dependencies[$id] = $value;
 
 				return $value;
-			} catch (TypeError $e) {
-				throw new DependencyInjectionException(
-					"Cannot initialise dependency '{$id}' on Dependency Container: '{$e->getMessage()}'",
-					(int)($e->getCode()), $e
-				);
+			} catch (TypeError | ReflectionException $e) {
+				throw new DependencyInjectionException("Cannot initialise dependency '{$id}' on Dependency Container: '{$e->getMessage()}'", (int)($e->getCode()), $e);
 			}
 		} else {
 			throw new DependencyNotFoundException("Dependency '{$id}' does not exist on Dependency Container");
@@ -68,7 +70,7 @@ class Container implements ContainerInterface {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	public function has($id) {
 		return isset($this->dependencies[$id]) || isset($this->lazyLoadedDeps[$id]);
@@ -106,9 +108,7 @@ class Container implements ContainerInterface {
 			$this->lazyLoadedDeps[$id] = array('class' => $value, 'args' => $constructorArgs);
 		} else {
 			if (!is_object($value)) {
-				throw new DependencyInjectionException(
-					"Cannot create dependency '{$id}' on Dependency Container"
-				);
+				throw new DependencyInjectionException("Cannot create dependency '{$id}' on Dependency Container");
 			}
 
 			$this->inject($value);

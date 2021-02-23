@@ -22,26 +22,26 @@ class ErrorHandler {
 	 * @psalm-var array<int, array{level: string, name: string}>
 	 */
 	public const ERROR_LEVEL_LOOKUP = array(
-		E_ERROR => array('level' => LogLevel::CRITICAL, 'name' => 'E_ERROR'),
-		E_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_WARNING'),
-		E_PARSE => array('level' => LogLevel::ALERT, 'name' => 'E_PARSE'),
-		E_NOTICE => array('level' => LogLevel::NOTICE, 'name' => 'E_NOTICE'),
-		E_CORE_ERROR => array('level' => LogLevel::CRITICAL, 'name' => 'E_CORE_ERROR'),
-		E_CORE_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_CORE_WARNING'),
-		E_COMPILE_ERROR => array('level' => LogLevel::ALERT, 'name' => 'E_COMPILE_ERROR'),
-		E_COMPILE_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_COMPILE_WARNING'),
-		E_USER_ERROR => array('level' => LogLevel::ERROR, 'name' => 'E_USER_ERROR'),
-		E_USER_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_USER_WARNING'),
-		E_USER_NOTICE => array('level' => LogLevel::NOTICE, 'name' => 'E_USER_NOTICE'),
-		E_STRICT => array('level' => LogLevel::NOTICE, 'name' => 'E_STRICT'),
-		E_RECOVERABLE_ERROR => array('level' => LogLevel::ERROR, 'name' => 'E_RECOVERABLE_ERROR'),
-		E_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_DEPRECATED'),
-		E_USER_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_USER_DEPRECATED'),
+		\E_ERROR => array('level' => LogLevel::CRITICAL, 'name' => 'E_ERROR'),
+		\E_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_WARNING'),
+		\E_PARSE => array('level' => LogLevel::ALERT, 'name' => 'E_PARSE'),
+		\E_NOTICE => array('level' => LogLevel::NOTICE, 'name' => 'E_NOTICE'),
+		\E_CORE_ERROR => array('level' => LogLevel::CRITICAL, 'name' => 'E_CORE_ERROR'),
+		\E_CORE_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_CORE_WARNING'),
+		\E_COMPILE_ERROR => array('level' => LogLevel::ALERT, 'name' => 'E_COMPILE_ERROR'),
+		\E_COMPILE_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_COMPILE_WARNING'),
+		\E_USER_ERROR => array('level' => LogLevel::ERROR, 'name' => 'E_USER_ERROR'),
+		\E_USER_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_USER_WARNING'),
+		\E_USER_NOTICE => array('level' => LogLevel::NOTICE, 'name' => 'E_USER_NOTICE'),
+		\E_STRICT => array('level' => LogLevel::NOTICE, 'name' => 'E_STRICT'),
+		\E_RECOVERABLE_ERROR => array('level' => LogLevel::ERROR, 'name' => 'E_RECOVERABLE_ERROR'),
+		\E_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_DEPRECATED'),
+		\E_USER_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_USER_DEPRECATED'),
 	);
 
 	private ?LoggerInterface $logger;
 
-	public function __construct(LoggerInterface $logger = null) {
+	public function __construct(?LoggerInterface $logger = null) {
 		$this->logger = $logger;
 	}
 
@@ -54,13 +54,13 @@ class ErrorHandler {
 	 * @param int $line The line the error was caused on
 	 * @return bool|null To advise the spl to continue error handling or not
 	 */
-	public function handleError(int $errno, string $msg = '', string $file = '', int $line = null): ?bool {
+	public function handleError(int $errno, string $msg = '', string $file = '', ?int $line = null): ?bool {
 		if (!(error_reporting() & $errno)) {
 			// This error code is not included in error_reporting
 			return null;
 		}
 
-		list('type' => $type, 'name' => $name) = (self::ERROR_LEVEL_LOOKUP[$errno] ?? self::ERROR_LEVEL_LOOKUP[E_ERROR]);
+		list('type' => $type, 'name' => $name) = (self::ERROR_LEVEL_LOOKUP[$errno] ?? self::ERROR_LEVEL_LOOKUP[\E_ERROR]);
 
 		if ($this->logger !== null) {
 			$this->logger->log(

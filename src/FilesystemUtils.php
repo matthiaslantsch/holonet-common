@@ -21,7 +21,7 @@ class FilesystemUtils {
 	 * @return string system independent absolute directory path with a trailing separator
 	 */
 	public static function dirpath(...$parts): string {
-		return static::filepath(...$parts).DIRECTORY_SEPARATOR;
+		return static::filepath(...$parts).\DIRECTORY_SEPARATOR;
 	}
 
 	/**
@@ -38,15 +38,15 @@ class FilesystemUtils {
 	 * @return string system independent absolute path using the given path parts
 	 */
 	public static function filepath(...$parts): string {
-		$ret = implode(DIRECTORY_SEPARATOR, $parts);
+		$ret = implode(\DIRECTORY_SEPARATOR, $parts);
 		//prepend a / on linux
-		if ($ret[0] !== DIRECTORY_SEPARATOR && DIRECTORY_SEPARATOR === '/') {
-			$ret = DIRECTORY_SEPARATOR.$ret;
+		if ($ret[0] !== \DIRECTORY_SEPARATOR && \DIRECTORY_SEPARATOR === '/') {
+			$ret = \DIRECTORY_SEPARATOR.$ret;
 		}
 		//make sure there's no double separators
-		$double = DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR;
+		$double = \DIRECTORY_SEPARATOR.\DIRECTORY_SEPARATOR;
 		if (mb_strpos($ret, $double) !== false) {
-			$ret = str_replace($double, DIRECTORY_SEPARATOR, $ret);
+			$ret = str_replace($double, \DIRECTORY_SEPARATOR, $ret);
 		}
 
 		return $ret;
@@ -57,7 +57,7 @@ class FilesystemUtils {
 	 * @return string system independent directory path relative to the calling file with a trailing separator
 	 */
 	public static function reldirpath(...$parts): string {
-		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
+		$bt = debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 		array_unshift($parts, dirname($bt[0]['file']));
 
 		return static::dirpath(...$parts);
@@ -68,7 +68,7 @@ class FilesystemUtils {
 	 * @return string system independent file path relative to the calling file
 	 */
 	public static function relfilepath(...$parts): string {
-		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
+		$bt = debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 		array_unshift($parts, dirname($bt[0]['file']));
 
 		return static::filepath(...$parts);
@@ -114,20 +114,22 @@ class FilesystemUtils {
 			$objects = scandir($directory);
 			foreach ($objects as $object) {
 				if ($object !== '.' && $object !== '..') {
-					if (is_dir($directory.DIRECTORY_SEPARATOR.$object)) {
-						static::rrmdir($directory.DIRECTORY_SEPARATOR.$object);
+					if (is_dir($directory.\DIRECTORY_SEPARATOR.$object)) {
+						static::rrmdir($directory.\DIRECTORY_SEPARATOR.$object);
 					} else {
-						static::rrmdir($directory.DIRECTORY_SEPARATOR.$object);
+						static::rrmdir($directory.\DIRECTORY_SEPARATOR.$object);
 					}
 				}
 			}
 			if (!@rmdir($directory) && $throw) {
 				$msg = error_get_last()['message'];
+
 				throw new Exception("Could not rmdir '{$directory}': {$msg}", 100);
 			}
 		} else {
 			if ((!@unlink($directory) && $throw) || file_exists($directory)) {
 				$msg = error_get_last()['message'];
+
 				throw new Exception("Could not unlink '{$directory}': {$msg}", 100);
 			}
 		}

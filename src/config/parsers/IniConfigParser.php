@@ -16,10 +16,10 @@ use holonet\common\config\exception\FileAccessException;
  */
 class IniConfigParser extends AbstractParser {
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	protected function readFile(string $filename): array {
-		$contents = @parse_ini_file($filename, true, INI_SCANNER_TYPED);
+		$contents = @parse_ini_file($filename, true, \INI_SCANNER_TYPED);
 		if ($contents === false) {
 			throw new FileAccessException("Could not parse_ini_file() '{$filename}'");
 		}

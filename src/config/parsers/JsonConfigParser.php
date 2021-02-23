@@ -17,7 +17,7 @@ use holonet\common\config\exception\ParseErrorException;
  */
 class JsonConfigParser extends AbstractParser {
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	protected function readFile(string $filename): array {
 		$contents = @file_get_contents($filename);

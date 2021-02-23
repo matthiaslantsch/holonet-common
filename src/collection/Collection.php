@@ -51,7 +51,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate {
 	 *  => cannot use our own get() method.
 	 */
 	public function &__get(string $key) {
-		if (is_object($this->data[$key]) || null === $this->data[$key]) {
+		if (is_object($this->data[$key]) || $this->data[$key] === null) {
 			//only actual variables should be returned by reference
 			return $this->data[$key];
 		}
@@ -64,7 +64,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	public function count(): int {
 		return count($this->data);
@@ -81,7 +81,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate {
 	/**
 	 * @param string[] $which Array with keys that are requested
 	 */
-	public function getAll(array $which = null): array {
+	public function getAll(?array $which = null): array {
 		if ($which !== null) {
 			return array_intersect_key($this->data, array_flip($which));
 		}
@@ -90,7 +90,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	public function getIterator(): ArrayIterator {
 		return new ArrayIterator($this->data);
@@ -109,7 +109,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @see self::__isset()
 	 */
 	public function offsetExists($offset): bool {
@@ -118,7 +118,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @see self::get()
 	 */
 	public function offsetGet($offset) {
@@ -126,7 +126,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @see self::set()
 	 */
 	public function offsetSet($offset, $value): void {
@@ -134,7 +134,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @see self::remove()
 	 */
 	public function offsetUnset($offset): void {

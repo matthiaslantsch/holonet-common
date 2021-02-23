@@ -11,7 +11,6 @@ namespace holonet\common;
 
 use BadMethodCallException;
 use UnexpectedValueException;
-use function array_key_exists;
 
 /**
  * Wrapper class around the standard enum to make all value classes singleton instances
@@ -22,14 +21,16 @@ abstract class Enum extends \MyCLabs\Enum\Enum {
 	protected static $instances = array();
 
 	/**
-	 * {@inheritdoc}
+	 * @psalm-suppress OverriddenMethodAccess
+	 * We must override the constructor so we can ensure the existence of only our instances
+	 * {@inheritDoc}
 	 */
 	protected function __construct($value) {
 		$this->value = $value;
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @return static
 	 * @psalm-suppress MissingImmutableAnnotation
 	 */
@@ -39,7 +40,7 @@ abstract class Enum extends \MyCLabs\Enum\Enum {
 
 	public static function fromValue($value): self {
 		$name = static::search($value);
-		if ($name === null) {
+		if ($name === false) {
 			/** @psalm-suppress InvalidCast */
 			throw new UnexpectedValueException("Value '{$value}' is not part of the enum ".static::class);
 		}
@@ -48,18 +49,18 @@ abstract class Enum extends \MyCLabs\Enum\Enum {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @psalm-suppress MissingImmutableAnnotation
 	 */
 	public static function isValid($value): bool {
-		return static::search($value) !== null;
+		return static::search($value) !== false;
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @psalm-suppress MissingImmutableAnnotation
 	 */
-	public static function search($value): ?string {
+	public static function search($value) {
 		$toArray = parent::toArray();
 		foreach ($toArray as $name => $constValue) {
 			if (is_array($constValue)) {
@@ -70,11 +71,11 @@ abstract class Enum extends \MyCLabs\Enum\Enum {
 			}
 		}
 
-		return null;
+		return false;
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * In order to not break any code outside relying on this method, we will reorganise to only return the
 	 * base values not the basic constant array.
 	 * @psalm-suppress MissingImmutableAnnotation
@@ -98,7 +99,7 @@ abstract class Enum extends \MyCLabs\Enum\Enum {
 	public static function valueOf(string $name): self {
 		$array = parent::toArray();
 		$class = get_called_class();
-		if (isset($array[$name]) || array_key_exists($name, $array)) {
+		if (isset($array[$name]) || \array_key_exists($name, $array)) {
 			if (!isset(static::$instances[$class][$name])) {
 				if (is_array($array[$name])) {
 					$params = $array[$name];
@@ -116,7 +117,7 @@ abstract class Enum extends \MyCLabs\Enum\Enum {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 * @psalm-suppress MissingImmutableAnnotation
 	 */
 	public static function values(): array {

@@ -33,7 +33,7 @@ class Error {
 	 * @param string $errfile The error file path
 	 * @param int|null $errline Error line number
 	 */
-	public function __construct(string $level, int $errno, string $errstr = '', string $errfile = '', int $errline = null) {
+	public function __construct(string $level, int $errno, string $errstr = '', string $errfile = '', ?int $errline = null) {
 		$this->errorlevel = $level;
 		$this->errorno = $errno;
 		$this->errormsg = $errstr;

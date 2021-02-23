@@ -22,15 +22,15 @@ use PHPUnit\Framework\TestCase;
 class EnumTest extends TestCase {
 	public function testEnumExtraFeatures(): void {
 		// we should be able to instantiate all 4 enum values even though they are defined differently in the constant
-		static::assertNotNull(TestEnum::VALUE1());
-		static::assertNotNull(TestEnum::VALUE2());
-		static::assertNotNull(TestEnum::VALUE3());
-		static::assertNotNull(TestEnum::VALUE4());
+		$this->assertNotNull(TestEnum::VALUE1());
+		$this->assertNotNull(TestEnum::VALUE2());
+		$this->assertNotNull(TestEnum::VALUE3());
+		$this->assertNotNull(TestEnum::VALUE4());
 
 		$value1 = TestEnum::VALUE1();
 		// no matter how it's accessed (static method or from dynamic value) it should always be the same instance
-		static::assertSame($value1, TestEnum::fromValue('value1'));
-		static::assertSame($value1, TestEnum::valueOf('VALUE1'));
+		$this->assertSame($value1, TestEnum::fromValue('value1'));
+		$this->assertSame($value1, TestEnum::valueOf('VALUE1'));
 	}
 
 	/**
@@ -38,7 +38,7 @@ class EnumTest extends TestCase {
 	 */
 	public function testToArrayMethod(): void {
 		$array = TestEnum::toArray();
-		static::assertSame(array(
+		$this->assertSame(array(
 			'VALUE1' => 'value1',
 			'VALUE2' => 'value2',
 			'VALUE3' => 'value3',
@@ -57,6 +57,6 @@ class EnumTest extends TestCase {
 			'VALUE4' => TestEnum::VALUE4(),
 		);
 
-		static::assertSame($values, TestEnum::values());
+		$this->assertSame($values, TestEnum::values());
 	}
 }

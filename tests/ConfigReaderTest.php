@@ -9,6 +9,7 @@
 
 namespace holonet\common\tests;
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 use holonet\common\config\ConfigReader;
 
@@ -28,7 +29,7 @@ class ConfigReaderTest extends TestCase {
 	public function configTestProvider() {
 		$ret = array();
 		foreach (glob(__DIR__.'/data/config.*') as $file) {
-			$ext = pathinfo($file, PATHINFO_EXTENSION);
+			$ext = pathinfo($file, \PATHINFO_EXTENSION);
 			$ret[$ext] = array($file);
 		}
 
@@ -41,10 +42,10 @@ class ConfigReaderTest extends TestCase {
 
 		try {
 			$configreader->read($filename);
-		} catch (\Exception $e) {
+		} catch (Exception $e) {
 			$msg = $e->getMessage();
 		}
-		static::assertSame("File path 'iSurelyDon'tExist.ini' does not exist", $msg);
+		$this->assertSame("File path 'iSurelyDon'tExist.ini' does not exist", $msg);
 	}
 
 	/**
@@ -59,7 +60,7 @@ class ConfigReaderTest extends TestCase {
 		$configreader = new ConfigReader();
 		$configreader->read($file);
 
-		static::assertSame($expectedData, $configreader->registry->getAll());
+		$this->assertSame($expectedData, $configreader->registry->getAll());
 	}
 
 	public function testUnknownType(): void {
@@ -68,9 +69,9 @@ class ConfigReaderTest extends TestCase {
 
 		try {
 			$configreader->read($filename);
-		} catch (\Exception $e) {
+		} catch (Exception $e) {
 			$msg = $e->getMessage();
 		}
-		static::assertSame("Could not parse config file '{$filename}'; Unknown config file type 'blablabla'", $msg);
+		$this->assertSame("Could not parse config file '{$filename}'; Unknown config file type 'blablabla'", $msg);
 	}
 }

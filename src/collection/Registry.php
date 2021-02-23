@@ -56,7 +56,7 @@ class Registry implements ArrayAccess {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	public function offsetExists($offset): bool {
 		$parts = explode($this->separator, $offset);
@@ -72,7 +72,7 @@ class Registry implements ArrayAccess {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	public function offsetGet($offset) {
 		$parts = explode($this->separator, $offset);
@@ -80,7 +80,7 @@ class Registry implements ArrayAccess {
 
 		foreach ($parts as $sublevel) {
 			if (!isset($position[$sublevel])) {
-				return null;
+				return;
 			}
 			$position = $position[$sublevel];
 		}
@@ -89,7 +89,7 @@ class Registry implements ArrayAccess {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	public function offsetSet($offset, $value): void {
 		$parts = explode($this->separator, $offset);
@@ -107,7 +107,7 @@ class Registry implements ArrayAccess {
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	public function offsetUnset($offset): void {
 		$parts = explode($this->separator, $offset);
@@ -156,7 +156,7 @@ class Registry implements ArrayAccess {
 	protected function replacePlaceholder($position) {
 		if (is_string($position) && mb_strpos($position, '%') !== false) {
 			$matches = array();
-			preg_match_all('/%([^%]+)%/', $position, $matches, PREG_SET_ORDER);
+			preg_match_all('/%([^%]+)%/', $position, $matches, \PREG_SET_ORDER);
 			foreach ($matches as $placeholderPair) {
 				//if the placeholder is a value in the registry, replace it, otherwise leave it with the % signs
 				$position = str_replace($placeholderPair[0], $this->get($placeholderPair[1], $placeholderPair[0]), $position);

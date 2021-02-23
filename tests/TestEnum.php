@@ -31,7 +31,7 @@ class TestEnum extends Enum {
 
 	protected ?string $thirdAttr = null;
 
-	protected function __construct($value, string $secondAttr = null, string $thirdAttr = null) {
+	protected function __construct($value, ?string $secondAttr = null, ?string $thirdAttr = null) {
 		parent::__construct($value);
 		if ($secondAttr !== null) {
 			$this->secondAttr = $secondAttr;

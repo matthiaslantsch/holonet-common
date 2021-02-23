@@ -29,7 +29,7 @@ class ConfigReader {
 
 	public Registry $registry;
 
-	public function __construct(Registry $registry = null) {
+	public function __construct(?Registry $registry = null) {
 		if ($registry !== null) {
 			$this->registry = $registry;
 		} else {
@@ -43,7 +43,7 @@ class ConfigReader {
 	 * @param string|null $type Allows the user to specify the type of file
 	 * @throws ConfigReaderException
 	 */
-	public function read($input, string $type = null): void {
+	public function read($input, ?string $type = null): void {
 		if (!is_array($input) && !is_string($input)) {
 			throw new ConfigReaderException('Given parameter to ConfigReader::read() must be filename or array of filenames');
 		}
@@ -69,7 +69,7 @@ class ConfigReader {
 	 * @param string|null $type Allows the user to specify the type of file in the dir
 	 * @throws FileAccessException
 	 */
-	private function readDir(string $filename, string $type = null): void {
+	private function readDir(string $filename, ?string $type = null): void {
 		if ($dh = opendir($filename)) {
 			while (($file = readdir($dh)) !== false) {
 				if ($file !== '.' && $file !== '..') {
@@ -86,9 +86,9 @@ class ConfigReader {
 	 * @param string|null $type Allows the user to specify the type of file
 	 * @throws FileAccessException
 	 */
-	private function readFile(string $filename, string $type = null): void {
+	private function readFile(string $filename, ?string $type = null): void {
 		if ($type === null) {
-			$type = pathinfo($filename, PATHINFO_EXTENSION);
+			$type = pathinfo($filename, \PATHINFO_EXTENSION);
 		}
 
 		if (!isset($this->parsers[$type])) {

@@ -25,6 +25,11 @@ class ErrorDispatcher {
 	private array $exceptionHandlers = array();
 
 	/**
+	 * @var ErrorHandler $finalHandler Last error handler to be called
+	 */
+	private ?ErrorHandler $finalHandler = null;
+
+	/**
 	 * @var callable[] $shutdownHandlers
 	 */
 	private array $shutdownHandlers = array();
@@ -53,6 +58,10 @@ class ErrorDispatcher {
 			foreach ($this->errorHandlers as $handler) {
 				$handler(...$args);
 			}
+
+			if ($this->finalHandler !== null) {
+				$this->finalHandler->handleError(...$args);
+			}
 		});
 
 		/**
@@ -62,6 +71,10 @@ class ErrorDispatcher {
 		set_exception_handler(function (...$args): void {
 			foreach ($this->exceptionHandlers as $handler) {
 				$handler(...$args);
+			}
+
+			if ($this->finalHandler !== null) {
+				$this->finalHandler->handleException(...$args);
 			}
 		});
 
@@ -73,6 +86,14 @@ class ErrorDispatcher {
 			foreach ($this->shutdownHandlers as $handler) {
 				$handler(...$args);
 			}
+
+			if ($this->finalHandler !== null) {
+				$this->finalHandler->handleShutdown(...$args);
+			}
 		});
+	}
+
+	public function setFinalHandler(ErrorHandler $finalHandler): void {
+		$this->finalHandler = $finalHandler;
 	}
 }

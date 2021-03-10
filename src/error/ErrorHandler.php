@@ -39,7 +39,9 @@ class ErrorHandler {
 		\E_USER_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_USER_DEPRECATED'),
 	);
 
-	private ?LoggerInterface $logger;
+	protected ?Throwable $lastException = null;
+
+	protected ?LoggerInterface $logger;
 
 	public function __construct(?LoggerInterface $logger = null) {
 		$this->logger = $logger;
@@ -60,7 +62,7 @@ class ErrorHandler {
 			return null;
 		}
 
-		list('type' => $type, 'name' => $name) = (self::ERROR_LEVEL_LOOKUP[$errno] ?? self::ERROR_LEVEL_LOOKUP[\E_ERROR]);
+		list('level' => $type, 'name' => $name) = (self::ERROR_LEVEL_LOOKUP[$errno] ?? self::ERROR_LEVEL_LOOKUP[\E_ERROR]);
 
 		if ($this->logger !== null) {
 			$this->logger->log(
@@ -95,6 +97,34 @@ class ErrorHandler {
 			$this->logger->log(LogLevel::ERROR, $message, array('exception' => $exception));
 		}
 
-		exit(255);
+		$this->lastException = $exception;
+	}
+
+	/**
+	 * Shutdown function
+	 * should be changed in extending classes to add more functionality to it.
+	 */
+	public function handleShutdown(): void {
+		if (($error = $this->getLastError()) !== null) {
+			echo $error;
+			exit(255);
+		}
+	}
+
+	/**
+	 * Return the last error message if there was one.
+	 * Can be used in fatal shutdown handlers to help.
+	 */
+	protected function getLastError(): ?string {
+		if ($this->lastException !== null) {
+			$class = get_class($this->lastException);
+
+			return "Unwanted crash due to {$class}: {$this->lastException->getMessage()}";
+		}
+		if (($lasterror = error_get_last()) !== null) {
+			return "Unwanted crash due to: {$lasterror['message']} in file {$lasterror['file']} on line {$lasterror['line']}";
+		}
+
+		return null;
 	}
 }

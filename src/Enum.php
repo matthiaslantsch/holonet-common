@@ -26,7 +26,7 @@ abstract class Enum extends \MyCLabs\Enum\Enum {
 	 * {@inheritDoc}
 	 */
 	protected function __construct($value) {
-		$this->value = $value;
+		parent::__construct($value);
 	}
 
 	/**

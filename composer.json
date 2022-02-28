@@ -14,19 +14,19 @@
 		"myclabs/php-enum": "^1.7",
 		"psr/container": "1.0.0"
 	},
-	"provide": {
-		"psr/container-implementation": "1.0.0"
-	},
 	"require-dev": {
 		"holonet/hdev": "~1.0.0",
 		"phpunit/phpunit": "^8.4.1"
 	},
-	"extra": {
-		"branch-alias": {
-			"dev-develop": "1.5.x-dev",
-			"dev-master": "1.4.x-dev"
-		}
+	"provide": {
+		"psr/container-implementation": "1.0.0"
 	},
+	"repositories": [
+		{
+			"type": "composer",
+			"url": "https://holonet.easylabs.ch/hgit/composer/"
+		}
+	],
 	"autoload": {
 		"psr-4": {
 			"holonet\\common\\": "src/"
@@ -40,12 +40,12 @@
 			"holonet\\common\\tests\\": "tests/"
 		}
 	},
-	"repositories": [
-		{
-			"type": "composer",
-			"url": "https://holonet.easylabs.ch/hgit/composer/"
+	"extra": {
+		"branch-alias": {
+			"dev-develop": "1.5.x-dev",
+			"dev-master": "1.4.x-dev"
 		}
-	],
+	},
 	"scripts": {
 		"fix": [
 			"@composer normalize --diff",

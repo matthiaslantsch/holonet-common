@@ -88,9 +88,14 @@ class Container implements ContainerInterface {
 			if (mb_strpos($propertyName, self::DI_PREFIX) === 0) {
 				$depKey = str_replace(self::DI_PREFIX, '', $propertyName);
 				if (!$this->has($depKey) && $forceInjection) {
-					throw new DependencyNotFoundException("Dependency '{$depKey}' does not exist on Dependency Container");
+					try {
+						$dependencyUser->{$propertyName} = null;
+					} catch (TypeError $e) {
+						throw new DependencyNotFoundException("Dependency '{$depKey}' does not exist on Dependency Container");
+					}
+				} else {
+					$dependencyUser->{$propertyName} = $this->get($depKey, $injectFor);
 				}
-				$dependencyUser->{$propertyName} = $this->get($depKey, $injectFor);
 			}
 		}
 	}

@@ -9,18 +9,22 @@
 
 namespace holonet\common\tests;
 
+use stdClass;
 use holonet\common as co;
 use PHPUnit\Framework\TestCase;
+use holonet\common\verifier\Proof;
+use function holonet\common\verify;
+use holonet\common\verifier\Verifier;
+use holonet\common\verifier\rules\Required;
 
 /**
- * Tests the functionality of utility functions in functions.php.
- *
- * @internal
- *
- * @small
  * @coversNothing
  */
 class FunctionsTest extends TestCase {
+	protected function tearDown(): void {
+		verify(new stdClass(), reset: true);
+	}
+
 	/**
 	 * @covers \holonet\common\FilesystemUtils::dirpath()
 	 * @covers \holonet\common\FilesystemUtils::filepath()
@@ -59,7 +63,37 @@ class FunctionsTest extends TestCase {
 			$msg = $e->getMessage();
 		}
 
-		$expected = 'oh nos in file '.__FILE__.' on line 57';
+		$expected = 'oh nos in file '.__FILE__.' on line 61';
 		$this->assertSame($expected, $msg);
+	}
+
+	/**
+	 * @covers \holonet\common\verify()
+	 */
+	public function testVerifierCanBeInjectedIntoVerify(): void {
+		$test = new class() {
+			#[Required]
+			public mixed $testProp;
+		};
+
+		$proof = verify($test);
+		$this->assertSame(array('testProp is required'), $proof->flat());
+
+		$verifier = new class() extends Verifier {
+			public function verify(object $obj): Proof {
+				$result = new Proof();
+				$result->add('test', 'my message');
+
+				return $result;
+			}
+		};
+
+		// inject and verify
+		$proof = verify($test, $verifier);
+		$this->assertSame(array('my message'), $proof->flat());
+
+		// make sure the injected instance stays
+		$proof = verify($test);
+		$this->assertSame(array('my message'), $proof->flat());
 	}
 }

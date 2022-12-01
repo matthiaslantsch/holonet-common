@@ -9,6 +9,70 @@
 
 namespace holonet\common;
 
+use Attribute;
+use ReflectionClass;
+use ReflectionProperty;
+use holonet\common\verifier\Proof;
+use holonet\common\verifier\Verifier;
+
+if (!function_exists(__NAMESPACE__.'\\verify')) {
+	/**
+	 * Run a verifier on a given php object (most likely a dto) and return a proof of its verified state.
+	 * Can be used with the second parameter to save a different version of the Verifier.
+	 */
+	function verify(object $obj, ?Verifier $verifier = null, bool $reset = false): Proof {
+		static $_verifier;
+
+		if ($reset) {
+			$_verifier = null;
+		}
+
+		if ($verifier !== null) {
+			$_verifier = $verifier;
+		}
+		$_verifier ??= new Verifier();
+
+		return $_verifier->verify($obj);
+	}
+}
+
+if (!function_exists(__NAMESPACE__.'\\reflection_get_attribute')) {
+	/**
+	 * @template T
+	 * Get a single attribute from a reflection object.
+	 * @param class-string<T> $class
+	 * @return ?T
+	 */
+	function reflection_get_attribute(ReflectionClass|ReflectionProperty $reflection, string $class): ?object {
+		$attrs = $reflection->getAttributes($class);
+
+		return reset($attrs) ? reset($attrs)->newInstance() : null;
+	}
+}
+
+if (!function_exists(__NAMESPACE__.'\\stringify')) {
+	/**
+	 * Return a best guess string representation of the given value.
+	 */
+	function stringify(mixed $value): string {
+		if (is_array($value)) {
+			if (empty($value)) {
+				return '[]';
+			}
+
+			foreach ($value as &$sub) {
+				if (is_string($sub)) {
+					$sub = sprintf("'%s'", stringify($sub));
+				}
+			}
+
+			return sprintf('[%s]', implode(', ', $value));
+		}
+
+		return (string)$value;
+	}
+}
+
 if (!function_exists(__NAMESPACE__.'\\trigger_error_context')) {
 	/**
 	 * function using the php debug backtrace to trigger an error on the calling line.

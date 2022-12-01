@@ -49,7 +49,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	 * @param mixed $entry Either the key or the value that changes
 	 * @return mixed reference to the value or null if it doesn't exist
 	 */
-	public function &change($entry) {
+	public function &change($entry): mixed {
 		$key = $this->findKeyForKeyOrEntry($entry);
 		if ($key !== null) {
 			$this->changed[] = $key;
@@ -139,7 +139,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	 * @param string $key The key for the value
 	 * @return mixed the value from the $this->all array or null if not found
 	 */
-	public function get(string $key) {
+	public function get(string $key): mixed {
 		if (isset($this->all[$key]) && !in_array($key, $this->removed)) {
 			return $this->all[$key];
 		}
@@ -310,7 +310,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	 * @param mixed $entry Either the key or the value
 	 * @return mixed|null the key of the value/the key if it's a key
 	 */
-	private function findKeyForKeyOrEntry($entry) {
+	private function findKeyForKeyOrEntry($entry): mixed {
 		//check if $entry is an array key (allow null, so no isset)
 		if ((is_string($entry) || is_int($entry)) && array_key_exists($entry, $this->all)) {
 			return $entry;

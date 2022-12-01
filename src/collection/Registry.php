@@ -153,7 +153,7 @@ class Registry implements ArrayAccess {
 	 * @param mixed $position The value to be searched for placeholders
 	 * @return mixed the updated value
 	 */
-	protected function replacePlaceholder($position) {
+	protected function replacePlaceholder($position): mixed {
 		if (is_string($position) && mb_strpos($position, '%') !== false) {
 			$matches = array();
 			preg_match_all('/%([^%]+)%/', $position, $matches, \PREG_SET_ORDER);

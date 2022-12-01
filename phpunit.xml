@@ -1,7 +1,16 @@
 <phpunit
-	forceCoversAnnotation="true"
-	bootstrap="vendor/autoload.php">
-	<testsuite name="tests">
-		<directory>./tests</directory>
-	</testsuite>
+  forceCoversAnnotation="true"
+  bootstrap="vendor/autoload.php"
+  colors="true">
+  <testsuite name="tests">
+    <directory>./tests</directory>
+  </testsuite>
+  <coverage processUncoveredFiles="true">
+    <include>
+      <directory suffix=".php">./src</directory>
+    </include>
+    <report>
+      <html outputDirectory="tests/coverage/html"/>
+    </report>
+  </coverage>
 </phpunit>

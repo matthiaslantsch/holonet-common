@@ -11,9 +11,11 @@ namespace holonet\common\verifier;
 
 use ReflectionObject;
 use ReflectionProperty;
+use holonet\common\verifier\rules\Rule;
 use holonet\common\verifier\rules\Required;
-use holonet\common\verifier\rules\ValueRule;
 use function holonet\common\reflection_get_attribute;
+use holonet\common\verifier\rules\CheckValueRuleInterface;
+use holonet\common\verifier\rules\TransformValueRuleInterface;
 
 /**
  * Base verifier simply reads the rule attributes on the given object and checks against them.
@@ -45,12 +47,20 @@ class Verifier {
 		$value = $property->getValue($obj);
 		foreach ($property->getAttributes() as $rule) {
 			$rule = $rule->newInstance();
-			if (!$rule instanceof ValueRule) {
+
+			if (!$rule instanceof Rule) {
 				continue;
 			}
 
-			if (!$rule->pass($value)) {
-				$proof->add($property->getName(), $rule->message($property->getName()));
+			if ($rule instanceof TransformValueRuleInterface) {
+				$value = $rule->transform($value);
+				$property->setValue($obj, $value);
+			}
+
+			if ($rule instanceof CheckValueRuleInterface) {
+				if (!$rule->pass($value)) {
+					$proof->add($property->getName(), $rule->message($property->getName(), $value));
+				}
 			}
 		}
 	}

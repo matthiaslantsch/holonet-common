@@ -10,7 +10,8 @@
 namespace holonet\common\collection;
 
 use ArrayAccess;
-use RuntimeException;
+use function holonet\common\dot_key_get;
+use function holonet\common\dot_key_set;
 
 /**
  * Registry is a key value storage collection class that allows for multilevel keys and placeholders
@@ -19,17 +20,15 @@ use RuntimeException;
  */
 class Registry implements ArrayAccess {
 	/**
-	 * @var array $data Multilevel array with key=value pairs
+	 * @var array<string, mixed> $data Multilevel array with key=value pairs
 	 */
 	private array $data = array();
 
-	/**
-	 * @var string $separator Multilevel separator string
-	 */
-	private string $separator;
+	public function __construct(public string $separator = '.') {
+	}
 
-	public function __construct(string $separator = '.') {
-		$this->separator = $separator;
+	public function all(bool $replace = true): array {
+		return $replace ? $this->replacePlaceholder($this->data) : $this->data;
 	}
 
 	public function clear(): void {
@@ -38,14 +37,9 @@ class Registry implements ArrayAccess {
 
 	/**
 	 * @see self::offsetGet()
-	 * @param mixed|null $default
 	 */
-	public function get(string $key, $default = null) {
+	public function get(string $key, mixed $default = null): mixed {
 		return $this->offsetGet($key) ?? $default;
-	}
-
-	public function getAll(bool $replace = true): array {
-		return $replace ? $this->replacePlaceholder($this->data) : $this->data;
 	}
 
 	/**
@@ -74,55 +68,24 @@ class Registry implements ArrayAccess {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function offsetGet($offset) {
-		$parts = explode($this->separator, $offset);
-		$position = $this->data;
+	public function offsetGet($offset): mixed {
+		$value = dot_key_get($this->data, $offset, separator: $this->separator);
 
-		foreach ($parts as $sublevel) {
-			if (!isset($position[$sublevel])) {
-				return;
-			}
-			$position = $position[$sublevel];
-		}
-
-		return $this->replacePlaceholder($position);
+		return $this->replacePlaceholder($value);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public function offsetSet($offset, $value): void {
-		$parts = explode($this->separator, $offset);
-		$position = &$this->data;
-		foreach ($parts as $key => $sublevel) {
-			if ($key === array_key_last($parts)) {
-				$position[$sublevel] = $value;
-			} else {
-				if (!isset($position[$sublevel])) {
-					$position[$sublevel] = array();
-				}
-				$position = &$position[$sublevel];
-			}
-		}
+		dot_key_set($this->data, $offset, $value, $this->separator);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public function offsetUnset($offset): void {
-		$parts = explode($this->separator, $offset);
-		$position = &$this->data;
-		foreach ($parts as $key => $sublevel) {
-			if (!isset($position[$sublevel])) {
-				return;
-			}
-
-			if ($key === array_key_last($parts)) {
-				unset($position[$sublevel]);
-			} else {
-				$position = &$position[$sublevel];
-			}
-		}
+		dot_key_set($this->data, $offset, null, $this->separator);
 	}
 
 	/**
@@ -133,11 +96,7 @@ class Registry implements ArrayAccess {
 	}
 
 	public function setAll(array $data): void {
-		$replace = array_replace_recursive($this->data, $data);
-		if ($replace === null) {
-			throw new RuntimeException('Failed to array_replace_recursive() data array in Registry');
-		}
-		$this->data = $replace;
+		$this->data = array_replace_recursive($this->data, $data);
 	}
 
 	/**
@@ -148,18 +107,20 @@ class Registry implements ArrayAccess {
 	}
 
 	/**
-	 * replaces place holders in values of the registry
+	 * replaces placeholders in values of the registry
 	 * recursively calls this function if we are talking an array.
 	 * @param mixed $position The value to be searched for placeholders
 	 * @return mixed the updated value
 	 */
-	protected function replacePlaceholder($position): mixed {
+	protected function replacePlaceholder(mixed $position): mixed {
 		if (is_string($position) && mb_strpos($position, '%') !== false) {
 			$matches = array();
 			preg_match_all('/%([^%]+)%/', $position, $matches, \PREG_SET_ORDER);
 			foreach ($matches as $placeholderPair) {
 				//if the placeholder is a value in the registry, replace it, otherwise leave it with the % signs
-				$position = str_replace($placeholderPair[0], $this->get($placeholderPair[1], $placeholderPair[0]), $position);
+				if (($resolved = $this->resolvePlaceHolder($placeholderPair[1]))) {
+					$position = str_replace($placeholderPair[0], $resolved, $position);
+				}
 			}
 		} elseif (is_array($position)) {
 			foreach ($position as $key => $val) {
@@ -168,5 +129,13 @@ class Registry implements ArrayAccess {
 		}
 
 		return $position;
+	}
+
+	/**
+	 * Try to resolve a placeholder from the registry.
+	 * Treat it as a key for a given value in here.
+	 */
+	protected function resolvePlaceHolder(string $placeholder): ?string {
+		return $this->get($placeholder);
 	}
 }

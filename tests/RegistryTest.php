@@ -13,15 +13,31 @@ use PHPUnit\Framework\TestCase;
 use holonet\common\collection\Registry;
 
 /**
- * Tests the functionality of the Registry class.
- *
  * @covers  \holonet\common\collection\Registry
- *
- * @internal
- *
- * @small
+ * @covers  \holonet\common\dot_key_get()
+ * @covers  \holonet\common\dot_key_set()
  */
 class RegistryTest extends TestCase {
+	public function testArrayAccessCalls(): void {
+		$registry = new Registry();
+
+		$data = array(
+			'array' => array(
+				'lowerval' => 'lower',
+				'arrayarray' => array(
+					'lowestval' => 'lowest'
+				)
+			)
+		);
+		$registry->setAll($data);
+
+		$this->assertSame('lowest', $registry['array.arrayarray.lowestval']);
+		$this->assertTrue(isset($registry['array.lowerval']));
+		$this->assertFalse(isset($registry['array.invalid']));
+		unset($registry['array.lowerval.arrayarray']);
+		$this->assertNull($registry['array.lowerval.arrayarray']);
+	}
+
 	public function testGetMultilevel(): void {
 		$registry = new Registry();
 
@@ -50,7 +66,25 @@ class RegistryTest extends TestCase {
 
 		$this->assertSame('coolapp-test', $registry->get('app.environment'));
 		$this->assertSame('inside-%not-existing-placeholder%-testing', $registry->get('app.testing'));
-		$this->assertSame(array('app' => array('name' => 'coolapp', 'environment' => 'coolapp-test', 'testing' => 'inside-%not-existing-placeholder%-testing')), $registry->getAll());
+		$this->assertSame(array('app' => array('name' => 'coolapp', 'environment' => 'coolapp-test', 'testing' => 'inside-%not-existing-placeholder%-testing')), $registry->all());
+	}
+
+	public function testReset(): void {
+		$registry = new Registry();
+
+		$data = array(
+			'array' => array(
+				'lowerval' => 'lower',
+				'arrayarray' => array(
+					'lowestval' => 'lowest'
+				)
+			)
+		);
+		$registry->setAll($data);
+
+		$this->assertNotEmpty($registry->all());
+		$registry->clear();
+		$this->assertEmpty($registry->all());
 	}
 
 	public function testSetMultilevel(): void {
@@ -59,17 +93,17 @@ class RegistryTest extends TestCase {
 		//test multi level set
 		$registry->set('test.subone.sub2', 'subvalue');
 		$expected['test']['subone']['sub2'] = 'subvalue';
-		$this->assertSame($expected, $registry->getAll());
+		$this->assertSame($expected, $registry->all());
 
 		//test multi level set with overwrite
 		$registry->set('test.subone', 'overwrite');
 		$expected['test']['subone'] = 'overwrite';
-		$this->assertSame($expected, $registry->getAll());
+		$this->assertSame($expected, $registry->all());
 
 		//test same level 2 values set
 		$registry->set('test.subonebrother', 'nexttoit');
 		$expected['test'] = array('subone' => 'overwrite', 'subonebrother' => 'nexttoit');
-		$this->assertSame($expected, $registry->getAll());
+		$this->assertSame($expected, $registry->all());
 	}
 
 	public function testSetSublevelKeyWithoutOverwrite(): void {
@@ -92,7 +126,10 @@ class RegistryTest extends TestCase {
 		$registry->set('test', 'value');
 
 		$this->assertSame('value', $registry->get('test'));
+		$this->assertTrue($registry->has('test'));
 		$this->assertNull($registry->get('notexisting'));
-		$this->assertSame(array('test' => 'value'), $registry->getAll());
+		$this->assertSame(array('test' => 'value'), $registry->all());
+		$registry->unset('test');
+		$this->assertNull($registry->get('test'));
 	}
 }

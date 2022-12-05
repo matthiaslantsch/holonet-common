@@ -10,10 +10,11 @@
 namespace holonet\common\verifier\rules\numeric;
 
 use Attribute;
-use holonet\common\verifier\rules\ValueRule;
+use holonet\common\verifier\rules\Rule;
+use holonet\common\verifier\rules\CheckValueRuleInterface;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class Maximum extends ValueRule {
+class Maximum extends Rule implements CheckValueRuleInterface {
 	public function __construct(
 		public int $max,
 		?string $message = null,

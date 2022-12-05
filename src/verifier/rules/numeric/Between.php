@@ -10,10 +10,11 @@
 namespace holonet\common\verifier\rules\numeric;
 
 use Attribute;
-use holonet\common\verifier\rules\ValueRule;
+use holonet\common\verifier\rules\Rule;
+use holonet\common\verifier\rules\CheckValueRuleInterface;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class Between extends ValueRule {
+class Between extends Rule implements CheckValueRuleInterface {
 	public function __construct(
 		public int $low,
 		public int $high,

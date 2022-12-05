@@ -14,11 +14,14 @@ use PHPUnit\Framework\TestCase;
 use holonet\common\verifier\Proof;
 use function holonet\common\verify;
 use function holonet\common\stringify;
-use holonet\common\verifier\rules\ValueRule;
+use holonet\common\verifier\rules\Rule;
+use holonet\common\verifier\rules\CheckValueRuleInterface;
+use holonet\common\verifier\rules\TransformValueRuleInterface;
 
 /**
  * @covers \holonet\common\verifier\rules\Rule
- * @covers \holonet\common\verifier\rules\ValueRule
+ * @covers \holonet\common\verifier\rules\CheckValueRuleInterface
+ * @covers \holonet\common\verifier\rules\TransformValueRuleInterface
  */
 abstract class BaseVerifyTest extends TestCase {
 	public function assertProofContainsError(Proof $actual, string $attr, string $error): void {
@@ -64,12 +67,33 @@ abstract class BaseVerifyTest extends TestCase {
 		$proof = verify($test);
 		$this->assertProofPassed($proof, 'testProp');
 	}
+
+	public function testTransformsRule(): void {
+		$test = new class() {
+			public function __construct(
+				#[SlugifyAttribute]
+				public string $testProp = 'This Is A normal Sentence'
+			) {
+			}
+		};
+
+		$proof = verify($test);
+		$this->assertProofPassed($proof, 'testProp');
+		$this->assertSame('this-is-a-normal-sentence', $test->testProp);
+	}
 }
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class Invalid extends ValueRule {
+class Invalid extends Rule implements CheckValueRuleInterface {
 	public function pass(mixed $value): bool {
 		return false;
+	}
+}
+
+#[Attribute(Attribute::TARGET_PROPERTY)]
+class SlugifyAttribute extends Rule implements TransformValueRuleInterface {
+	public function transform(mixed $value): mixed {
+		return mb_strtolower(str_replace(' ', '-', $value));
 	}
 }
 

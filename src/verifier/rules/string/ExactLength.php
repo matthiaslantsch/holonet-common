@@ -10,10 +10,11 @@
 namespace holonet\common\verifier\rules\string;
 
 use Attribute;
-use holonet\common\verifier\rules\ValueRule;
+use holonet\common\verifier\rules\Rule;
+use holonet\common\verifier\rules\CheckValueRuleInterface;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class ExactLength extends ValueRule {
+class ExactLength extends Rule implements CheckValueRuleInterface {
 	public function __construct(
 		public int $len,
 		?string $message = null,

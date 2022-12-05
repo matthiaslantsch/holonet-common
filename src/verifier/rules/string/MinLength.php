@@ -10,10 +10,11 @@
 namespace holonet\common\verifier\rules\string;
 
 use Attribute;
-use holonet\common\verifier\rules\ValueRule;
+use holonet\common\verifier\rules\Rule;
+use holonet\common\verifier\rules\CheckValueRuleInterface;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class MinLength extends ValueRule {
+class MinLength extends Rule implements CheckValueRuleInterface {
 	public function __construct(
 		public int $min,
 		?string $message = null,

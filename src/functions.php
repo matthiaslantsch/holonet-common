@@ -9,23 +9,68 @@
 
 namespace holonet\common;
 
-use Attribute;
 use ReflectionClass;
 use ReflectionProperty;
 use holonet\common\verifier\Proof;
 use holonet\common\verifier\Verifier;
+use function Webmozart\Assert\Tests\StaticAnalysis\string;
+
+if (!function_exists(__NAMESPACE__.'\\dot_key_set')) {
+	function dot_key_set(object|array &$position, string $key, mixed $value = null, string $separator = '.'): void {
+		$parts = explode($separator, $key);
+
+		$targetKey = array_pop($parts);
+
+		foreach ($parts as $subLevel) {
+			if (!isset($position[$subLevel])) {
+				$position[$subLevel] = array();
+			}
+			$position = &$position[$subLevel];
+		}
+
+		if (!is_array($position)) {
+			$position = array();
+		}
+
+		if ($value === null) {
+			unset($position[$targetKey]);
+
+			return;
+		}
+		$position[$targetKey] = $value;
+	}
+}
+
+if (!function_exists(__NAMESPACE__.'\\dot_key_get')) {
+	function dot_key_get(object|array $position, string $key, mixed $default = null, string $separator = '.'): mixed {
+		$parts = explode($separator, $key);
+
+		foreach ($parts as $subLevel) {
+			if (!isset($position[$subLevel])) {
+				return $default;
+			}
+			$position = $position[$subLevel];
+		}
+
+		return $position;
+	}
+}
+
+if (!function_exists(__NAMESPACE__.'\\set_object_vars')) {
+	function set_object_vars(object $object, array $vars): void {
+		foreach ($vars as $name => $value) {
+			$object->{$name} = $value;
+		}
+	}
+}
 
 if (!function_exists(__NAMESPACE__.'\\verify')) {
 	/**
 	 * Run a verifier on a given php object (most likely a dto) and return a proof of its verified state.
 	 * Can be used with the second parameter to save a different version of the Verifier.
 	 */
-	function verify(object $obj, ?Verifier $verifier = null, bool $reset = false): Proof {
+	function verify(object $obj, ?Verifier $verifier = null): Proof {
 		static $_verifier;
-
-		if ($reset) {
-			$_verifier = null;
-		}
 
 		if ($verifier !== null) {
 			$_verifier = $verifier;
@@ -54,7 +99,7 @@ if (!function_exists(__NAMESPACE__.'\\stringify')) {
 	/**
 	 * Return a best guess string representation of the given value.
 	 */
-	function stringify(mixed $value): string {
+	function stringify(mixed $value, bool $prettyPrint = false): string {
 		if (is_array($value)) {
 			if (empty($value)) {
 				return '[]';
@@ -62,8 +107,14 @@ if (!function_exists(__NAMESPACE__.'\\stringify')) {
 
 			foreach ($value as &$sub) {
 				if (is_string($sub)) {
-					$sub = sprintf("'%s'", stringify($sub));
+					$sub = sprintf("'%s'", stringify($sub, $prettyPrint));
+				} else {
+					$sub = stringify($sub, $prettyPrint);
 				}
+			}
+
+			if ($prettyPrint) {
+				return sprintf("[\n\t%s\n]", implode(",\n\t", $value));
 			}
 
 			return sprintf('[%s]', implode(', ', $value));
@@ -145,5 +196,37 @@ if (!function_exists(__NAMESPACE__.'\\readableDurationString')) {
 		}
 
 		return $time.'s';
+	}
+}
+
+if (!function_exists(__NAMESPACE__.'\\get_absolute_path')) {
+	/**
+	 * Get the absolute path for a given path by resolving any relative .. references
+	 * and normalising separator. Courtesy of:.
+	 * @see https://www.php.net/manual/en/function.realpath.php#84012
+	 */
+	function get_absolute_path(string $path): string {
+		if ($path[0] === '.') {
+			$cwd = getcwd();
+			if ($cwd !== false) {
+				$path = "{$cwd}/{$path}";
+			}
+		}
+
+		$path = str_replace(array('/', '\\'), \DIRECTORY_SEPARATOR, $path);
+		$parts = explode(\DIRECTORY_SEPARATOR, $path);
+		$absolutes = array();
+		foreach ($parts as $part) {
+			if ($part === '.') {
+				continue;
+			}
+			if ($part === '..') {
+				array_pop($absolutes);
+			} else {
+				$absolutes[] = $part;
+			}
+		}
+
+		return implode(\DIRECTORY_SEPARATOR, $absolutes);
 	}
 }

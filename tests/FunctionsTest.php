@@ -16,13 +16,14 @@ use holonet\common\verifier\Proof;
 use function holonet\common\verify;
 use holonet\common\verifier\Verifier;
 use holonet\common\verifier\rules\Required;
+use function holonet\common\get_absolute_path;
 
 /**
  * @coversNothing
  */
 class FunctionsTest extends TestCase {
 	protected function tearDown(): void {
-		verify(new stdClass(), reset: true);
+		verify(new stdClass(), new Verifier());
 	}
 
 	/**
@@ -35,6 +36,13 @@ class FunctionsTest extends TestCase {
 
 		$expected .= 'test.txt';
 		$this->assertSame($expected, co\FilesystemUtils::filepath(__DIR__, 'subfolder', 'subsubfolder', 'test.txt'));
+	}
+
+	/**
+	 * @covers \holonet\common\get_absolute_path()
+	 */
+	public function testGetAbsolutePath(): void {
+		$this->assertSame('this/a/test/is', get_absolute_path('this/is/../a/./test/./is'));
 	}
 
 	/**
@@ -58,12 +66,13 @@ class FunctionsTest extends TestCase {
 		$msg = '';
 
 		try {
+			$line = (__LINE__) + 1;
 			co\trigger_error_context('oh nos');
 		} catch (\PHPUnit\Exception $e) {
 			$msg = $e->getMessage();
 		}
 
-		$expected = 'oh nos in file '.__FILE__.' on line 61';
+		$expected = 'oh nos in file '.__FILE__." on line {$line}";
 		$this->assertSame($expected, $msg);
 	}
 

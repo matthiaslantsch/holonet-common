@@ -9,6 +9,6 @@
 
 namespace holonet\common\verifier\rules;
 
-abstract class ValueRule extends Rule {
-	abstract public function pass(mixed $value): bool;
+interface TransformValueRuleInterface {
+	public function transform(mixed $value): mixed;
 }

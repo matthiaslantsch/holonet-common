@@ -60,7 +60,7 @@ class ConfigReaderTest extends TestCase {
 		$configreader = new ConfigReader();
 		$configreader->read($file);
 
-		$this->assertSame($expectedData, $configreader->registry->getAll());
+		$this->assertSame($expectedData, $configreader->registry->all());
 	}
 
 	public function testUnknownType(): void {

@@ -7,25 +7,17 @@
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
-namespace holonet\common\verifier\rules\numeric;
+namespace holonet\common\verifier\rules\filesystem;
 
 use Attribute;
-use holonet\common\verifier\rules\Rule;
-use holonet\common\verifier\rules\CheckValueRuleInterface;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class Numeric extends Rule implements CheckValueRuleInterface {
-	public function __construct(
-		?string $message = null,
-	) {
-		parent::__construct($message);
-	}
-
+class ValidPath extends PathRule {
 	public static function defaultMessage(): string {
-		return ':attr must be numeric';
+		return "':value' is not a valid path";
 	}
 
 	public function pass(mixed $value): bool {
-		return is_numeric($value);
+		return file_exists($value);
 	}
 }

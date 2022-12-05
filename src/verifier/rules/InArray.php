@@ -12,7 +12,7 @@ namespace holonet\common\verifier\rules;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class InArray extends ValueRule {
+class InArray extends Rule implements CheckValueRuleInterface {
 	public function __construct(
 		public array $values,
 		public bool $not = false,

@@ -230,3 +230,27 @@ if (!function_exists(__NAMESPACE__.'\\get_absolute_path')) {
 		return implode(\DIRECTORY_SEPARATOR, $absolutes);
 	}
 }
+
+if (!function_exists(__NAMESPACE__.'\\read_file_contents')) {
+	function read_file_contents(string $path): string {
+		return FilesystemUtils::readFileContents($path);
+	}
+}
+
+if (!function_exists(__NAMESPACE__.'\\read_file_lines')) {
+	function read_file_lines(string $path): array {
+		return FilesystemUtils::readFileLines($path);
+	}
+}
+
+if (!function_exists(__NAMESPACE__.'\\file_contains')) {
+	function file_contains(string $path, string $search): bool {
+		return FilesystemUtils::fileContains($path, $search);
+	}
+}
+
+if (!function_exists(__NAMESPACE__.'\\dir_path')) {
+	function dir_path(string ...$parts): string {
+		return FilesystemUtils::dirpath(...$parts);
+	}
+}

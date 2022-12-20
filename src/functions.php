@@ -254,3 +254,19 @@ if (!function_exists(__NAMESPACE__.'\\dir_path')) {
 		return FilesystemUtils::dirpath(...$parts);
 	}
 }
+
+if (!function_exists(__NAMESPACE__.'\\str_lreplace')) {
+	/**
+	 * Replace the last occurence of a string inside the subject.
+	 * Courtesy of https://stackoverflow.com/a/3835653
+	 */
+	function str_lreplace($search, $replace, $subject) {
+		$pos = strrpos($subject, $search);
+
+		if($pos !== false) {
+			$subject = substr_replace($subject, $replace, $pos, strlen($search));
+		}
+
+		return $subject;
+	}
+}

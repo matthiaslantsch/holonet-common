@@ -13,6 +13,7 @@ use ReflectionClass;
 use ReflectionProperty;
 use holonet\common\verifier\Proof;
 use holonet\common\verifier\Verifier;
+use holonet\common\code\FileUseStatementParser;
 use function Webmozart\Assert\Tests\StaticAnalysis\string;
 
 if (!function_exists(__NAMESPACE__.'\\dot_key_set')) {
@@ -258,15 +259,30 @@ if (!function_exists(__NAMESPACE__.'\\dir_path')) {
 if (!function_exists(__NAMESPACE__.'\\str_lreplace')) {
 	/**
 	 * Replace the last occurence of a string inside the subject.
-	 * Courtesy of https://stackoverflow.com/a/3835653
+	 * Courtesy of https://stackoverflow.com/a/3835653.
 	 */
 	function str_lreplace($search, $replace, $subject) {
-		$pos = strrpos($subject, $search);
+		$pos = mb_strrpos($subject, $search);
 
-		if($pos !== false) {
-			$subject = substr_replace($subject, $replace, $pos, strlen($search));
+		if ($pos !== false) {
+			$subject = substr_replace($subject, $replace, $pos, mb_strlen($search));
 		}
 
 		return $subject;
+	}
+}
+
+if (!function_exists(__NAMESPACE__.'\\get_class_short')) {
+	function get_class_short(string $class): string {
+		return basename(str_replace('\\', '/', $class));
+	}
+}
+
+if (!function_exists(__NAMESPACE__.'\\file_get_use_statements')) {
+	/**
+	 * Read in and parse all use statements for a given php code file.
+	 */
+	function file_get_use_statements(string $file): array {
+		return (new FileUseStatementParser($file))->parse();
 	}
 }

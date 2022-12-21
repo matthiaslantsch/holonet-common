@@ -39,6 +39,38 @@ class FunctionsTest extends TestCase {
 	}
 
 	/**
+	 * @covers \holonet\common\file_get_use_statements()
+	 * @covers \holonet\common\code\FileUseStatementParser
+	 */
+	public function testFileGetUseStatements(): void {
+		$this->assertSame(array(
+			'class' => array(
+				'Another' => 'My\Full\Classname',
+				'NSname' => 'My\Full\NSname',
+				'ArrayObject' => 'ArrayObject',
+				'AnotherTest' => 'My\Full\Classname',
+				'NSnameNamed' => 'My\Full\NSnameNamed',
+				'ClassA' => 'some\namespace\ClassA',
+				'ClassB' => 'some\namespace\ClassB',
+				'C' => 'some\namespace\ClassC',
+			),
+			'function' => array(
+				'functionName' => 'My\Full\functionName',
+				'func' => 'My\Full\functionName',
+				'fn_a' => 'some\namespace\fn_a',
+				'fn_b' => 'some\namespace\fn_b',
+				'fc' => 'some\namespace\fn_c',
+			),
+			'constant' => array(
+				'CONSTANT' => 'My\Full\CONSTANT',
+				'ConstA' => 'some\namespace\ConstA',
+				'ConstB' => 'some\namespace\ConstB',
+				'cnstc' => 'some\namespace\ConstC'
+			)
+		), co\file_get_use_statements(__DIR__.'/data/use_statements.txt'));
+	}
+
+	/**
 	 * @covers \holonet\common\get_absolute_path()
 	 */
 	public function testGetAbsolutePath(): void {

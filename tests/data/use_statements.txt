@@ -1,0 +1,27 @@
+<?php
+
+namespace foo;
+
+use My\Full\Classname as Another;
+
+// this is the same as use My\Full\NSname as NSname
+use My\Full\NSname;
+
+// importing a global class
+use ArrayObject;
+
+// importing a function
+use function My\Full\functionName;
+
+// aliasing a function
+use function My\Full\functionName as func;
+
+// importing a constant
+use const My\Full\CONSTANT;
+
+use My\Full\Classname as AnotherTest, My\Full\NSnameNamed;
+
+use some\namespace\{ClassA, ClassB, ClassC as C};
+use function some\namespace\{fn_a, fn_b, fn_c as fc};
+use const some\namespace\{ConstA, ConstB, ConstC as cnstc};
+

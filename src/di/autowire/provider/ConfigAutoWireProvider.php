@@ -9,6 +9,7 @@
 
 namespace holonet\common\di\autowire\provider;
 
+use LogicException;
 use ReflectionNamedType;
 use ReflectionParameter;
 use holonet\common\di\Container;
@@ -50,5 +51,29 @@ class ConfigAutoWireProvider implements ParamAutoWireProvider {
 		}
 
 		return $container->registry->get($configKey);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function compile(ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string {
+		$expectedType = $type->getName();
+
+		$attribute = reflection_get_attribute($param, ConfigItem::class);
+		if ($attribute === null) {
+			return new LogicException();
+		}
+
+		$configKey = ($givenParam ?? $attribute->key);
+
+		if (class_exists($expectedType)) {
+			if ($attribute->verified) {
+				return "\$this->registry->verifiedDto('{$configKey}', '{$expectedType}');";
+			}
+
+			return "\$this->registry->asDto('{$configKey}', '{$expectedType}');";
+		}
+
+		return "\$this->registry->get('{$configKey}');";
 	}
 }

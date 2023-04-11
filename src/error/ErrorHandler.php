@@ -60,11 +60,11 @@ class ErrorHandler {
 			return null;
 		}
 
-		list('type' => $type, 'name' => $name) = (self::ERROR_LEVEL_LOOKUP[$errno] ?? self::ERROR_LEVEL_LOOKUP[\E_ERROR]);
+		list('level' => $level, 'name' => $name) = (self::ERROR_LEVEL_LOOKUP[$errno] ?? self::ERROR_LEVEL_LOOKUP[\E_ERROR]);
 
 		if ($this->logger !== null) {
 			$this->logger->log(
-				$type,
+				$level,
 				"{$name}: {$msg}",
 				array(
 					'code' => $errno,

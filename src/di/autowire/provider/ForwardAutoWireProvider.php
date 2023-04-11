@@ -31,4 +31,11 @@ class ForwardAutoWireProvider implements ParamAutoWireProvider {
 
 		return null;
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function compile(ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string {
+		return var_export($givenParam);
+	}
 }

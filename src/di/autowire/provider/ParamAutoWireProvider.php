@@ -31,4 +31,11 @@ interface ParamAutoWireProvider {
 	 * If it is appropriate to return a value but it can't it should throw an exception instead.
 	 */
 	public function provide(Container $container, ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): mixed;
+
+	/**
+	 * Return a php code string representation of getting the autowired parameter value.
+	 * This is used to compile the static container class.
+	 * Assume that $this in the code refers to the container object.
+	 */
+	public function compile(ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string;
 }

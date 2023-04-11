@@ -42,7 +42,7 @@ class Container implements ContainerInterface {
 	protected array $recursionPath = array();
 
 	/**
-	 * @var array<string, array{string, array<string, array>}> $wiring Wiring information on how to make certain types of objects.
+	 * @var array<string, array{string, array}> $wiring Wiring information on how to make certain types of objects.
 	 * Mapped by name / type => class abstract (array with class name and parameters).
 	 */
 	protected array $wiring = array();
@@ -190,12 +190,6 @@ class Container implements ContainerInterface {
 	}
 
 	protected function instance(string $class, array $params): object {
-		if (is_a($class, Provider::class, true)) {
-			$provider = new $class($this);
-
-			return $provider->make();
-		}
-
 		$reflection = new ReflectionClass($class);
 		$constructor = $reflection->getConstructor();
 		if ($constructor === null) {
@@ -208,6 +202,11 @@ class Container implements ContainerInterface {
 
 		$params = $this->autoWiring->autoWire($constructor, $params);
 
-		return new $class(...$params);
+		$result = new $class(...$params);
+		if ($result instanceof Provider) {
+			return $result->make();
+		}
+
+		return $result;
 	}
 }

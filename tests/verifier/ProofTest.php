@@ -11,10 +11,9 @@ namespace holonet\common\tests\verifier;
 
 use PHPUnit\Framework\TestCase;
 use holonet\common\verifier\Proof;
+use PHPUnit\Framework\Attributes\CoversClass;
 
-/**
- * @covers \holonet\common\verifier\Proof
- */
+#[CoversClass(Proof::class)]
 class ProofTest extends TestCase {
 	public function testProofErrorBag(): void {
 		$proof = new Proof();

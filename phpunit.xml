@@ -1,16 +1,16 @@
-<phpunit
-  forceCoversAnnotation="true"
-  bootstrap="vendor/autoload.php"
-  colors="true">
+<?xml version="1.0"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" bootstrap="vendor/autoload.php" colors="true" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.1/phpunit.xsd" cacheDirectory=".phpunit.cache" requireCoverageMetadata="true">
   <testsuite name="tests">
     <directory>./tests</directory>
   </testsuite>
-  <coverage processUncoveredFiles="true">
-    <include>
-      <directory suffix=".php">./src</directory>
-    </include>
+  <coverage>
     <report>
       <html outputDirectory="tests/coverage/html"/>
     </report>
   </coverage>
+  <source>
+    <include>
+      <directory suffix=".php">./src</directory>
+    </include>
+  </source>
 </phpunit>

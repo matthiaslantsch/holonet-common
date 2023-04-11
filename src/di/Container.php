@@ -9,110 +9,182 @@
 
 namespace holonet\common\di;
 
-use TypeError;
 use ReflectionClass;
-use ReflectionException;
 use Psr\Container\ContainerInterface;
+use holonet\common\di\autowire\AutoWire;
+use holonet\common\config\ConfigRegistry;
+use holonet\common\di\autowire\AutoWireException;
 
 /**
  * Dependency Injection container conforming with PSR-11.
  */
 class Container implements ContainerInterface {
 	/**
-	 * @var string DI_PREFIX Prefix value for the injected class properties
+	 * @var array<string, string> $aliases key mapping with all available services on the container
 	 */
-	public const DI_PREFIX = 'di_';
+	protected array $aliases = array();
+
+	protected AutoWire $autoWiring;
 
 	/**
-	 * @var array<string, object> $dependencies A key value storage with dependency objects
+	 * @var array<string, array<string, array{string, array}>> $callers Method calls with injection definitions
 	 */
-	private array $dependencies = array();
+	protected array $callers = array();
 
 	/**
-	 * @var array<string, array> $lazyLoadedDeps Lazily loaded dependency objects
+	 * @var array<string, object> $instances a key value storage with dependency objects
 	 */
-	private array $lazyLoadedDeps = array();
+	protected array $instances = array();
+
+	/**
+	 * @var string[] $recursionPath Array used keep track of injections (to prevent recursive dependencies)
+	 */
+	protected array $recursionPath = array();
+
+	/**
+	 * @var array<string, array{string, array<string, array>}> $wiring Wiring information on how to make certain types of objects.
+	 * Mapped by name / type => class abstract (array with class name and parameters).
+	 */
+	protected array $wiring = array();
+
+	public function __construct(public ConfigRegistry $registry = new ConfigRegistry()) {
+		$this->autoWiring = new AutoWire($this);
+	}
+
+	/**
+	 * @template T
+	 * @param class-string<T> $class
+	 * @return T
+	 */
+	public function byType(string $class, ?string $id = null): object {
+		$keys = array_keys($this->aliases, $class);
+		if (count($keys) === 1) {
+			return $this->get(reset($keys));
+		}
+
+		if ($id === null) {
+			throw new DependencyInjectionException(sprintf('Ambiguous dependency of type \'%s\' requested: found %d dependencies of that type', $class, count($keys)));
+		}
+
+		if (!in_array($id, $keys)) {
+			// we don't have it, let's try to make it
+			return $this->make($class);
+		}
+
+		return $this->get($id);
+	}
 
 	/**
 	 * {@inheritDoc}
-	 * @param string[] $getFor Array used keep track of injections (to prevent recursive dependencies)
 	 */
-	public function get($id, array $getFor = array()) {
-		if (in_array($id, $getFor)) {
-			throw new DependencyInjectionException('Recursive dependency definition detected: '.implode(' => ', $getFor));
+	public function get(string $id): object {
+		if (in_array($id, $this->recursionPath)) {
+			throw new DependencyInjectionException(sprintf('Recursive dependency definition detected: %s', implode(' => ', $this->recursionPath)));
 		}
 
-		if (isset($this->dependencies[$id])) {
-			return $this->dependencies[$id];
+		if (!$this->has($id)) {
+			throw new DependencyNotFoundException("Container has no named dependency called '{$id}'");
 		}
-		if (isset($this->lazyLoadedDeps[$id])) {
-			try {
-				list('class' => $class, 'args' => $args) = $this->lazyLoadedDeps[$id];
-				$rfc = new ReflectionClass($class);
-				$value = $rfc->newInstanceWithoutConstructor();
-				$getFor[] = $id;
-				$this->inject($value, true, $getFor);
-				if (method_exists($value, '__construct')) {
-					$value->__construct(...$args);
-				}
-				if (method_exists($value, 'init')) {
-					trigger_error('Relying on init() to initialise dependency objects after injecting is no longer required and deprecated', \E_USER_DEPRECATED);
-				}
-				$this->dependencies[$id] = $value;
 
-				return $value;
-			} catch (TypeError | ReflectionException $e) {
-				throw new DependencyInjectionException("Cannot initialise dependency '{$id}' on Dependency Container: '{$e->getMessage()}'", (int)($e->getCode()), $e);
-			}
+		// if we have the dependency, just return it
+		if (isset($this->instances[$id])) {
+			return $this->instances[$id];
+		}
+
+		list($class, $params) = $this->wiring[$id];
+
+		$this->recursionPath[] = $id;
+		$this->instances[$id] = $this->instance($class, $params);
+		array_pop($this->recursionPath);
+
+		return $this->instances[$id];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function has($id): bool {
+		return isset($this->aliases[$id]);
+	}
+
+	/**
+	 * @template T
+	 * @param class-string<T>|string $abstract
+	 * @return T
+	 */
+	public function make(string $abstract, array $extraParams = array()): object {
+		if ($this->has($abstract)) {
+			return $this->get($abstract);
+		}
+
+		if (in_array($abstract, $this->recursionPath)) {
+			throw new DependencyInjectionException(sprintf('Recursive dependency definition detected: %s', implode(' => ', $this->recursionPath)));
+		}
+
+		$this->recursionPath[] = $abstract;
+		if (isset($this->wiring[$abstract])) {
+			list($class, $params) = $this->wiring[$abstract];
+			$instance = $this->instance($class, array_merge($params, $extraParams));
 		} else {
-			throw new DependencyNotFoundException("Dependency '{$id}' does not exist on Dependency Container");
-		}
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function has($id) {
-		return isset($this->dependencies[$id]) || isset($this->lazyLoadedDeps[$id]);
-	}
-
-	/**
-	 * Method used to inject dependencies into an object, here called "the user of the dependencies".
-	 * @param object $dependencyUser The object to be injected
-	 * @param bool $forceInjection Whether to throw an exception if a dependency cannot be found
-	 * @param array $injectFor Array used keep track of injections (to prevent recursive dependencies)
-	 */
-	public function inject(object $dependencyUser, bool $forceInjection = true, array $injectFor = array()): void {
-		foreach (array_keys(get_class_vars(get_class($dependencyUser))) as $propertyName) {
-			$propertyName = (string)$propertyName;
-			if (mb_strpos($propertyName, self::DI_PREFIX) === 0) {
-				$depKey = str_replace(self::DI_PREFIX, '', $propertyName);
-				if (!$this->has($depKey) && $forceInjection) {
-					throw new DependencyNotFoundException("Dependency '{$depKey}' does not exist on Dependency Container");
-				}
-				$dependencyUser->{$propertyName} = $this->get($depKey, $injectFor);
+			if (!class_exists($abstract)) {
+				throw new DependencyInjectionException("No idea how to make '{$abstract}'. Class does not exist and no wire directive was set");
 			}
+
+			$instance = $this->instance($abstract, $extraParams);
 		}
+		array_pop($this->recursionPath);
+
+		return $instance;
 	}
 
 	/**
 	 * Method used to set a dependency in this class.
-	 * If the given value is an object, it will get injected and saved under the key
+	 * If the given value is an object, be saved under the key
 	 * If the given value is a string a class name is assumed and the class / argument combination will be saved for later instantiation.
-	 * @param string $id The key to save the dependency under
-	 * @param mixed $value The dependency to save
-	 * @param mixed ...$constructorArgs Arguments for the class instantiation
 	 */
-	public function set(string $id, $value, ...$constructorArgs): void {
-		if (is_string($value) && class_exists($value)) {
-			$this->lazyLoadedDeps[$id] = array('class' => $value, 'args' => $constructorArgs);
-		} else {
-			if (!is_object($value)) {
-				throw new DependencyInjectionException("Cannot create dependency '{$id}' on Dependency Container");
+	public function set(string $id, object|string $value, array $params = array()): void {
+		// as the object has already been created, we must assume it has its dependencies
+		if (is_object($value)) {
+			$this->aliases[$id] = get_class($value);
+			$this->instances[$id] = $value;
+
+			return;
+		}
+
+		if (class_exists($value)) {
+			$this->aliases[$id] = $value;
+			$this->wire($value, $params, $id);
+		}
+	}
+
+	/**
+	 * Set up a wiring from an abstract to an actual implementation.
+	 * This can be used to choose strategy pattern possibilities based on config.
+	 * The wired object will also get additional params autowired.
+	 */
+	public function wire(string $class, array $params = array(), ?string $abstract = null): void {
+		if (!class_exists($class)) {
+			throw new DependencyInjectionException("Could not auto-wire abstract '{$class}': class does not exist");
+		}
+
+		$abstract ??= $class;
+
+		$this->wiring[$abstract] = array($class, $params);
+	}
+
+	protected function instance(string $class, array $params): object {
+		$reflection = new ReflectionClass($class);
+		$constructor = $reflection->getConstructor();
+		if ($constructor === null) {
+			if (!empty($params)) {
+				AutoWireException::failNoConstructor($reflection, $params);
 			}
 
-			$this->inject($value);
-			$this->dependencies[$id] = $value;
+			return new $class();
 		}
+
+		$params = $this->autoWiring->autoWire($constructor, $params);
+
+		return new $class(...$params);
 	}
 }

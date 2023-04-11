@@ -10,7 +10,10 @@
 namespace holonet\common;
 
 use ReflectionClass;
+use RuntimeException;
 use ReflectionProperty;
+use ReflectionParameter;
+use InvalidArgumentException;
 use holonet\common\verifier\Proof;
 use holonet\common\verifier\Verifier;
 use holonet\common\code\FileUseStatementParser;
@@ -89,7 +92,7 @@ if (!function_exists(__NAMESPACE__.'\\reflection_get_attribute')) {
 	 * @param class-string<T> $class
 	 * @return ?T
 	 */
-	function reflection_get_attribute(ReflectionClass|ReflectionProperty $reflection, string $class): ?object {
+	function reflection_get_attribute(ReflectionClass|ReflectionProperty|ReflectionParameter $reflection, string $class): ?object {
 		$attrs = $reflection->getAttributes($class);
 
 		return reset($attrs) ? reset($attrs)->newInstance() : null;
@@ -122,18 +125,6 @@ if (!function_exists(__NAMESPACE__.'\\stringify')) {
 		}
 
 		return (string)$value;
-	}
-}
-
-if (!function_exists(__NAMESPACE__.'\\trigger_error_context')) {
-	/**
-	 * function using the php debug backtrace to trigger an error on the calling line.
-	 * @param string $message The message to throw in the error
-	 * @param int $level Error level integer, defaults to E_USER_ERROR
-	 */
-	function trigger_error_context(string $message, int $level = \E_USER_ERROR): void {
-		$caller = debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0];
-		trigger_error("{$message} in file {$caller['file']} on line {$caller['line']}", $level);
 	}
 }
 

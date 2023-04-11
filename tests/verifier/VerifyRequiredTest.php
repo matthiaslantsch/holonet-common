@@ -10,12 +10,12 @@
 namespace holonet\common\tests\verifier;
 
 use function holonet\common\verify;
+use holonet\common\verifier\Verifier;
 use holonet\common\verifier\rules\Required;
+use PHPUnit\Framework\Attributes\CoversClass;
 
-/**
- * @covers \holonet\common\verifier\Verifier
- * @covers \holonet\common\verifier\rules\Required
- */
+#[CoversClass(Verifier::class)]
+#[CoversClass(Required::class)]
 class VerifyRequiredTest extends BaseVerifyTest {
 	public function testCheckForRequiredAfterUnset(): void {
 		$test = new class('test') {

@@ -10,20 +10,22 @@
 namespace holonet\common\tests\verifier;
 
 use function holonet\common\verify;
+use holonet\common\verifier\Verifier;
+use holonet\common\verifier\rules\Rule;
+use PHPUnit\Framework\Attributes\CoversClass;
+use holonet\common\verifier\rules\filesystem\PathRule;
 use holonet\common\verifier\rules\filesystem\Readable;
 use holonet\common\verifier\rules\filesystem\Writable;
 use holonet\common\verifier\rules\filesystem\Directory;
 use holonet\common\verifier\rules\filesystem\ValidPath;
 
-/**
- * @covers \holonet\common\verifier\Verifier
- * @covers \holonet\common\verifier\rules\Rule
- * @covers \holonet\common\verifier\rules\filesystem\ValidPath
- * @covers \holonet\common\verifier\rules\filesystem\PathRule
- * @covers \holonet\common\verifier\rules\filesystem\Readable
- * @covers \holonet\common\verifier\rules\filesystem\Writable
- * @covers \holonet\common\verifier\rules\filesystem\Directory
- */
+#[CoversClass(Verifier::class)]
+#[CoversClass(Rule::class)]
+#[CoversClass(ValidPath::class)]
+#[CoversClass(PathRule::class)]
+#[CoversClass(Readable::class)]
+#[CoversClass(Writable::class)]
+#[CoversClass(Directory::class)]
 class VerifyFilesystemRulesTest extends BaseVerifyTest {
 	public function testCheckPathIsDirectory(): void {
 		$test = new class('/path/surely/doesnt/exist') {

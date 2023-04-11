@@ -10,13 +10,14 @@
 namespace holonet\common\tests\verifier;
 
 use function holonet\common\verify;
+use holonet\common\verifier\Verifier;
+use holonet\common\verifier\rules\Rule;
 use holonet\common\verifier\rules\InArray;
+use PHPUnit\Framework\Attributes\CoversClass;
 
-/**
- * @covers \holonet\common\verifier\Verifier
- * @covers \holonet\common\verifier\rules\Rule
- * @covers \holonet\common\verifier\rules\InArray
- */
+#[CoversClass(Verifier::class)]
+#[CoversClass(Rule::class)]
+#[CoversClass(InArray::class)]
 class VerifyInArrayTest extends BaseVerifyTest {
 	public function testCheckInArray(): void {
 		$test = new class('itsy bitsy') {

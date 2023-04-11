@@ -10,17 +10,18 @@
 namespace holonet\common\tests;
 
 use PHPUnit\Framework\TestCase;
+use holonet\common\collection\Registry;
 use holonet\common\config\ConfigRegistry;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversFunction;
 use holonet\common\error\BadEnvironmentException;
 use holonet\common\verifier\rules\string\MinLength;
 use holonet\common\verifier\rules\string\ExactLength;
 
-/**
- * @covers  \holonet\common\config\ConfigRegistry
- * @covers  \holonet\common\collection\Registry
- * @covers  \holonet\common\dot_key_get()
- * @covers  \holonet\common\dot_key_set()
- */
+#[CoversClass(ConfigRegistry::class)]
+#[CoversClass(Registry::class)]
+#[CoversFunction('holonet\common\dot_key_get')]
+#[CoversFunction('holonet\common\dot_key_set')]
 class ConfigRegistryTest extends TestCase {
 	protected function setUp(): void {
 		$_ENV['ENV_VALUE'] = 'cool env config value';
@@ -55,7 +56,7 @@ class ConfigRegistryTest extends TestCase {
 
 	public function testVerifiedDto(): void {
 		$this->expectException(BadEnvironmentException::class);
-		$this->expectExceptionMessage('Faulty config with key test.testProp: testProp must be exactly 11 characters long');
+		$this->expectExceptionMessage('Faulty config with key \'test.testProp\': testProp must be exactly 11 characters long');
 
 		$dto = new class() {
 			public function __construct(
@@ -73,7 +74,7 @@ class ConfigRegistryTest extends TestCase {
 
 	public function testVerifiedDtoTypeError(): void {
 		$this->expectException(BadEnvironmentException::class);
-		$this->expectExceptionMessage('Faulty config with key test: TypeError: Cannot assign array to property class@anonymous::$testProp of type string');
+		$this->expectExceptionMessage('Faulty config with key \'test\': TypeError: Cannot assign array to property class@anonymous::$testProp of type string');
 
 		$dto = new class() {
 			public function __construct(

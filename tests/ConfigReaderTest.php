@@ -12,21 +12,21 @@ namespace holonet\common\tests;
 use Exception;
 use PHPUnit\Framework\TestCase;
 use holonet\common\config\ConfigReader;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use holonet\common\config\parsers\IniConfigParser;
+use holonet\common\config\parsers\PhpConfigParser;
+use holonet\common\config\parsers\JsonConfigParser;
 
-/**
- * Tests the functionality of the ConfigReader class.
- *
- * @covers  \holonet\common\config\ConfigReader
- *
- * @internal
- *
- * @small
- */
+#[CoversClass(ConfigReader::class)]
+#[CoversClass(IniConfigParser::class)]
+#[CoversClass(JsonConfigParser::class)]
+#[CoversClass(PhpConfigParser::class)]
 class ConfigReaderTest extends TestCase {
 	/**
 	 * Return an entry for each test config file there is so we can test all the file formats.
 	 */
-	public function configTestProvider() {
+	public static function configTestProvider(): array {
 		$ret = array();
 		foreach (glob(__DIR__.'/data/config.*') as $file) {
 			$ext = pathinfo($file, \PATHINFO_EXTENSION);
@@ -48,13 +48,8 @@ class ConfigReaderTest extends TestCase {
 		$this->assertSame("File path 'iSurelyDon'tExist.ini' does not exist", $msg);
 	}
 
-	/**
-	 * @dataProvider configTestProvider
-	 * @covers  \holonet\common\config\parsers\IniConfigParser
-	 * @covers  \holonet\common\config\parsers\JsonConfigParser
-	 * @covers  \holonet\common\config\parsers\PhpConfigParser
-	 */
-	public function testParseFiles($file): void {
+	#[DataProvider('configTestProvider')]
+	public function testParseFiles(string $file): void {
 		$expectedData = array('toplevel' => 'value', 'sublevel' => array('config' => 'sub'));
 
 		$configreader = new ConfigReader();

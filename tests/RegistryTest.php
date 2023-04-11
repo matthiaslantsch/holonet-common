@@ -11,12 +11,12 @@ namespace holonet\common\tests;
 
 use PHPUnit\Framework\TestCase;
 use holonet\common\collection\Registry;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversFunction;
 
-/**
- * @covers  \holonet\common\collection\Registry
- * @covers  \holonet\common\dot_key_get()
- * @covers  \holonet\common\dot_key_set()
- */
+#[CoversClass(Registry::class)]
+#[CoversFunction('holonet\common\dot_key_get')]
+#[CoversFunction('holonet\common\dot_key_set')]
 class RegistryTest extends TestCase {
 	public function testArrayAccessCalls(): void {
 		$registry = new Registry();

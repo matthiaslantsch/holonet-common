@@ -10,19 +10,20 @@
 namespace holonet\common\tests\verifier;
 
 use function holonet\common\verify;
+use holonet\common\verifier\Verifier;
+use holonet\common\verifier\rules\Rule;
+use PHPUnit\Framework\Attributes\CoversClass;
 use holonet\common\verifier\rules\numeric\Between;
 use holonet\common\verifier\rules\numeric\Maximum;
 use holonet\common\verifier\rules\numeric\Minimum;
 use holonet\common\verifier\rules\numeric\Numeric;
 
-/**
- * @covers \holonet\common\verifier\Verifier
- * @covers \holonet\common\verifier\rules\Rule
- * @covers \holonet\common\verifier\rules\numeric\Between
- * @covers \holonet\common\verifier\rules\numeric\Maximum
- * @covers \holonet\common\verifier\rules\numeric\Minimum
- * @covers \holonet\common\verifier\rules\numeric\Numeric
- */
+#[CoversClass(Verifier::class)]
+#[CoversClass(Rule::class)]
+#[CoversClass(Between::class)]
+#[CoversClass(Maximum::class)]
+#[CoversClass(Minimum::class)]
+#[CoversClass(Numeric::class)]
 class VerifyNumericRulesTest extends BaseVerifyTest {
 	public function testCheckBetween(): void {
 		$test = new class(22) {

@@ -15,15 +15,14 @@ use holonet\common\verifier\Proof;
 use function holonet\common\verify;
 use function holonet\common\stringify;
 use holonet\common\verifier\rules\Rule;
+use PHPUnit\Framework\Attributes\CoversClass;
 use holonet\common\verifier\rules\CheckValueRuleInterface;
 use holonet\common\verifier\rules\TransformValueRuleInterface;
 
-/**
- * @covers \holonet\common\verifier\rules\Rule
- * @covers \holonet\common\verifier\rules\CheckValueRuleInterface
- * @covers \holonet\common\verifier\rules\TransformValueRuleInterface
- */
-abstract class BaseVerifyTest extends TestCase {
+#[CoversClass(Rule::class)]
+#[CoversClass(CheckValueRuleInterface::class)]
+#[CoversClass(TransformValueRuleInterface::class)]
+class BaseVerifyTest extends TestCase {
 	public function assertProofContainsError(Proof $actual, string $attr, string $error): void {
 		$this->assertContains($error, $actual->flat());
 		$this->assertArrayHasKey($attr, $actual->all());

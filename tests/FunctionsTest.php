@@ -14,22 +14,22 @@ use holonet\common as co;
 use PHPUnit\Framework\TestCase;
 use holonet\common\verifier\Proof;
 use function holonet\common\verify;
+use holonet\common\FilesystemUtils;
 use holonet\common\verifier\Verifier;
 use holonet\common\verifier\rules\Required;
+use PHPUnit\Framework\Attributes\CoversClass;
 use function holonet\common\get_absolute_path;
+use holonet\common\code\FileUseStatementParser;
+use PHPUnit\Framework\Attributes\CoversFunction;
 
-/**
- * @coversNothing
- */
+#[CoversClass(FileUseStatementParser::class)]
+#[CoversClass(FilesystemUtils::class)]
+#[CoversFunction('holonet\common\verify')]
 class FunctionsTest extends TestCase {
 	protected function tearDown(): void {
 		verify(new stdClass(), new Verifier());
 	}
 
-	/**
-	 * @covers \holonet\common\FilesystemUtils::dirpath()
-	 * @covers \holonet\common\FilesystemUtils::filepath()
-	 */
 	public function testAbsolutePaths(): void {
 		$expected = implode(\DIRECTORY_SEPARATOR, array(__DIR__, 'subfolder', 'subsubfolder')).\DIRECTORY_SEPARATOR;
 		$this->assertSame($expected, co\FilesystemUtils::dirpath(__DIR__, 'subfolder', 'subsubfolder'));
@@ -38,10 +38,6 @@ class FunctionsTest extends TestCase {
 		$this->assertSame($expected, co\FilesystemUtils::filepath(__DIR__, 'subfolder', 'subsubfolder', 'test.txt'));
 	}
 
-	/**
-	 * @covers \holonet\common\file_get_use_statements()
-	 * @covers \holonet\common\code\FileUseStatementParser
-	 */
 	public function testFileGetUseStatements(): void {
 		$this->assertSame(array(
 			'class' => array(
@@ -70,19 +66,10 @@ class FunctionsTest extends TestCase {
 		), co\file_get_use_statements(__DIR__.'/data/use_statements.txt'));
 	}
 
-	/**
-	 * @covers \holonet\common\get_absolute_path()
-	 */
 	public function testGetAbsolutePath(): void {
 		$this->assertSame('this/a/test/is', get_absolute_path('this/is/../a/./test/./is'));
 	}
 
-	/**
-	 * @covers \holonet\common\FilesystemUtils::dirpath()
-	 * @covers \holonet\common\FilesystemUtils::filepath()
-	 * @covers \holonet\common\FilesystemUtils::reldirpath()
-	 * @covers \holonet\common\FilesystemUtils::relfilepath()
-	 */
 	public function testRelativePaths(): void {
 		$expected = implode(\DIRECTORY_SEPARATOR, array(__DIR__, 'subfolder', 'subsubfolder')).\DIRECTORY_SEPARATOR;
 		$this->assertSame($expected, co\FilesystemUtils::reldirpath('subfolder', 'subsubfolder'));
@@ -91,26 +78,6 @@ class FunctionsTest extends TestCase {
 		$this->assertSame($expected, co\FilesystemUtils::relfilepath('subfolder', 'subsubfolder', 'test.txt'));
 	}
 
-	/**
-	 * @covers \holonet\common\trigger_error_context()
-	 */
-	public function testTriggerErrorContext(): void {
-		$msg = '';
-
-		try {
-			$line = (__LINE__) + 1;
-			co\trigger_error_context('oh nos');
-		} catch (\PHPUnit\Exception $e) {
-			$msg = $e->getMessage();
-		}
-
-		$expected = 'oh nos in file '.__FILE__." on line {$line}";
-		$this->assertSame($expected, $msg);
-	}
-
-	/**
-	 * @covers \holonet\common\verify()
-	 */
 	public function testVerifierCanBeInjectedIntoVerify(): void {
 		$test = new class() {
 			#[Required]

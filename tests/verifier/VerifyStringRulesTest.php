@@ -10,21 +10,22 @@
 namespace holonet\common\tests\verifier;
 
 use function holonet\common\verify;
+use holonet\common\verifier\Verifier;
+use holonet\common\verifier\rules\Rule;
+use PHPUnit\Framework\Attributes\CoversClass;
 use holonet\common\verifier\rules\string\Pattern;
 use holonet\common\verifier\rules\string\MaxLength;
 use holonet\common\verifier\rules\string\MinLength;
 use holonet\common\verifier\rules\string\ExactLength;
 use holonet\common\verifier\rules\string\LengthBetween;
 
-/**
- * @covers \holonet\common\verifier\Verifier
- * @covers \holonet\common\verifier\rules\Rule
- * @covers \holonet\common\verifier\rules\string\MaxLength
- * @covers \holonet\common\verifier\rules\string\MinLength
- * @covers \holonet\common\verifier\rules\string\ExactLength
- * @covers \holonet\common\verifier\rules\string\LengthBetween
- * @covers \holonet\common\verifier\rules\string\Pattern
- */
+#[CoversClass(Verifier::class)]
+#[CoversClass(Rule::class)]
+#[CoversClass(MaxLength::class)]
+#[CoversClass(MinLength::class)]
+#[CoversClass(ExactLength::class)]
+#[CoversClass(LengthBetween::class)]
+#[CoversClass(Pattern::class)]
 class VerifyStringRulesTest extends BaseVerifyTest {
 	public function testCheckExactLength(): void {
 		$test = new class('itsy bitsy') {

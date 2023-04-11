@@ -21,11 +21,15 @@ use holonet\common\error\BadEnvironmentException;
 class ConfigRegistry extends Registry {
 	/**
 	 * @template T
-	 * Get a verified instance of a config dto class supplied by the user.
+	 * Get an instance of a config dto class supplied by the user.
 	 * @param class-string<T>|T $cfgDto
 	 * @return T
 	 */
-	public function verifiedDto(string $configKey, string|object $cfgDto): object {
+	public function asDto(string $configKey, string|object $cfgDto): object {
+		if (!$this->has($configKey)) {
+			throw BadEnvironmentException::faultyConfig($configKey, 'Config item doesn\'t exist');
+		}
+
 		$value = $this->get($configKey);
 		if (!is_array($value)) {
 			$value = array($value);
@@ -40,6 +44,18 @@ class ConfigRegistry extends Registry {
 		} catch (TypeError $e) {
 			throw BadEnvironmentException::faultyConfig($configKey, "TypeError: {$e->getMessage()}");
 		}
+
+		return $cfgDto;
+	}
+
+	/**
+	 * @template T
+	 * Get a verified instance of a config dto class supplied by the user.
+	 * @param class-string<T>|T $cfgDto
+	 * @return T
+	 */
+	public function verifiedDto(string $configKey, string|object $cfgDto): object {
+		$cfgDto = $this->asDto($configKey, $cfgDto);
 
 		$proof = verify($cfgDto);
 		if ($proof->pass()) {

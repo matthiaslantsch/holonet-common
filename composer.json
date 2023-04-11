@@ -15,7 +15,7 @@
 	},
 	"require-dev": {
 		"holonet/hdev": "~1.1.0@dev",
-		"phpunit/phpunit": "^9.5"
+		"phpunit/phpunit": "^10.0.0"
 	},
 	"provide": {
 		"psr/container-implementation": "2.0.2"
@@ -26,6 +26,7 @@
 			"url": "https://holonet.easylabs.ch/hgit/composer/"
 		}
 	],
+	"minimum-stability": "dev",
 	"autoload": {
 		"psr-4": {
 			"holonet\\common\\": "src/"

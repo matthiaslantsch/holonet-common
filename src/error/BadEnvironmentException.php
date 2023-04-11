@@ -18,7 +18,7 @@ use function holonet\common\stringify;
  */
 class BadEnvironmentException extends RuntimeException {
 	public static function faultyConfig(string $key, string $errors): static {
-		return new static("Faulty config with key {$key}: {$errors}");
+		return new static("Faulty config with key '{$key}': {$errors}");
 	}
 
 	public static function faultyConfigFromProof(string $key, Proof $proof): static {

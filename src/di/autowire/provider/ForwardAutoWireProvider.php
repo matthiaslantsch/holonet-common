@@ -22,14 +22,8 @@ class ForwardAutoWireProvider implements ParamAutoWireProvider {
 	 * {@inheritDoc}
 	 */
 	public function provide(Container $container, ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): mixed {
-		$givenType = gettype($givenParam);
+		$givenType = get_debug_type($givenParam);
 		$expectedType = $type->getName();
-		$givenType = match ($givenType) {
-			'integer' => 'int',
-			'double' => 'float',
-			'boolean' => 'bool',
-			default => $givenType
-		};
 
 		if (in_array($givenType, explode('|', $expectedType)) || $givenParam instanceof $expectedType) {
 			return $givenParam;

@@ -7,7 +7,7 @@
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
-namespace holonet\common\tests;
+namespace holonet\common\tests\di;
 
 use Countable;
 use holonet\common\di\Provider;
@@ -23,10 +23,6 @@ use holonet\common\di\DependencyInjectionException;
 #[CoversClass(Container::class)]
 #[CoversClass(Provider::class)]
 class ProviderTest extends TestCase {
-	// test provider for service
-	// test provider for instance
-	// test provider for type byType
-	// test provider calling make() with the actual class
 
 	public function testProviderSetForService(): void {
 		$container = new Container();
@@ -71,11 +67,37 @@ class ProviderTest extends TestCase {
 		$this->assertInstanceOf(ProvidedDependency::class, $result);
 		$this->assertFalse($result === $container->make(ProvidedDependency::class));
 	}
+
+	public function testMakeWithBadProviderWithoutTypehintCausesException(): void {
+		$this->expectException(DependencyInjectionException::class);
+		$this->expectExceptionMessage('Provider factory method holonet\common\tests\di\BadProviderWithoutTypehint::make() has no return type');
+
+		$container = new Container();
+
+		$container->wire(BadProviderWithoutTypehint::class);
+	}
+
+	public function testSetWithBadProviderWithoutTypehintCausesException(): void {
+		$this->expectException(DependencyInjectionException::class);
+		$this->expectExceptionMessage('Provider factory method holonet\common\tests\di\BadProviderWithoutTypehint::make() has no return type');
+
+		$container = new Container();
+
+		$container->set('test', BadProviderWithoutTypehint::class);
+	}
 }
 
 class TestProvider extends Provider {
 
 	public function make(): ProvidedDependency {
+		return new ProvidedDependency();
+	}
+
+}
+
+class BadProviderWithoutTypehint extends Provider {
+
+	public function make(): object {
 		return new ProvidedDependency();
 	}
 

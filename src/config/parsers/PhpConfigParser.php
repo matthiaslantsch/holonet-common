@@ -24,6 +24,7 @@ class PhpConfigParser extends AbstractParser {
 		 */
 		$ret = require $filename;
 		//either the user sets a variable called "config" or returns an array
+		/** @psalm-suppress UndefinedVariable */
 		if (!isset($config) && ($config = $ret) !== 1) {
 			throw new FileAccessException("Could not parse php config file '{$filename}'; File must either return an array or define the variable \$config");
 		}

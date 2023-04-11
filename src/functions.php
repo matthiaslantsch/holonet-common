@@ -141,23 +141,6 @@ if (!function_exists(__NAMESPACE__.'\\indentText')) {
 	}
 }
 
-if (!function_exists(__NAMESPACE__.'\\isAssoc')) {
-	/**
-	 * function used to check if an array is associative.
-	 * @param array $arr The array to check
-	 * @return bool true or false on is associative or not
-	 */
-	function isAssoc(array $arr): bool {
-		if ($arr === array()) {
-			return false;
-		}
-		ksort($arr);
-
-		/** @psalm-suppress DocblockTypeContradiction */
-		return array_keys($arr) !== range(0, count($arr) - 1);
-	}
-}
-
 if (!function_exists(__NAMESPACE__.'\\readableDurationString')) {
 	/**
 	 * function used to transform a duration into a human readable string.
@@ -184,7 +167,7 @@ if (!function_exists(__NAMESPACE__.'\\readableDurationString')) {
 				return $time / 60 .'min';
 			}
 
-			return (int)($time / 60).'min '.(int)($time % 60).'s';
+			return (int)($time / 60).'min '. $time % 60 .'s';
 		}
 
 		return $time.'s';

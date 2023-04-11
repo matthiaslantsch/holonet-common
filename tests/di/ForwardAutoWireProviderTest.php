@@ -7,7 +7,7 @@
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
-namespace holonet\common\tests;
+namespace holonet\common\tests\di;
 
 use PHPUnit\Framework\TestCase;
 use holonet\common\di\Container;

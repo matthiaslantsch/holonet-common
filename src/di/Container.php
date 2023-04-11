@@ -42,7 +42,7 @@ class Container implements ContainerInterface {
 	protected array $recursionPath = array();
 
 	/**
-	 * @var array<string, array{string, array<string, array>}> $wiring Wiring information on how to make certain types of objects.
+	 * @var array<string, array{string, array}> $wiring Wiring information on how to make certain types of objects.
 	 * Mapped by name / type => class abstract (array with class name and parameters).
 	 */
 	protected array $wiring = array();
@@ -55,6 +55,8 @@ class Container implements ContainerInterface {
 	 * @template T
 	 * @param class-string<T> $class
 	 * @return T
+	 * @psalm-suppress InvalidReturnType
+	 * @psalm-suppress InvalidReturnStatement
 	 */
 	public function byType(string $class, ?string $id = null): object {
 		$keys = array_keys($this->aliases, $class);
@@ -111,6 +113,8 @@ class Container implements ContainerInterface {
 	 * @template T
 	 * @param class-string<T>|string $abstract
 	 * @return T
+	 * @psalm-suppress InvalidReturnType
+	 * @psalm-suppress InvalidReturnStatement
 	 */
 	public function make(string $abstract, array $extraParams = array()): object {
 		if ($this->has($abstract)) {
@@ -147,7 +151,11 @@ class Container implements ContainerInterface {
 			$reflection = new ReflectionClass($value);
 			$factoryMethod = $reflection->getMethod('make');
 
-			$this->aliases[$id] = $factoryMethod->getReturnType()->getName();
+			$returnType = $factoryMethod->getReturnType();
+			if (!$returnType instanceof \ReflectionNamedType || $returnType->getName() === 'object') {
+				throw new DependencyInjectionException("Provider factory method {$reflection->getName()}::make() has no return type");
+			}
+			$this->aliases[$id] = $returnType->getName();
 			$this->wire($reflection->getName(), $params, $id);
 
 			return;
@@ -164,7 +172,11 @@ class Container implements ContainerInterface {
 		if (class_exists($value)) {
 			$this->aliases[$id] = $value;
 			$this->wire($value, $params, $id);
+
+			return;
 		}
+
+		throw new DependencyInjectionException("Could not set dependency '{$id}': value is not an object or class name");
 	}
 
 	/**
@@ -181,7 +193,11 @@ class Container implements ContainerInterface {
 			$reflection = new ReflectionClass($class);
 			$factoryMethod = $reflection->getMethod('make');
 
-			$abstract = $factoryMethod->getReturnType()->getName();
+			$returnType = $factoryMethod->getReturnType();
+			if (!$returnType instanceof \ReflectionNamedType || $returnType->getName() === 'object') {
+				throw new DependencyInjectionException("Provider factory method {$class}::make() has no return type");
+			}
+			$abstract = $returnType->getName();
 		}
 
 		$abstract ??= $class;
@@ -190,12 +206,6 @@ class Container implements ContainerInterface {
 	}
 
 	protected function instance(string $class, array $params): object {
-		if (is_a($class, Provider::class, true)) {
-			$provider = new $class($this);
-
-			return $provider->make();
-		}
-
 		$reflection = new ReflectionClass($class);
 		$constructor = $reflection->getConstructor();
 		if ($constructor === null) {
@@ -203,11 +213,17 @@ class Container implements ContainerInterface {
 				AutoWireException::failNoConstructor($reflection, $params);
 			}
 
-			return new $class();
+			$result = new $class();
+		} else {
+			$params = $this->autoWiring->autoWire($constructor, $params);
+
+			$result = new $class(...$params);
 		}
 
-		$params = $this->autoWiring->autoWire($constructor, $params);
+		if ($result instanceof Provider) {
+			return $result->make();
+		}
 
-		return new $class(...$params);
+		return $result;
 	}
 }

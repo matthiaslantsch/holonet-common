@@ -31,4 +31,11 @@ class ContainerAutoWireProvider implements ParamAutoWireProvider {
 
 		return null;
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function compile(ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string {
+		return "\$this->byType('{$type->getName()}', '{$param->getName()}')";
+	}
 }

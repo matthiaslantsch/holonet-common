@@ -7,7 +7,7 @@
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
-namespace holonet\common\tests;
+namespace holonet\common\tests\di;
 
 use PHPUnit\Framework\TestCase;
 use holonet\common\di\Container;
@@ -25,7 +25,7 @@ use holonet\common\di\autowire\provider\ContainerAutoWireProvider;
 class ContainerAutoWireProviderTest extends TestCase {
 	public function testInjectionFailedThrowsException(): void {
 		$this->expectException(DependencyInjectionException::class);
-		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\DependencyWithParameter::__construct\': Parameter #0: mustBeSuppliedParameter: Cannot auto-wire to type \'string\'');
+		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\DependencyWithParameter::__construct\': Parameter #0: mustBeSuppliedParameter: Cannot auto-wire to type \'string\'');
 
 		$container = new Container();
 

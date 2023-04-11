@@ -7,7 +7,7 @@
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
-namespace holonet\common\tests;
+namespace holonet\common\tests\di;
 
 use PHPUnit\Framework\TestCase;
 use holonet\common\di\Container;
@@ -86,7 +86,7 @@ class ConfigAutoWireProviderTest extends TestCase {
 
 	public function testUserMustSupplyConfigKeyForInjection(): void {
 		$this->expectException(DependencyInjectionException::class);
-		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\Dependency::__construct\': Parameter #0: config: Cannot auto-wire to a config dto object without supplying a config key');
+		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\Dependency::__construct\': Parameter #0: config: Cannot auto-wire to a config dto object without supplying a config key');
 
 		$container = new Container();
 

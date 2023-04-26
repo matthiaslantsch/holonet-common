@@ -143,6 +143,16 @@ class Container implements ContainerInterface {
 	 * If the given value is a string a class name is assumed and the class / argument combination will be saved for later instantiation.
 	 */
 	public function set(string $id, object|string $value, array $params = array()): void {
+		if (is_a($value, Provider::class, true)) {
+			$reflection = new ReflectionClass($value);
+			$factoryMethod = $reflection->getMethod('make');
+
+			$this->aliases[$id] = $factoryMethod->getReturnType()->getName();
+			$this->wire($reflection->getName(), $params, $id);
+
+			return;
+		}
+
 		// as the object has already been created, we must assume it has its dependencies
 		if (is_object($value)) {
 			$this->aliases[$id] = get_class($value);
@@ -167,12 +177,25 @@ class Container implements ContainerInterface {
 			throw new DependencyInjectionException("Could not auto-wire abstract '{$class}': class does not exist");
 		}
 
+		if (is_a($class, Provider::class, true) && $abstract === null) {
+			$reflection = new ReflectionClass($class);
+			$factoryMethod = $reflection->getMethod('make');
+
+			$abstract = $factoryMethod->getReturnType()->getName();
+		}
+
 		$abstract ??= $class;
 
 		$this->wiring[$abstract] = array($class, $params);
 	}
 
 	protected function instance(string $class, array $params): object {
+		if (is_a($class, Provider::class, true)) {
+			$provider = new $class($this);
+
+			return $provider->make();
+		}
+
 		$reflection = new ReflectionClass($class);
 		$constructor = $reflection->getConstructor();
 		if ($constructor === null) {

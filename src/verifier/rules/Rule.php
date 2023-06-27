@@ -12,8 +12,10 @@ namespace holonet\common\verifier\rules;
 use function holonet\common\stringify;
 
 abstract class Rule {
-	public function __construct(public ?string $message = null) {
-		$this->message ??= static::defaultMessage();
+	public string $message;
+
+	public function __construct(string $message = null) {
+		$this->message = $message ?? static::defaultMessage();
 	}
 
 	public static function defaultMessage(): string {

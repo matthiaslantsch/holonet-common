@@ -18,7 +18,7 @@ use function holonet\common\dot_key_set;
  *  e.g. toplevel.lowerlevel => $data['toplevel']['lowerlevel']
  *  e.g. "%app.name%-test" => $data['app']['name'] . "-test".
  */
-class Registry implements ArrayAccess {
+class Registry {
 	/**
 	 * @var array<string, mixed> $data Multilevel array with key=value pairs
 	 */
@@ -35,75 +35,35 @@ class Registry implements ArrayAccess {
 		$this->data = array();
 	}
 
-	/**
-	 * @see self::offsetGet()
-	 */
 	public function get(string $key, mixed $default = null): mixed {
-		return $this->offsetGet($key) ?? $default;
+		$value = dot_key_get($this->data, $key, separator: $this->separator);
+
+		return $this->replacePlaceholder($value) ?? $default;
 	}
 
-	/**
-	 * @see self::offsetExists()
-	 */
 	public function has(string $key): bool {
-		return $this->offsetExists($key);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function offsetExists($offset): bool {
-		$parts = explode($this->separator, $offset);
+		$parts = explode($this->separator, $key);
 		$position = $this->data;
-		foreach ($parts as $sublevel) {
-			if (!isset($position[$sublevel])) {
+		foreach ($parts as $subLevel) {
+			if (!isset($position[$subLevel])) {
 				return false;
 			}
-			$position = $position[$sublevel];
+			$position = $position[$subLevel];
 		}
 
 		return true;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function offsetGet($offset): mixed {
-		$value = dot_key_get($this->data, $offset, separator: $this->separator);
-
-		return $this->replacePlaceholder($value);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function offsetSet($offset, $value): void {
-		dot_key_set($this->data, $offset, $value, $this->separator);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function offsetUnset($offset): void {
-		dot_key_set($this->data, $offset, null, $this->separator);
-	}
-
-	/**
-	 * @see self::offsetSet()
-	 */
 	public function set(string $key, $value): void {
-		$this->offsetSet($key, $value);
+		dot_key_set($this->data, $key, $value, $this->separator);
 	}
 
 	public function setAll(array $data): void {
 		$this->data = array_replace_recursive($this->data, $data);
 	}
 
-	/**
-	 * @see self::offsetUnset()
-	 */
 	public function unset(string $key): void {
-		$this->offsetUnset($key);
+		dot_key_set($this->data, $key, null, $this->separator);
 	}
 
 	/**

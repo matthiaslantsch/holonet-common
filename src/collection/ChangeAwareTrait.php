@@ -13,7 +13,7 @@ trait ChangeAwareTrait {
 	/**
 	 * holds a reference to the ChangeAwareCollection that is keeping track of this object.
 	 */
-	private ChangeAwareCollection $partOfCollection;
+	private ?ChangeAwareCollection $partOfCollection = null;
 
 	/**
 	 * @param ChangeAwareCollection $coll A reference to the collection this object is part of

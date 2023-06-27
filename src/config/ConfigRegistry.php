@@ -22,7 +22,7 @@ class ConfigRegistry extends Registry {
 	/**
 	 * @template T
 	 * Get an instance of a config dto class supplied by the user.
-	 * @param class-string<T>|T $cfgDto
+	 * @psalm-param class-string<T>|T $cfgDto
 	 * @return T
 	 */
 	public function asDto(string $configKey, string|object $cfgDto): object {
@@ -51,7 +51,7 @@ class ConfigRegistry extends Registry {
 	/**
 	 * @template T
 	 * Get a verified instance of a config dto class supplied by the user.
-	 * @param class-string<T>|T $cfgDto
+	 * @psalm-param class-string<T>|T $cfgDto
 	 * @return T
 	 */
 	public function verifiedDto(string $configKey, string|object $cfgDto): object {

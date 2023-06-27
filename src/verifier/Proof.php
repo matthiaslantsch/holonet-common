@@ -34,7 +34,7 @@ class Proof {
 
 	public function flat(): array {
 		$all = array();
-		array_walk_recursive($this->errors, function ($error) use (&$all): void { $all[] = $error; });
+		array_walk_recursive($this->errors, function (string $error) use (&$all): void { $all[] = $error; });
 
 		return $all;
 	}

@@ -232,10 +232,10 @@ if (!function_exists(__NAMESPACE__.'\\dir_path')) {
 
 if (!function_exists(__NAMESPACE__.'\\str_lreplace')) {
 	/**
-	 * Replace the last occurence of a string inside the subject.
+	 * Replace the last occurrence of a string inside the subject.
 	 * Courtesy of https://stackoverflow.com/a/3835653.
 	 */
-	function str_lreplace($search, $replace, $subject) {
+	function str_lreplace(string $search, string $replace, string $subject): string {
 		$pos = mb_strrpos($subject, $search);
 
 		if ($pos !== false) {

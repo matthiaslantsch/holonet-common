@@ -18,26 +18,6 @@ use PHPUnit\Framework\Attributes\CoversFunction;
 #[CoversFunction('holonet\common\dot_key_get')]
 #[CoversFunction('holonet\common\dot_key_set')]
 class RegistryTest extends TestCase {
-	public function testArrayAccessCalls(): void {
-		$registry = new Registry();
-
-		$data = array(
-			'array' => array(
-				'lowerval' => 'lower',
-				'arrayarray' => array(
-					'lowestval' => 'lowest'
-				)
-			)
-		);
-		$registry->setAll($data);
-
-		$this->assertSame('lowest', $registry['array.arrayarray.lowestval']);
-		$this->assertTrue(isset($registry['array.lowerval']));
-		$this->assertFalse(isset($registry['array.invalid']));
-		unset($registry['array.lowerval.arrayarray']);
-		$this->assertNull($registry['array.lowerval.arrayarray']);
-	}
-
 	public function testGetMultilevel(): void {
 		$registry = new Registry();
 
@@ -51,6 +31,7 @@ class RegistryTest extends TestCase {
 		);
 		$registry->setAll($data);
 
+		$this->assertFalse($registry->has('array.notexisting'));
 		$this->assertSame('lower', $registry->get('array.lowerval'));
 		$this->assertNull($registry->get('array.notexisting'));
 		$this->assertSame('lowest', $registry->get('array.arrayarray.lowestval'));

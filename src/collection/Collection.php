@@ -10,15 +10,18 @@
 namespace holonet\common\collection;
 
 use Countable;
-use ArrayAccess;
 use ArrayIterator;
 use IteratorAggregate;
 
 /**
  * The Collection is used as a wrapper around a data array
  * it allows for the data to be accessed like an array or object.
+ * @template TKey of array-key
+ * @template T
+ *
+ * @implements IteratorAggregate<array-key, T>
  */
-class Collection implements ArrayAccess, Countable, IteratorAggregate {
+class Collection implements Countable, IteratorAggregate {
 	protected array $data = array();
 
 	public function __construct(array $initial = array()) {
@@ -50,7 +53,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate {
 	 * return a reference so we can change e.g. sub arrays from this call
 	 *  => cannot use our own get() method.
 	 */
-	public function &__get(string $key) {
+	public function __get(string $key): mixed {
 		if (is_object($this->data[$key]) || $this->data[$key] === null) {
 			//only actual variables should be returned by reference
 			return $this->data[$key];
@@ -81,7 +84,7 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate {
 	/**
 	 * @param string[] $which Array with keys that are requested
 	 */
-	public function getAll(?array $which = null): array {
+	public function all(?array $which = null): array {
 		if ($which !== null) {
 			return array_intersect_key($this->data, array_flip($which));
 		}
@@ -106,39 +109,6 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate {
 		if (!empty($data)) {
 			$this->data = array_merge($this->data, $data);
 		}
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * @see self::__isset()
-	 */
-	public function offsetExists($offset): bool {
-		//use the isset method in order to return false for null value (the behaviour of isset())
-		return $this->__isset($offset);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * @see self::get()
-	 */
-	public function offsetGet($offset) {
-		return $this->get($offset);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * @see self::set()
-	 */
-	public function offsetSet($offset, $value): void {
-		$this->set($offset, $value);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * @see self::remove()
-	 */
-	public function offsetUnset($offset): void {
-		$this->remove($offset);
 	}
 
 	public function remove(string $key): void {

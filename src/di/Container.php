@@ -24,8 +24,6 @@ class Container implements ContainerInterface {
 	 */
 	protected array $aliases = array();
 
-	protected AutoWire $autoWiring;
-
 	/**
 	 * @var array<string, array<string, array{string, array}>> $callers Method calls with injection definitions
 	 */
@@ -40,12 +38,6 @@ class Container implements ContainerInterface {
 	 * @var string[] $recursionPath Array used keep track of injections (to prevent recursive dependencies)
 	 */
 	protected array $recursionPath = array();
-
-	/**
-	 * @var array<string, array{string, array}> $wiring Wiring information on how to make certain types of objects.
-	 * Mapped by name / type => class abstract (array with class name and parameters).
-	 */
-	protected array $wiring = array();
 
 	public function __construct(public ConfigRegistry $registry = new ConfigRegistry()) {
 		$this->autoWiring = new AutoWire($this);
@@ -179,51 +171,4 @@ class Container implements ContainerInterface {
 		throw new DependencyInjectionException("Could not set dependency '{$id}': value is not an object or class name");
 	}
 
-	/**
-	 * Set up a wiring from an abstract to an actual implementation.
-	 * This can be used to choose strategy pattern possibilities based on config.
-	 * The wired object will also get additional params autowired.
-	 */
-	public function wire(string $class, array $params = array(), ?string $abstract = null): void {
-		if (!class_exists($class)) {
-			throw new DependencyInjectionException("Could not auto-wire abstract '{$class}': class does not exist");
-		}
-
-		if (is_a($class, Provider::class, true) && $abstract === null) {
-			$reflection = new ReflectionClass($class);
-			$factoryMethod = $reflection->getMethod('make');
-
-			$returnType = $factoryMethod->getReturnType();
-			if (!$returnType instanceof \ReflectionNamedType || $returnType->getName() === 'object') {
-				throw new DependencyInjectionException("Provider factory method {$class}::make() has no return type");
-			}
-			$abstract = $returnType->getName();
-		}
-
-		$abstract ??= $class;
-
-		$this->wiring[$abstract] = array($class, $params);
-	}
-
-	protected function instance(string $class, array $params): object {
-		$reflection = new ReflectionClass($class);
-		$constructor = $reflection->getConstructor();
-		if ($constructor === null) {
-			if (!empty($params)) {
-				AutoWireException::failNoConstructor($reflection, $params);
-			}
-
-			$result = new $class();
-		} else {
-			$params = $this->autoWiring->autoWire($constructor, $params);
-
-			$result = new $class(...$params);
-		}
-
-		if ($result instanceof Provider) {
-			return $result->make();
-		}
-
-		return $result;
-	}
 }

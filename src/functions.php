@@ -10,6 +10,7 @@
 namespace holonet\common;
 
 use ReflectionClass;
+use ReflectionMethod;
 use RuntimeException;
 use ReflectionProperty;
 use ReflectionParameter;
@@ -92,7 +93,7 @@ if (!function_exists(__NAMESPACE__.'\\reflection_get_attribute')) {
 	 * @param class-string<T> $class
 	 * @return ?T
 	 */
-	function reflection_get_attribute(ReflectionClass|ReflectionProperty|ReflectionParameter $reflection, string $class): ?object {
+	function reflection_get_attribute(ReflectionClass|ReflectionProperty|ReflectionParameter|ReflectionMethod $reflection, string $class): ?object {
 		$attrs = $reflection->getAttributes($class);
 
 		return reset($attrs) ? reset($attrs)->newInstance() : null;

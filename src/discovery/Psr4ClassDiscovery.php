@@ -20,7 +20,7 @@ class Psr4ClassDiscovery extends ClassDiscovery {
 	/**
 	 * Namespace basis for all namespaces below the psr4 directory structure.
 	 */
-	private ?string $baseNamespace;
+	protected ?string $baseNamespace;
 
 	/**
 	 * The directory at which the root of the psr4 namespace starts.

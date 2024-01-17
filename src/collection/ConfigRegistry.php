@@ -7,7 +7,7 @@
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
-namespace holonet\common\config;
+namespace holonet\common\collection;
 
 use TypeError;
 use function holonet\common\verify;
@@ -74,6 +74,8 @@ class ConfigRegistry extends Registry {
 			if (($envVal = $_ENV[$envKey] ?? getenv($envKey)) !== false) {
 				return $envVal;
 			}
+
+			return '';
 		}
 
 		return parent::resolvePlaceHolder($placeholder);

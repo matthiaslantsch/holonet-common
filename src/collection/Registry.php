@@ -78,7 +78,7 @@ class Registry {
 			preg_match_all('/%([^%]+)%/', $position, $matches, \PREG_SET_ORDER);
 			foreach ($matches as $placeholderPair) {
 				//if the placeholder is a value in the registry, replace it, otherwise leave it with the % signs
-				if (($resolved = $this->resolvePlaceHolder($placeholderPair[1]))) {
+				if (($resolved = $this->resolvePlaceHolder($placeholderPair[1])) !== null) {
 					$position = str_replace($placeholderPair[0], $resolved, $position);
 				}
 			}

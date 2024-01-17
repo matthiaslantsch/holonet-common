@@ -45,9 +45,7 @@ class Verifier {
 		}
 
 		$value = $property->getValue($obj);
-		foreach ($property->getAttributes() as $rule) {
-			$rule = $rule->newInstance();
-
+		foreach ($this->getRulesForProperty($property) as $rule) {
 			if (!$rule instanceof Rule) {
 				continue;
 			}
@@ -63,5 +61,20 @@ class Verifier {
 				}
 			}
 		}
+	}
+
+	protected function getRulesForProperty(ReflectionProperty $property): array {
+		$rules = array();
+		foreach ($property->getAttributes() as $rule) {
+			$rule = $rule->newInstance();
+
+			if (!$rule instanceof Rule) {
+				continue;
+			}
+
+			$rules[] = $rule;
+		}
+
+		return $rules;
 	}
 }

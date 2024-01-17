@@ -11,7 +11,7 @@ namespace holonet\common\tests;
 
 use PHPUnit\Framework\TestCase;
 use holonet\common\collection\Registry;
-use holonet\common\config\ConfigRegistry;
+use holonet\common\collection\ConfigRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversFunction;
 use holonet\common\error\BadEnvironmentException;

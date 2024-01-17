@@ -28,7 +28,7 @@ class ChangeAwareCollection implements Countable, ArrayAccess, IteratorAggregate
 	protected array $added = array();
 
 	/**
-	 * @var array<string, mixed> $all An array containing all entries
+	 * @var array<string|int, mixed> $all An array containing all entries
 	 */
 	protected array $all = array();
 
@@ -64,15 +64,20 @@ class ChangeAwareCollection implements Countable, ArrayAccess, IteratorAggregate
 
 	/**
 	 * @param mixed $val The data entry to be saved
-	 * @param string $key The key to save the entry under
+	 * @param ?string $key The key to save the entry under
 	 * @param bool $new Flag marking this entry as not new (not to be saved into $this->added)
 	 */
-	public function add(mixed $val, string $key, bool $new = true): void {
+	public function add(mixed $val, ?string $key, bool $new = true): void {
 		if (is_object($val) && is_subclass_of($val, ChangeAwareInterface::class)) {
 			$val->belongsTo($this);
 		}
 
-		$this->all[$key] = $val;
+		if ($key !== null) {
+			$this->all[$key] = $val;
+		} else {
+			$this->all[] = $val;
+			$key = array_search($val, $this->all);
+		}
 
 		//if the override flag wasn't given, mark the entry as newly added
 		if ($new) {
@@ -203,6 +208,13 @@ class ChangeAwareCollection implements Countable, ArrayAccess, IteratorAggregate
 	}
 
 	/**
+	 * Convenience function to clear all the values.
+	 */
+	public function clear(): void {
+		$this->replace(array());
+	}
+
+	/**
 	 * setter function to set a value by its key
 	 * either calls the add function or set the value.
 	 * @param string $key The key for the value
@@ -273,5 +285,10 @@ class ChangeAwareCollection implements Countable, ArrayAccess, IteratorAggregate
 
 	public function getIterator(): Iterator {
 		return new ArrayIterator($this->getAll());
+	}
+
+	public function first(): mixed {
+		$all = $this->getAll();
+		return reset($all);
 	}
 }

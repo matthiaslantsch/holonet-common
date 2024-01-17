@@ -11,13 +11,17 @@ namespace holonet\common\tests\di;
 
 use Countable;
 use FilesystemIterator;
-use holonet\common\config\ConfigRegistry;
+use holonet\common\collection\ConfigRegistry;
+use holonet\common\di\autowire\CannotAutowireException;
 use holonet\common\di\autowire\provider\ConfigAutoWireProvider;
 use holonet\common\di\autowire\provider\ContainerAutoWireProvider;
 use holonet\common\di\autowire\provider\ForwardAutoWireProvider;
 use holonet\common\di\Compiler;
 use holonet\common\di\Factory;
 use holonet\common\Noun;
+use InvalidArgumentException;
+use ReflectionClass;
+use Spatie\Snapshots\MatchesSnapshots;
 use Stringable;
 use PHPUnit\Framework\TestCase;
 use holonet\common\di\Container;
@@ -26,6 +30,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use holonet\common\di\autowire\AutoWireException;
 use holonet\common\di\DependencyNotFoundException;
 use holonet\common\di\DependencyInjectionException;
+use function holonet\common\dir_path;
 
 #[CoversClass(Container::class)]
 #[CoversClass(Compiler::class)]
@@ -34,10 +39,30 @@ use holonet\common\di\DependencyInjectionException;
 #[CoversClass(ConfigAutoWireProvider::class)]
 #[CoversClass(ContainerAutoWireProvider::class)]
 #[CoversClass(ForwardAutoWireProvider::class)]
-class CompilerTest extends TestCase
-{
-	public function testParameterForwardCompile(): void
-	{
+class CompilerTest extends TestCase {
+	use MatchesSnapshots;
+
+	public function test_parameter_required_compile(): void {
+		$container = new Container();
+
+		$container->wire(holonet_common_tests_CompilerTest_ForwardParamDependency::class, array('testParamTwo' => 'testParamTwoValue'));
+
+		$compiler = new Compiler($container);
+
+		$actual = $compiler->compile();
+
+		$this->assertMatchesTextSnapshot($actual);
+		$container = $this->assertValidCompiledContainer($actual, $container->registry);
+
+		// assert we can make it if we supply the required parameter
+		$this->assertInstanceOf(holonet_common_tests_CompilerTest_ForwardParamDependency::class, $container->make(holonet_common_tests_CompilerTest_ForwardParamDependency::class, array('testParam' => 'testParamValue')));
+		// assert we can't make it without supplying the required parameter
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Cannot instantiate \'holonet\common\tests\di\holonet_common_tests_CompilerTest_ForwardParamDependency\': Missing parameter \'testParam\' of type \'string)\'');
+		$container->make(holonet_common_tests_CompilerTest_ForwardParamDependency::class);
+	}
+
+	public function testParameterForwardCompile(): void {
 		$container = new Container();
 
 		$params = array(
@@ -51,191 +76,111 @@ class CompilerTest extends TestCase
 
 		$compiler = new Compiler($container);
 
-		$compiled = <<<'COMPILED'
-		if (!isset($config) || !$config instanceof \holonet\common\config\ConfigRegistry) {
-			throw new \InvalidArgumentException('The config parameter must be an instance of \holonet\common\config\ConfigRegistry');
-		}
-		
-		return new class($config) extends \holonet\common\di\Container {
-			public function make(string $abstract, array $extraParams = array()): object {
-				return match ($abstract) {
-					holonet\common\tests\di\DependencyForwardAutoWire::class => $this->make_holonet_common_tests_di_DependencyForwardAutoWire(),
-					default => parent::make($abstract, $extraParams)
-				};
-			}
-			
-			public function make_holonet_common_tests_di_DependencyForwardAutoWire(): holonet\common\tests\di\DependencyForwardAutoWire {
-				return new holonet\common\tests\di\DependencyForwardAutoWire(string: 'gojsdgoisjdgio', int: 5, float: 10.5, boolean: true, array: array (
-		 	  0 => 'value1',
-		 	  1 => 'value2',
-			));
-			}
-		};
-		COMPILED;
 		$actual = $compiler->compile();
 
-		$this->assertEqualsIgnoringIndentation($compiled, $actual);
+		$this->assertMatchesTextSnapshot($actual);
 		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
-	public function testClassWithoutConstructorProvidedParams(): void
-	{
+	public function testClassWithoutConstructorProvidedParams(): void {
 		$this->expectException(AutoWireException::class);
-		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\NoConstructorDependency\': Has no constructor, but 1 parameters were given');
+		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\holonet_common_tests_CompilerTest_NoConstructorDependency\': Has no constructor, but 1 parameters were given');
 
 		$container = new Container();
 
-		$container->wire(NoConstructorDependency::class, array('test' => 'value'));
+		$container->wire(holonet_common_tests_CompilerTest_NoConstructorDependency::class, array('test' => 'value'));
 
 		$compiler = new Compiler($container);
 		$compiler->compile();
 	}
 
-	public function testClassWithoutConstructorCompiles(): void
-	{
+	public function testClassWithoutConstructorCompiles(): void {
 		$container = new Container();
 
-		$container->wire(NoConstructorDependency::class);
+		$container->wire(holonet_common_tests_CompilerTest_NoConstructorDependency::class);
 
 		$compiler = new Compiler($container);
 
-		$expected = <<<'COMPILED'
-		if (!isset($config) || !$config instanceof \holonet\common\config\ConfigRegistry) {
-			throw new \InvalidArgumentException('The config parameter must be an instance of \holonet\common\config\ConfigRegistry');
-		}
-		
-		return new class($config) extends \holonet\common\di\Container {
-			public function make(string $abstract, array $extraParams = array()): object {
-				return match ($abstract) {
-					holonet\common\tests\di\NoConstructorDependency::class => $this->make_holonet_common_tests_di_NoConstructorDependency(),
-					default => parent::make($abstract, $extraParams)
-				};
-			}
-		
-			public function make_holonet_common_tests_di_NoConstructorDependency(): holonet\common\tests\di\NoConstructorDependency {
-				return new holonet\common\tests\di\NoConstructorDependency();
-			}
-		};
-		COMPILED;
 		$actual = $compiler->compile();
 
-		$this->assertEqualsIgnoringIndentation($expected, $actual);
+		$this->assertMatchesTextSnapshot($actual);
 		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
-	public function testIntersectionTypesCannotBeCompiled(): void
-	{
-		$this->expectException(AutoWireException::class);
-		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\DependencyWithIntersectionType::__construct\': Parameter #0: param: Cannot auto-wire intersection types');
+	public function testIntersectionTypesCannotBeCompiled(): void {
+		$this->expectException(CannotAutowireException::class);
+		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\holonet_common_tests_CompilerTest_DependencyWithIntersectionType::__construct\': Parameter #0: param: Cannot auto-wire intersection types');
 
 		$container = new Container();
 
-		$container->wire(DependencyWithIntersectionType::class);
+		$container->wire(holonet_common_tests_CompilerTest_DependencyWithIntersectionType::class);
 
 		$compiler = new Compiler($container);
 		$compiler->compile();
 	}
 
-	public function testCannotAutowireUntypedParameter(): void
-	{
+	public function testCannotAutowireUntypedParameter(): void {
 		$this->expectException(AutoWireException::class);
-		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\UntypedParamsDependency::__construct\': Parameter #0: param1: Can only auto-wire typed parameters');
+		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\holonet_common_tests_CompilerTest_UntypedParamsDependency::__construct\': Parameter #0: param1: Can only auto-wire typed parameters');
 
 		$container = new Container();
-		$container->wire(UntypedParamsDependency::class);
+		$container->wire(holonet_common_tests_CompilerTest_UntypedParamsDependency::class);
 
 		$compiler = new Compiler($container);
 		$compiler->compile();
 	}
 
-	public function testCanAutowireUntypedOptionalParameter(): void
-	{
+	public function testCanAutowireUntypedOptionalParameter(): void {
 		$container = new Container();
-		$container->wire(UntypedParamOptionalDependency::class);
+		$container->wire(holonet_common_tests_CompilerTest_UntypedParamOptionalDependency::class);
 
 		$compiler = new Compiler($container);
 		$this->assertNotEmpty($compiler->compile());
 	}
 
-	public function testCompilesOptionalOrNullableParameter(): void
-	{
+	public function testCompilesOptionalOrNullableParameter(): void {
 		$container = new Container();
-		$container->wire(OptionalAndNullableParamsDependency::class);
+		$container->wire(holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency::class);
 
 		$compiler = new Compiler($container);
 
-		$expected = <<<'COMPILED'
-		if (!isset($config) || !$config instanceof \holonet\common\config\ConfigRegistry) {
-			throw new \InvalidArgumentException('The config parameter must be an instance of \holonet\common\config\ConfigRegistry');
-		}
-		
-		return new class($config) extends \holonet\common\di\Container {
-			public function make(string $abstract, array $extraParams = array()): object {
-				return match ($abstract) {
-					holonet\common\tests\di\OptionalAndNullableParamsDependency::class => $this->make_holonet_common_tests_di_OptionalAndNullableParamsDependency(),
-					default => parent::make($abstract, $extraParams)
-				};
-			}
-		
-			public function make_holonet_common_tests_di_OptionalAndNullableParamsDependency(): holonet\common\tests\di\OptionalAndNullableParamsDependency {
-				return new holonet\common\tests\di\OptionalAndNullableParamsDependency(param1: null);
-			}
-		};
-		COMPILED;
 		$actual = $compiler->compile();
 
-		$this->assertEqualsIgnoringIndentation($expected, $actual);
+		$this->assertMatchesTextSnapshot($actual);
 		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
 	public function testUnionTypeCanBeCompiled(): void
 	{
 		$container = new Container();
-		$container->wire(UnionTypeDependency::class);
+		$container->wire(holonet_common_tests_CompilerTest_UnionTypeDependency::class);
 
 		$compiler = new Compiler($container);
 
-		$expected = <<<'COMPILED'
-		if (!isset($config) || !$config instanceof \holonet\common\config\ConfigRegistry) {
-		       throw new \InvalidArgumentException('The config parameter must be an instance of \holonet\common\config\ConfigRegistry');
-		}
-		
-		return new class($config) extends \holonet\common\di\Container {
-		       public function make(string $abstract, array $extraParams = array()): object {
-		               return match ($abstract) {
-		                       holonet\common\tests\di\UnionTypeDependency::class => $this->make_holonet_common_tests_di_UnionTypeDependency(),
-		                       default => parent::make($abstract, $extraParams)
-		               };
-		       }
-		       
-		       public function make_holonet_common_tests_di_UnionTypeDependency(): holonet\common\tests\di\UnionTypeDependency {
-		               return new holonet\common\tests\di\UnionTypeDependency(param: $this->byType('holonet\common\Noun', 'param'));
-		       }
-		};
-		COMPILED;
 		$actual = $compiler->compile();
 
-		$this->assertEqualsIgnoringIndentation($expected, $actual);
+		$this->assertMatchesTextSnapshot($actual);
 		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
 	public function testCannotCompileNonWireableDependency(): void {
-		$this->expectException(AutoWireException::class);
-		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\NonWireableDependency::__construct\': Parameter #0: param: Cannot auto-wire to type \'string\'');
-
 		$container = new Container();
-		$container->wire(NonWireableDependency::class);
+		$container->wire(holonet_common_tests_CompilerTest_NonWireableDependency::class);
 
 		$compiler = new Compiler($container);
-		$compiler->compile();
+
+		$actual = $compiler->compile();
+
+		$this->assertMatchesTextSnapshot($actual);
+		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
 	public function testUnionTypeNonWireable(): void {
 		$this->expectException(AutoWireException::class);
-		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\DependencyTest::__construct\': Parameter #0: param: Cannot auto-wire to union type \'holonet\common\tests\di\NonWireableDependency|string\'');
+		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\holonet_common_tests_CompilerTest_DependencyTest::__construct\': Parameter #0: param: Cannot auto-wire to union type \'holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency|string\'');
 
 		$container = new Container();
-		$container->wire(DependencyTest::class);
+		$container->wire(holonet_common_tests_CompilerTest_DependencyTest::class);
 
 		$compiler = new Compiler($container);
 		$compiler->compile();
@@ -255,37 +200,9 @@ class CompilerTest extends TestCase
 
 		$compiler = new Compiler($container);
 
-		$expected = <<<'COMPILED'
-		if (!isset($config) || !$config instanceof \holonet\common\config\ConfigRegistry) {
-			throw new \InvalidArgumentException('The config parameter must be an instance of \holonet\common\config\ConfigRegistry');
-		}
-		
-		return new class($config) extends \holonet\common\di\Container {
-			public function make(string $abstract, array $extraParams = array()): object {
-				return match ($abstract) {
-					holonet\common\tests\di\ServiceWithArrayConfigValue::class => $this->make_holonet_common_tests_di_ServiceWithArrayConfigValue(),
-					holonet\common\tests\di\OtherDependency::class => $this->make_holonet_common_tests_di_OtherDependency(),
-					holonet\common\tests\di\Dependency::class => $this->make_holonet_common_tests_di_Dependency(),
-					default => parent::make($abstract, $extraParams)
-				};
-			}
-		
-			public function make_holonet_common_tests_di_ServiceWithArrayConfigValue(): holonet\common\tests\di\ServiceWithArrayConfigValue {
-				return new holonet\common\tests\di\ServiceWithArrayConfigValue(value: $this->registry->get('config.just_an_array_value'));
-			}
-		
-			public function make_holonet_common_tests_di_OtherDependency(): holonet\common\tests\di\OtherDependency {
-				return new holonet\common\tests\di\OtherDependency(config: $this->registry->verifiedDto('service.other', 'holonet\common\tests\di\Config'));
-			}
-		
-			public function make_holonet_common_tests_di_Dependency(): holonet\common\tests\di\Dependency {
-				return new holonet\common\tests\di\Dependency(config: $this->registry->asDto('service.config', 'holonet\common\tests\di\Config'));
-			}
-		};
-		COMPILED;
 		$actual = $compiler->compile();
 
-		$this->assertEqualsIgnoringIndentation($expected, $actual);
+		$this->assertMatchesTextSnapshot($actual);
 		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
@@ -295,94 +212,82 @@ class CompilerTest extends TestCase
 		$container = new Container($registry);
 		$container->set('service1', DiAnonDep::class);
 		$compiler = new Compiler($container);
-		$expected = <<<'COMPILED'
-		if (!isset($config) || !$config instanceof \holonet\common\config\ConfigRegistry) {
-			throw new \InvalidArgumentException('The config parameter must be an instance of \holonet\common\config\ConfigRegistry');
-		}
-		
-		return new class($config) extends \holonet\common\di\Container {
-			public function make(string $abstract, array $extraParams = array()): object {
-				return match ($abstract) {
-					'service1' => $this->make_service1(),
-					default => parent::make($abstract, $extraParams)
-				};
-			}
-			
-			public function make_service1(): holonet\common\tests\di\DiAnonDep {
-				return new holonet\common\tests\di\DiAnonDep();
-			}
-		};
-		COMPILED;
 
 		$actual = $compiler->compile();
 
-		$this->assertEqualsIgnoringIndentation($expected, $actual);
+		$this->assertMatchesTextSnapshot($actual);
 		$this->assertValidCompiledContainer($actual, $registry);
 	}
 
-	protected function assertValidCompiledContainer(string $code, ConfigRegistry $config): void {
+	protected function assertValidCompiledContainer(string $code, ConfigRegistry $config): Container {
 		$container = eval("{$code}");
 		$this->assertTrue(str_contains(get_class($container), '@anonymous'));
 		$this->assertInstanceOf(Container::class, $container);
+
+		return $container;
 	}
 
-	protected function assertEqualsIgnoringIndentation(string $expect, string $actual, string $message = ''): void
-	{
-		$expect = preg_replace('/\s+/', ' ', $expect);
-		$actual = preg_replace('/\s+/', ' ', $actual);
-		$this->assertEquals($expect, $actual, $message);
+	protected function getSnapshotDirectory(): string {
+		return dir_path(dirname(__FILE__, 2), '__snapshots__');
 	}
 }
 
-class DependencyTest
+class holonet_common_tests_CompilerTest_DependencyTest
 {
-	public function __construct(NonWireableDependency|string $param)
+	public function __construct(holonet_common_tests_CompilerTest_NonWireableDependency|string $param)
 	{
 	}
 }
 
-class NonWireableDependency
+class holonet_common_tests_CompilerTest_NonWireableDependency
 {
 	public function __construct(string $param)
 	{
 	}
 }
 
-class UnionTypeDependency
+class holonet_common_tests_CompilerTest_UnionTypeDependency
 {
 	public function __construct(string|Noun $param)
 	{
 	}
 }
 
-class OptionalAndNullableParamsDependency
+class holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency
 {
 	public function __construct(?string $param1, string $param2 = 'default')
 	{
 	}
 }
 
-class UntypedParamOptionalDependency
+class holonet_common_tests_CompilerTest_UntypedParamOptionalDependency
 {
 	public function __construct($param1 = null)
 	{
 	}
 }
 
-class UntypedParamsDependency
+class holonet_common_tests_CompilerTest_UntypedParamsDependency
 {
 	public function __construct($param1, $param2 = null)
 	{
 	}
 }
 
-class NoConstructorDependency
+class holonet_common_tests_CompilerTest_NoConstructorDependency
 {
 }
 
-class DependencyWithIntersectionType
+class holonet_common_tests_CompilerTest_DependencyWithIntersectionType
 {
 	public function __construct(Stringable&Countable $param)
+	{
+	}
+}
+
+class holonet_common_tests_CompilerTest_ForwardParamDependency
+{
+	public function __construct(holonet_common_tests_CompilerTest_NoConstructorDependency $dependency, string $testParam, string $testParamTwo, int $value = 5)
 	{
 	}
 }

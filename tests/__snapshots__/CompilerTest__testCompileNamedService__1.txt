@@ -1,5 +1,3 @@
-<?php
-
 if (!isset($config) || !$config instanceof \holonet\common\collection\ConfigRegistry) {
 	throw new \InvalidArgumentException('The config parameter must be an instance of \holonet\common\collection\ConfigRegistry');
 }

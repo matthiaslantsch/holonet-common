@@ -11,7 +11,7 @@ namespace holonet\common\di\autowire\attribute;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_PARAMETER)]
+#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
 class ConfigItem {
 	public function __construct(public ?string $key = null, public bool $verified = true) {
 	}

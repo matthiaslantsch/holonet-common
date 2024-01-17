@@ -20,6 +20,10 @@ class ConfigDependencyDiscovery implements DependencyDiscovery {
 	public function discover(Container $container): void {
 		if (is_array($services = $container->registry->get('di.services'))) {
 			foreach ($services as $service => $abstract) {
+				if (is_int($service)) {
+					$service = $abstract;
+				}
+
 				if (is_string($abstract)) {
 					$abstract = array($abstract);
 				}

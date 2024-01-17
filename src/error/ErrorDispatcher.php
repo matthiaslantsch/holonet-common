@@ -42,9 +42,9 @@ class ErrorDispatcher {
 	}
 
 	/**
-	 * registers the our callbacks as error handlers/exception handlers/shutdown function with the SPL.
+	 * registers our callbacks as error handlers/exception handlers/shutdown function with the SPL.
 	 */
-	public function register(): void {
+	public function __construct() {
 		/**
 		 * @psalm-suppress InvalidArgument
 		 * @psalm-suppress MissingClosureParamType

@@ -12,7 +12,7 @@ namespace holonet\common\di;
 use holonet\common\di\discovery\ConfigDependencyDiscovery;
 use holonet\common\di\discovery\DependencyDiscovery;
 use holonet\common\error\BadEnvironmentException;
-use holonet\common\config\ConfigRegistry;
+use holonet\common\collection\ConfigRegistry;
 
 /**
  * Factory class that is supposed to initialise a container based on a configuration.
@@ -28,15 +28,23 @@ class Factory {
 		$this->discoverers[] = new ConfigDependencyDiscovery();
 	}
 
-	public function make(): Container {
-		if ($this->registry->has('di.cache_path')) {
-			return $this->makeCompiledContainer();
-		} else {
-			return $this->makeContainer();
-		}
+	public function discover(DependencyDiscovery $discovery): void {
+		$this->discoverers[] = $discovery;
 	}
 
-	private function makeCompiledContainer(): Container {
+	public function make(array $initialServices = array()): Container {
+		$warnAboutInefficientInstantiation = $this->registry->get('di.warn_on_inefficient_instantiation', false);
+		$this->registry->set('di.warn_on_inefficient_instantiation', false);
+		if ($this->registry->has('di.cache_path')) {
+			$container = $this->makeCompiledContainer($initialServices);
+		} else {
+			$container = $this->makeContainer($initialServices);
+		}
+		$this->registry->set('di.warn_on_inefficient_instantiation', $warnAboutInefficientInstantiation);
+		return $container;
+	}
+
+	private function makeCompiledContainer(array $initialServices = array()): Container {
 		$cacheFile = $this->cacheFilePath();
 		$config = $this->registry;
 
@@ -44,15 +52,15 @@ class Factory {
 			return require $cacheFile;
 		}
 
-		$container = $this->makeContainer();
+		$container = $this->makeContainer($initialServices);
 		$compiler = new Compiler($container);
 
 		file_put_contents($cacheFile, "<?php\n\n{$compiler->compile()}");
 		return require $cacheFile;
 	}
 
-	private function makeContainer(): Container {
-		$container = new Container($this->registry);
+	private function makeContainer(array $initialServices = array()): Container {
+		$container = new Container($this->registry, $initialServices);
 		foreach ($this->discoverers as $discoverer) {
 			$discoverer->discover($container);
 		}

@@ -10,7 +10,7 @@
 namespace holonet\common\tests\di;
 
 use holonet\common\collection\Registry;
-use holonet\common\config\ConfigRegistry;
+use holonet\common\collection\ConfigRegistry;
 use holonet\common\di\discovery\ConfigDependencyDiscovery;
 use PHPUnit\Framework\TestCase;
 use holonet\common\di\Container;

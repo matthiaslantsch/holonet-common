@@ -66,7 +66,7 @@ class FilesystemUtils {
 	public static function readFileContents(string $path): string {
 		$contents = @file_get_contents($path);
 		if ($contents === false) {
-			throw new RuntimeException(sprintf("Could not file_get_contents() path '%s': %s", $path, error_get_last()['message']));
+			throw new RuntimeException(sprintf("Could not file_get_contents() path '%s': last error on the stack: %s", $path, error_get_last()['message']));
 		}
 
 		return $contents;

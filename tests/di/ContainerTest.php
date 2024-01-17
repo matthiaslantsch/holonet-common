@@ -185,7 +185,7 @@ class ContainerTest extends TestCase {
 
 	public function testWireNonExistingClassThrowsError(): void {
 		$this->expectException(DependencyInjectionException::class);
-		$this->expectExceptionMessage('Could not auto-wire abstract \'\nonsense\class\TestClass\': class does not exist');
+		$this->expectExceptionMessage('Could not auto-wire to \'\nonsense\class\TestClass\': not a class or interface');
 
 		$container = new Container();
 
@@ -204,14 +204,56 @@ class ContainerTest extends TestCase {
 		$this->assertTrue($one->parameter === $two->parameter);
 	}
 
-	public function testWiringAnInterfaceToAnImplementation(): void {
+	public function test_wiring_an_interface_to_an_implementation(): void {
 		$container = new Container();
 
-		$container->wire(TestClass::class, abstract: MyInterface::class);
-		$container->wire(TestClass::class, abstract: AbstractBaseClass::class);
+		// first wire the interface to an alias
+		$container->wire(MyInterface::class, alias: 'test_interface');
+
+		// then wire an implementation to the same alias
+		$container->wire(TestClass::class, array('value' => 'cool'), 'test_interface');
 
 		$this->assertInstanceOf(TestClass::class, $container->make(MyInterface::class));
+		$this->assertInstanceOf(TestClass::class, $container->make('test_interface'));
+		$this->assertInstanceOf(TestClass::class, $container->make(TestClass::class));
+
+		$container = new Container();
+
+		// first wire the interface to an alias
+		$container->wire(MyInterface::class, alias: 'test_interface');
+
+		// then wire an implementation to the same interface
+		$container->wire(TestClass::class, array('value' => 'cool'), MyInterface::class);
+
+		$this->assertInstanceOf(TestClass::class, $container->make(MyInterface::class));
+		$this->assertInstanceOf(TestClass::class, $container->make('test_interface'));
+		$this->assertInstanceOf(TestClass::class, $container->make(TestClass::class));
+	}
+
+	public function test_wiring_an_abstract_class_to_an_implementation(): void {
+		$container = new Container();
+
+		// first wire the abstract class to an alias
+		$container->wire(AbstractBaseClass::class, alias: 'test_abstract');
+
+		// then wire an implementation to the same alias
+		$container->wire(TestClass::class, array('value' => 'cool'), 'test_abstract');
+
 		$this->assertInstanceOf(TestClass::class, $container->make(AbstractBaseClass::class));
+		$this->assertInstanceOf(TestClass::class, $container->make('test_abstract'));
+		$this->assertInstanceOf(TestClass::class, $container->make(TestClass::class));
+
+		$container = new Container();
+
+		// first wire the abstract class to an alias
+		$container->wire(AbstractBaseClass::class, alias: 'test_abstract');
+
+		// then wire an implementation to the same abstract class
+		$container->wire(TestClass::class, array('value' => 'cool'), AbstractBaseClass::class);
+
+		$this->assertInstanceOf(TestClass::class, $container->make(AbstractBaseClass::class));
+		$this->assertInstanceOf(TestClass::class, $container->make('test_abstract'));
+		$this->assertInstanceOf(TestClass::class, $container->make(TestClass::class));
 	}
 
 	public function testSetNonsenseAsService(): void {
@@ -287,6 +329,8 @@ abstract class AbstractBaseClass {
 }
 
 class TestClass extends AbstractBaseClass implements MyInterface {
+	public function __construct(public string $value) {
+	}
 }
 
 interface MyInterface {

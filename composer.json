@@ -15,7 +15,8 @@
 	},
 	"require-dev": {
 		"holonet/hdev": "~1.1.0@dev",
-		"phpunit/phpunit": "^10.0.0"
+		"phpunit/phpunit": "^10.0.0",
+		"spatie/phpunit-snapshot-assertions": "dev-main"
 	},
 	"provide": {
 		"psr/container-implementation": "2.0.2"

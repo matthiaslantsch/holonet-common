@@ -9,6 +9,7 @@
 
 namespace holonet\common;
 
+use holonet\common\error\BadEnvironmentException;
 use ReflectionClass;
 use ReflectionMethod;
 use RuntimeException;
@@ -18,7 +19,36 @@ use InvalidArgumentException;
 use holonet\common\verifier\Proof;
 use holonet\common\verifier\Verifier;
 use holonet\common\code\FileUseStatementParser;
+use function Symfony\Component\String\b;
 use function Webmozart\Assert\Tests\StaticAnalysis\string;
+
+if (!function_exists(__NAMESPACE__.'\\read_php_config_file')) {
+	/**
+	 * @param string|null $expectedVariable The config file can be expected to set a variable instead of returning its content.
+	 * If this parameter is given, the reader will expect the required file to set a variable with the same name and
+	 * then return it.
+	 */
+	function read_php_config_file(string $file, ?string $expectedVariable = null): mixed {
+		if (!is_readable($file) || pathinfo($file, PATHINFO_EXTENSION) !== 'php') {
+			throw new BadEnvironmentException("Config file '{$file}' is not a valid php config file");
+		}
+
+		$return = require $file;
+
+		if (!empty($expectedVariable) && isset(${$expectedVariable})) {
+			return ${$expectedVariable};
+		}
+
+		if (isset($return)) {
+			return $return;
+		}
+
+		if ($expectedVariable === null) {
+			throw new BadEnvironmentException("Error reading php config '{$file}': File was expected to return a value");
+		}
+		throw new BadEnvironmentException("Error reading php config '{$file}': File was expected to either return a value or set a variable named '\${$expectedVariable}'");
+	}
+}
 
 if (!function_exists(__NAMESPACE__.'\\dot_key_set')) {
 	function dot_key_set(object|array &$position, string $key, mixed $value = null, string $separator = '.'): void {
@@ -90,7 +120,7 @@ if (!function_exists(__NAMESPACE__.'\\reflection_get_attribute')) {
 	/**
 	 * @template T
 	 * Get a single attribute from a reflection object.
-	 * @param class-string<T> $class
+	 * @psalm-param class-string<T> $class
 	 * @return ?T
 	 */
 	function reflection_get_attribute(ReflectionClass|ReflectionProperty|ReflectionParameter|ReflectionMethod $reflection, string $class): ?object {

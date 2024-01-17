@@ -9,7 +9,7 @@
 
 namespace holonet\common\tests\di;
 
-use holonet\common\config\ConfigRegistry;
+use holonet\common\collection\ConfigRegistry;
 use holonet\common\di\Container;
 use holonet\common\di\Factory;
 use holonet\common\error\BadEnvironmentException;

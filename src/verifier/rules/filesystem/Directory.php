@@ -13,11 +13,22 @@ use Attribute;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class Directory extends PathRule {
+
+	public function __construct(public bool $create = false, public  bool $recursive = false, string $message = null) {
+		parent::__construct($message);
+	}
+
 	public static function defaultMessage(): string {
 		return "':value' is not a directory";
 	}
 
 	public function pass(mixed $value): bool {
+		if ($this->create && !is_dir($value)) {
+			if (!mkdir($value, 0777, $this->recursive)) {
+				return false;
+			}
+		}
+
 		return is_dir($value);
 	}
 }

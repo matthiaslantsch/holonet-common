@@ -47,7 +47,6 @@ class ErrorDispatcher {
 	public function __construct() {
 		/**
 		 * @psalm-suppress InvalidArgument
-		 * @psalm-suppress MissingClosureParamType
 		 */
 		set_error_handler(function (...$args): void {
 			foreach ($this->errorHandlers as $handler) {
@@ -55,10 +54,6 @@ class ErrorDispatcher {
 			}
 		});
 
-		/**
-		 * @psalm-suppress InvalidArgument
-		 * @psalm-suppress MissingClosureParamType
-		 */
 		set_exception_handler(function (...$args): void {
 			foreach ($this->exceptionHandlers as $handler) {
 				$handler(...$args);
@@ -66,7 +61,6 @@ class ErrorDispatcher {
 		});
 
 		/**
-		 * @psalm-suppress InvalidArgument
 		 * @psalm-suppress MissingClosureParamType
 		 */
 		register_shutdown_function(function (...$args): void {

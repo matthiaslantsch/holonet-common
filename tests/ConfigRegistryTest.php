@@ -33,7 +33,7 @@ class ConfigRegistryTest extends TestCase {
 		putenv('ENV_VALUE_2=');
 	}
 
-	public function testEnvPlaceholderReplacement(): void {
+	public function test_env_placeholder_gets_replaced(): void {
 		$registry = new ConfigRegistry();
 		$registry->setAll(array(
 			'test' => '%env(ENV_VALUE)%',
@@ -44,7 +44,7 @@ class ConfigRegistryTest extends TestCase {
 		$this->assertSame('test value', $registry->get('test2'));
 	}
 
-	public function testNormalPlaceholdersStillWork(): void {
+	public function test_normal_placeholders_still_work(): void {
 		$registry = new ConfigRegistry();
 		$registry->setAll(array(
 			'test' => '%test_prop%',
@@ -54,7 +54,7 @@ class ConfigRegistryTest extends TestCase {
 		$this->assertSame('cool', $registry->get('test'));
 	}
 
-	public function testVerifiedDto(): void {
+	public function test_config_data_can_be_fetched_as_a_verified_dto_object(): void {
 		$this->expectException(BadEnvironmentException::class);
 		$this->expectExceptionMessage('Faulty config with key \'test.testProp\': testProp must be exactly 11 characters long');
 
@@ -72,7 +72,7 @@ class ConfigRegistryTest extends TestCase {
 		$registry->verifiedDto('test', $dto);
 	}
 
-	public function testVerifiedDtoTypeError(): void {
+	public function test_faulty_config_data_fetch_with_dto_object_throws_type_error(): void {
 		$this->expectException(BadEnvironmentException::class);
 		$this->expectExceptionMessage('Faulty config with key \'test\': TypeError: Cannot assign array to property class@anonymous::$testProp of type string');
 
@@ -90,16 +90,34 @@ class ConfigRegistryTest extends TestCase {
 		$registry->verifiedDto('test', $dto);
 	}
 
-	public function testVerifiedDtoUsingClass(): void {
+	public function test_config_data_can_be_fetched_using_an_actual_dto_object_class(): void {
 		$registry = new ConfigRegistry();
 		$registry->set('test', 'amazing value');
 
-		$dto = $registry->verifiedDto('test', TestDto::class);
+		$dto = $registry->verifiedDto('test', holonet_common_tests_ConfigRegistryTest_TestDto::class);
 		$this->assertSame('amazing value', $dto->value);
 	}
+
+	public function test_accessing_a_non_existing_key_will_throw_a_helpful_exception(): void {
+		$this->expectException(BadEnvironmentException::class);
+		$this->expectExceptionMessage('Faulty config with key \'test\': Config item doesn\'t exist');
+
+		$registry = new ConfigRegistry();
+		$registry->asDto('test', holonet_common_tests_ConfigRegistryTest_TestDto::class);
+	}
+
+	public function test_having_an_unset_environment_placeholder_in_a_value_defaults_to_empty_string(): void {
+		$registry = new ConfigRegistry();
+		$registry->setAll(array(
+			'test' => '%env(ENV_VALUE_3)%',
+		));
+
+		$this->assertSame('', $registry->get('test'));
+	}
+
 }
 
-class TestDto {
+class holonet_common_tests_ConfigRegistryTest_TestDto {
 	public function __construct(
 		#[MinLength(4)]
 		public string $value

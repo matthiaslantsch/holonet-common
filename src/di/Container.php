@@ -75,7 +75,6 @@ class Container implements ContainerInterface {
 	 * @template T
 	 * @param class-string<T> $class
 	 * @return T
-	 * @psalm-suppress InvalidReturnType
 	 * @psalm-suppress InvalidReturnStatement
 	 */
 	public function byType(string $class, ?string $alias = null): object {

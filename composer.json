@@ -11,7 +11,7 @@
 	"require": {
 		"php": ">=8.1",
 		"monolog/monolog": "^2.0",
-		"psr/container": "2.0.2"
+		"psr/container": "^2.0.2"
 	},
 	"require-dev": {
 		"holonet/hdev": "~1.1.0@dev",
@@ -19,7 +19,7 @@
 		"spatie/phpunit-snapshot-assertions": "dev-main"
 	},
 	"provide": {
-		"psr/container-implementation": "2.0.2"
+		"psr/container-implementation": "^2.0.2"
 	},
 	"repositories": [
 		{
@@ -60,7 +60,7 @@
 		"test": [
 			"@composer validate",
 			"@composer normalize --dry-run --diff",
-			"@php -d memory_limit=-1 vendor/phpunit/phpunit/phpunit -c phpunit.xml",
+			"@php -d xdebug.mode=coverage -d memory_limit=-1 vendor/phpunit/phpunit/phpunit -c phpunit.xml",
 			"@php -d memory_limit=-1 vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --verbose --dry-run --ansi",
 			"@php -d memory_limit=-1 vendor/vimeo/psalm/psalm"
 		]

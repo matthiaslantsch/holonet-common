@@ -50,16 +50,16 @@ class Collection implements Countable, IteratorAggregate {
 	}
 
 	/**
-	 * return a reference so we can change e.g. sub arrays from this call
+	 * return a reference, so we can change e.g. sub arrays from this call
 	 *  => cannot use our own get() method.
 	 */
-	public function __get(string $key): mixed {
-		if (is_object($this->data[$key]) || $this->data[$key] === null) {
-			//only actual variables should be returned by reference
-			return $this->data[$key];
+	public function &__get(string $key): mixed {
+		if (!$this->has($key)) {
+			$null = null;
+			return $null;
 		}
 
-		return $this->data[$key] ?? null;
+		return $this->data[$key];
 	}
 
 	public function clear(): void {

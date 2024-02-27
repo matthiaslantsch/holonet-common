@@ -22,6 +22,19 @@ use holonet\common\code\FileUseStatementParser;
 use function Symfony\Component\String\b;
 use function Webmozart\Assert\Tests\StaticAnalysis\string;
 
+if (!function_exists(__NAMESPACE__.'\\is_abstract')) {
+	/**
+	 * Horribly inefficient method using reflection to check whether a class is abstract and
+	 * then throwing it away again. To be used during container compilation.
+	 */
+	function is_abstract(string $class): bool {
+		$reflection = new ReflectionClass($class);
+
+		return $reflection->isAbstract();
+	}
+}
+
+
 if (!function_exists(__NAMESPACE__.'\\read_php_config_file')) {
 	/**
 	 * @param string|null $expectedVariable The config file can be expected to set a variable instead of returning its content.
@@ -78,6 +91,10 @@ if (!function_exists(__NAMESPACE__.'\\dot_key_set')) {
 
 if (!function_exists(__NAMESPACE__.'\\dot_key_get')) {
 	function dot_key_get(object|array $position, string $key, mixed $default = null, string $separator = '.'): mixed {
+		if (is_object($position)) {
+			$position = (array)$position;
+		}
+
 		$parts = explode($separator, $key);
 
 		foreach ($parts as $subLevel) {
@@ -212,6 +229,10 @@ if (!function_exists(__NAMESPACE__.'\\get_absolute_path')) {
 	 * @see https://www.php.net/manual/en/function.realpath.php#84012
 	 */
 	function get_absolute_path(string $path): string {
+		if (empty($path)) {
+			return $path;
+		}
+
 		if ($path[0] === '.') {
 			$cwd = getcwd();
 			if ($cwd !== false) {

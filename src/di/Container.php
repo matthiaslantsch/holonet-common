@@ -10,6 +10,7 @@
 namespace holonet\common\di;
 
 use holonet\common\collection\Registry;
+use holonet\holofw\auth\Authoriser;
 use ReflectionClass;
 use Psr\Container\ContainerInterface;
 use holonet\common\di\autowire\AutoWire;
@@ -104,6 +105,7 @@ class Container implements ContainerInterface {
 	 */
 	public function get(string $id): object {
 		if (in_array($id, $this->recursionPath)) {
+			$this->recursionPath[] = $id;
 			throw new DependencyInjectionException(sprintf('Recursive dependency definition detected: %s', implode(' => ', $this->recursionPath)));
 		}
 
@@ -141,11 +143,12 @@ class Container implements ContainerInterface {
 	 * @psalm-suppress InvalidReturnStatement
 	 */
 	public function make(string $alias, array $extraParams = array()): object {
-		if (isset($this->instances[$alias])) {
+		if ($this->has($alias)) {
 			return $this->get($alias);
 		}
 
 		if (in_array($alias, $this->recursionPath)) {
+			$this->recursionPath[] = $alias;
 			throw new DependencyInjectionException(sprintf('Recursive dependency definition detected: %s', implode(' => ', $this->recursionPath)));
 		}
 

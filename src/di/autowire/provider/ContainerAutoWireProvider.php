@@ -19,7 +19,7 @@ class ContainerAutoWireProvider implements ParamAutoWireProvider {
 	 * {@inheritDoc}
 	 */
 	public function provide(Container $container, ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): mixed {
-		if (class_exists($type->getName())) {
+		if (class_exists($type->getName()) || interface_exists($type->getName())) {
 			try {
 				return $container->byType($type->getName(), $param->getName());
 			} catch (DependencyInjectionException $e) {

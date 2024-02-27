@@ -9,6 +9,7 @@
 
 namespace holonet\common\collection;
 
+use Error;
 use TypeError;
 use function holonet\common\verify;
 use holonet\common\collection\Registry;
@@ -43,6 +44,13 @@ class ConfigRegistry extends Registry {
 			}
 		} catch (TypeError $e) {
 			throw BadEnvironmentException::faultyConfig($configKey, "TypeError: {$e->getMessage()}");
+		} catch (Error $e) {
+			if (str_contains($e->getMessage(), 'Unknown named parameter')) {
+				$unknownKey = str_replace('Unknown named parameter $', '', $e->getMessage());
+				throw BadEnvironmentException::faultyConfig($configKey, "Additional unused config key was specified: '{$configKey}.{$unknownKey}'");
+			}
+
+			throw BadEnvironmentException::faultyConfig($configKey, "Error: {$e->getMessage()}");
 		}
 
 		return $cfgDto;

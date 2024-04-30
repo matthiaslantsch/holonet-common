@@ -63,6 +63,28 @@ if (!function_exists(__NAMESPACE__.'\\read_php_config_file')) {
 	}
 }
 
+if (!function_exists(__NAMESPACE__.'\\array_head')) {
+	function array_head(array $arr): mixed {
+		return reset($arr) ?: null;
+	}
+}
+
+if (!function_exists(__NAMESPACE__.'\\array_head_keys')) {
+	function array_head_keys(array $arr): ?array {
+		$head = array_head($arr);
+
+		if ($head === null) {
+			return null;
+		}
+
+		if (!is_array($head)) {
+			throw new InvalidArgumentException('Can only use array_head_keys on array of arrays');
+		}
+
+		return array_keys($head);
+	}
+}
+
 if (!function_exists(__NAMESPACE__.'\\dot_key_set')) {
 	function dot_key_set(object|array &$position, string $key, mixed $value = null, string $separator = '.'): void {
 		$parts = explode($separator, $key);

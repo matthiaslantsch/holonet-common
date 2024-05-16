@@ -155,6 +155,26 @@ if (!function_exists(__NAMESPACE__.'\\verify')) {
 	}
 }
 
+if (!function_exists(__NAMESPACE__.'\\reflection_get_attributes')) {
+	/**
+	 * @template T
+	 * Get all attributes from a reflection object.
+	 * @psalm-param class-string<T> $class
+	 * @return array<T>
+	 * @psalm-suppress InvalidReturnType
+	 * @psalm-suppress InvalidReturnStatement
+	 */
+	function reflection_get_attributes(ReflectionClass|ReflectionProperty|ReflectionParameter|ReflectionMethod $reflection, string $class): array {
+		$attrs = $reflection->getAttributes();
+
+		$attrs = array_filter($attrs, fn($attr) => is_a($attr->getName(), $class, true));
+
+		// instanciate the attributes
+		return array_map(fn($attr) => $attr->newInstance(), $attrs);
+	}
+}
+
+
 if (!function_exists(__NAMESPACE__.'\\reflection_get_attribute')) {
 	/**
 	 * @template T
@@ -163,9 +183,13 @@ if (!function_exists(__NAMESPACE__.'\\reflection_get_attribute')) {
 	 * @return ?T
 	 */
 	function reflection_get_attribute(ReflectionClass|ReflectionProperty|ReflectionParameter|ReflectionMethod $reflection, string $class): ?object {
-		$attrs = $reflection->getAttributes($class);
+		$attrs = reflection_get_attributes($reflection, $class);
 
-		return reset($attrs) ? reset($attrs)->newInstance() : null;
+		if (count($attrs) > 1) {
+			throw new RuntimeException(sprintf('Multiple attributes of type %s found on %s', $class, $reflection->getName()));
+		}
+
+		return array_head($attrs);
 	}
 }
 

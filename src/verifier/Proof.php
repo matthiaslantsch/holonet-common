@@ -29,7 +29,15 @@ class Proof {
 	}
 
 	public function attr(string $attr): array {
-		return $this->errors[$attr] ?? array();
+		$filtered = array();
+		foreach ($this->errors as $key => $errors) {
+			$baseKey = strstr($key, '.', true) ?: $key;
+			if ($baseKey === $attr || $key === $attr) {
+				$filtered = array(...$errors, ...$filtered);
+			}
+		}
+
+		return $filtered;
 	}
 
 	public function flat(): array {
@@ -50,6 +58,16 @@ class Proof {
 	 * Determine whether a single attribute passed.
 	 */
 	public function passed(string $attr): bool {
+		if (isset($this->errors[$attr])) {
+			return false;
+		}
+
+		foreach ($this->errors as $key => $value) {
+			if (strstr($key, '.', true) === $attr) {
+				return false;
+			}
+		}
+
 		return !isset($this->errors[$attr]);
 	}
 }

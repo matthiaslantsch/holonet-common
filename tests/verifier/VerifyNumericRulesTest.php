@@ -25,7 +25,7 @@ use holonet\common\verifier\rules\numeric\Numeric;
 #[CoversClass(Minimum::class)]
 #[CoversClass(Numeric::class)]
 class VerifyNumericRulesTest extends BaseVerifyTest {
-	public function testCheckBetween(): void {
+	public function test_check_between(): void {
 		$test = new class(22) {
 			public function __construct(
 				#[Between(1, 6)]
@@ -35,14 +35,15 @@ class VerifyNumericRulesTest extends BaseVerifyTest {
 		};
 
 		$proof = verify($test);
-		$this->assertProofFailedWithError($proof, 'testProp', 'testProp must be between 1 and 6');
+		$this->assertProofFailedForAttribute($proof, 'testProp');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp must be between 1 and 6');
 
 		$test->testProp = 3;
 		$proof = verify($test);
 		$this->assertProofPassed($proof, 'testProp');
 	}
 
-	public function testCheckMaximum(): void {
+	public function test_check_maximum(): void {
 		$test = new class(22) {
 			public function __construct(
 				#[Maximum(8)]
@@ -52,14 +53,15 @@ class VerifyNumericRulesTest extends BaseVerifyTest {
 		};
 
 		$proof = verify($test);
-		$this->assertProofFailedWithError($proof, 'testProp', 'testProp must be less or equal to 8');
+		$this->assertProofFailedForAttribute($proof, 'testProp');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp must be less or equal to 8');
 
 		$test->testProp = 4;
 		$proof = verify($test);
 		$this->assertProofPassed($proof, 'testProp');
 	}
 
-	public function testCheckMinimum(): void {
+	public function test_check_minimum(): void {
 		$test = new class(1) {
 			public function __construct(
 				#[Minimum(8)]
@@ -70,14 +72,15 @@ class VerifyNumericRulesTest extends BaseVerifyTest {
 
 		$proof = verify($test);
 
-		$this->assertProofFailedWithError($proof, 'testProp', 'testProp must be greater or equal to 8');
+		$this->assertProofFailedForAttribute($proof, 'testProp');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp must be greater or equal to 8');
 
 		$test->testProp = 10;
 		$proof = verify($test);
 		$this->assertProofPassed($proof, 'testProp');
 	}
 
-	public function testCheckNumeric(): void {
+	public function test_check_numeric(): void {
 		$test = new class('values') {
 			public function __construct(
 				#[Numeric]
@@ -87,14 +90,16 @@ class VerifyNumericRulesTest extends BaseVerifyTest {
 		};
 
 		$proof = verify($test);
-		$this->assertProofFailedWithError($proof, 'testProp', 'testProp must be numeric');
+
+		$this->assertProofFailedForAttribute($proof, 'testProp');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp must be numeric');
 
 		$test->testProp = '24.15';
 		$proof = verify($test);
 		$this->assertProofPassed($proof, 'testProp');
 	}
 
-	public function testCustomMessage(): void {
+	public function test_custom_message(): void {
 		$test = new class(5, 'cool') {
 			public function __construct(
 				#[Between(6, 10, message: 'no less than :low, no more than :high')]
@@ -119,4 +124,34 @@ class VerifyNumericRulesTest extends BaseVerifyTest {
 		$this->assertFalse($proof->passed('other'));
 		$this->assertProofContainsError($proof, 'other', 'other NUMERIC pls');
 	}
+
+	public function test_array_of_values(): void {
+		$test = new class([3, 6, 1, 'test']) {
+			public function __construct(
+				#[Between(1, 6)]
+				#[Maximum(5)]
+				#[Minimum(2)]
+				#[Numeric]
+				public array $testProp
+			) {
+			}
+		};
+
+		$proof = verify($test);
+
+		$this->assertProofFailedForAttribute($proof, 'testProp');
+		$this->assertProofPassed($proof, 'testProp.0');
+		$this->assertProofFailedForAttribute($proof, 'testProp.1');
+		$this->assertProofFailedForAttribute($proof, 'testProp.2');
+		$this->assertProofFailedForAttribute($proof, 'testProp.3');
+
+		$this->assertProofContainsError($proof, 'testProp.1', 'testProp.1 must be less or equal to 5');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp.1 must be less or equal to 5');
+		$this->assertProofContainsError($proof, 'testProp.2', 'testProp.2 must be greater or equal to 2');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp.2 must be greater or equal to 2');
+		$this->assertProofContainsError($proof, 'testProp.3', 'testProp.3 must be numeric');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp.3 must be numeric');
+	}
+
+
 }

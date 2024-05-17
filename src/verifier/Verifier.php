@@ -16,6 +16,7 @@ use holonet\common\verifier\rules\Required;
 use function holonet\common\reflection_get_attribute;
 use holonet\common\verifier\rules\CheckValueRuleInterface;
 use holonet\common\verifier\rules\TransformValueRuleInterface;
+use function holonet\common\reflection_get_attributes;
 
 /**
  * Base verifier simply reads the rule attributes on the given object and checks against them.
@@ -45,36 +46,39 @@ class Verifier {
 		}
 
 		$value = $property->getValue($obj);
-		foreach ($this->getRulesForProperty($property) as $rule) {
-			if (!$rule instanceof Rule) {
-				continue;
-			}
-
-			if ($rule instanceof TransformValueRuleInterface) {
-				$value = $rule->transform($value);
-				$property->setValue($obj, $value);
-			}
-
-			if ($rule instanceof CheckValueRuleInterface) {
-				if (!$rule->pass($value)) {
-					$proof->add($property->getName(), $rule->message($property->getName(), $value));
+		/** @var Rule $rule */
+		foreach (reflection_get_attributes($property, Rule::class) as $rule) {
+			if (is_array($value)) {
+				foreach ($value as $i => $val) {
+					if ($rule instanceof TransformValueRuleInterface) {
+						$value[$i] = $this->transformValue($rule, $val);
+					}
+					if ($rule instanceof CheckValueRuleInterface) {
+						$this->checkValue($rule, $value[$i], $proof,"{$property->getName()}.$i");
+					}
+				}
+			} else {
+				if ($rule instanceof TransformValueRuleInterface) {
+					$value = $this->transformValue($rule, $value);
+				}
+				if ($rule instanceof CheckValueRuleInterface) {
+					$this->checkValue($rule, $value, $proof, $property->getName());
 				}
 			}
-		}
-	}
-
-	protected function getRulesForProperty(ReflectionProperty $property): array {
-		$rules = array();
-		foreach ($property->getAttributes() as $rule) {
-			$rule = $rule->newInstance();
-
-			if (!$rule instanceof Rule) {
-				continue;
+			if ($rule instanceof TransformValueRuleInterface) {
+				$property->setValue($obj, $value);
 			}
-
-			$rules[] = $rule;
 		}
-
-		return $rules;
 	}
+
+	protected function transformValue(TransformValueRuleInterface&Rule $rule, mixed $value): mixed {
+		return $rule->transform($value);
+	}
+
+	protected function checkValue(CheckValueRuleInterface&Rule $rule, mixed $value, Proof $proof, string $property): void {
+		if (!$rule->pass($value)) {
+			$proof->add($property, $rule->message($property, $value));
+		}
+	}
+
 }

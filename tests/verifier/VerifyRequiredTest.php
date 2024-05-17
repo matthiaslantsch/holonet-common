@@ -17,7 +17,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(Verifier::class)]
 #[CoversClass(Required::class)]
 class VerifyRequiredTest extends BaseVerifyTest {
-	public function testCheckForRequiredAfterUnset(): void {
+	public function test_check_for_required_after_unset(): void {
 		$test = new class('test') {
 			public function __construct(
 				#[Required]
@@ -29,40 +29,48 @@ class VerifyRequiredTest extends BaseVerifyTest {
 		unset($test->testProp);
 
 		$proof = verify($test);
-		$this->assertProofFailedWithError($proof, 'testProp', 'testProp is required');
+
+		$this->assertProofFailedForAttribute($proof, 'testProp');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp is required');
 	}
 
-	public function testCheckForRequiredNullable(): void {
+	public function test_check_for_required_nullable(): void {
 		$test = new class() {
 			#[Required]
 			public ?string $testProp = null;
 		};
 
 		$proof = verify($test);
-		$this->assertProofFailedWithError($proof, 'testProp', 'testProp is required');
+
+		$this->assertProofFailedForAttribute($proof, 'testProp');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp is required');
 	}
 
-	public function testCheckForRequiredOfUninitialised(): void {
+	public function test_check_for_required_of_uninitialised(): void {
 		$test = new class() {
 			#[Required]
 			public string $testProp;
 		};
 
 		$proof = verify($test);
-		$this->assertProofFailedWithError($proof, 'testProp', 'testProp is required');
+
+		$this->assertProofFailedForAttribute($proof, 'testProp');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp is required');
 	}
 
-	public function testCustomMessage(): void {
+	public function test_custom_message(): void {
 		$test = new class() {
 			#[Required(message: "you better make sure :attr is set. It's the law!")]
 			public string $testProp;
 		};
 
 		$proof = verify($test);
-		$this->assertProofFailedWithError($proof, 'testProp', "you better make sure testProp is set. It's the law!");
+
+		$this->assertProofFailedForAttribute($proof, 'testProp');
+		$this->assertProofContainsError($proof, 'testProp', "you better make sure testProp is set. It's the law!");
 	}
 
-	public function testNonRequiredUnitialisedPass(): void {
+	public function test_non_required_unitialised_pass(): void {
 		$test = new class() {
 			public string $testProp;
 		};

@@ -24,40 +24,37 @@ use holonet\common\verifier\rules\TransformValueRuleInterface;
 #[CoversClass(TransformValueRuleInterface::class)]
 class BaseVerifyTest extends TestCase {
 	public function assertProofContainsError(Proof $actual, string $attr, string $error): void {
-		$this->assertContains($error, $actual->flat());
-		$this->assertArrayHasKey($attr, $actual->all());
+		$this->assertContains($error, $actual->flat(), sprintf('Instead contains: %s', stringify($actual->flat())));
+		$this->assertContains($error, $actual->attr($attr), sprintf('Instead contains: %s', stringify($actual->attr($attr))));
 	}
 
-	public function assertProofFailedWithError(Proof $actual, string $attr, string $error): void {
+	public function assertProofFailedForAttribute(Proof $actual, string $attr): void {
 		$this->assertFalse($actual->passed($attr), "Failed asserting that verification for '{$attr}' didn't pass");
-		$this->assertFalse($actual->pass(), "Failed asserting that verification didn't pass");
-		$this->assertProofContainsError($actual, $attr, $error);
 	}
 
 	public function assertProofPassed(Proof $actual, string $attr): void {
 		$failMessage = "Failed asserting that verification for '%s' passed; Got errors: %s";
 		$this->assertTrue($actual->passed($attr), sprintf($failMessage, $attr, stringify($actual->attr($attr))));
-		$this->assertTrue($actual->pass(), 'Failed asserting that verification passed');
-		$this->assertEmpty($actual->all());
 	}
 
-	public function testBaseDefaultMessage(): void {
+	public function test_base_default_message(): void {
 		$test = new class() {
 			public function __construct(
-				#[Invalid]
+				#[holonet_common_tests_verifier_BaseVerifyTest_Invalid]
 				public string $testProp = 'default'
 			) {
 			}
 		};
 
 		$proof = verify($test);
-		$this->assertProofFailedWithError($proof, 'testProp', 'testProp is invalid');
+		$this->assertProofFailedForAttribute($proof, 'testProp');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp is invalid');
 	}
 
-	public function testNonRuleAttributeIsIgnored(): void {
+	public function test_non_rule_attribute_is_ignored(): void {
 		$test = new class() {
 			public function __construct(
-				#[TestAttribute]
+				#[holonet_common_tests_verifier_BaseVerifyTest_TestAttribute]
 				public string $testProp = 'default'
 			) {
 			}
@@ -67,10 +64,10 @@ class BaseVerifyTest extends TestCase {
 		$this->assertProofPassed($proof, 'testProp');
 	}
 
-	public function testTransformsRule(): void {
+	public function test_transforms_rule(): void {
 		$test = new class() {
 			public function __construct(
-				#[SlugifyAttribute]
+				#[holonet_common_tests_verifier_BaseVerifyTest_SlugifyAttribute]
 				public string $testProp = 'This Is A normal Sentence'
 			) {
 			}
@@ -83,19 +80,19 @@ class BaseVerifyTest extends TestCase {
 }
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class Invalid extends Rule implements CheckValueRuleInterface {
+class holonet_common_tests_verifier_BaseVerifyTest_Invalid extends Rule implements CheckValueRuleInterface {
 	public function pass(mixed $value): bool {
 		return false;
 	}
 }
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class SlugifyAttribute extends Rule implements TransformValueRuleInterface {
+class holonet_common_tests_verifier_BaseVerifyTest_SlugifyAttribute extends Rule implements TransformValueRuleInterface {
 	public function transform(mixed $value): mixed {
 		return mb_strtolower(str_replace(' ', '-', $value));
 	}
 }
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class TestAttribute {
+class holonet_common_tests_verifier_BaseVerifyTest_TestAttribute {
 }

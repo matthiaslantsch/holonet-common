@@ -37,9 +37,12 @@ class VerifyUrlTest extends BaseVerifyTest {
 		};
 
 		$proof = verify($test);
-		$this->assertProofFailedWithError($proof, 'testProp', 'testProp must be a valid url');
+
+		$this->assertProofFailedForAttribute($proof, 'testProp');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp must be a valid url');
 		$this->assertTrue($proof->passed('testProp2'));
-		$this->assertProofFailedWithError($proof, 'testProp3', 'testProp3 must be a valid url');
+		$this->assertProofFailedForAttribute($proof, 'testProp3');
+		$this->assertProofContainsError($proof, 'testProp3', 'testProp3 must be a valid url');
 	}
 
 	public function test_valid_url_values(): void {
@@ -66,7 +69,9 @@ class VerifyUrlTest extends BaseVerifyTest {
 		};
 
 		$proof = verify($test);
-		$this->assertProofFailedWithError($proof, 'testProp', 'testProp hasen to bean a riggidy real url');
+
+		$this->assertProofFailedForAttribute($proof, 'testProp');
+		$this->assertProofContainsError($proof, 'testProp', 'testProp hasen to bean a riggidy real url');
 	}
 
 }

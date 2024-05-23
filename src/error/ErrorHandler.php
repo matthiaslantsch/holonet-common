@@ -100,7 +100,7 @@ class ErrorHandler {
 			return;
 		}
 
-		$this->logger?->log(
+		$this->logger->log(
 			$logLevel, $message, $context
 		);
 	}

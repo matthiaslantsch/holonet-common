@@ -13,6 +13,7 @@ use holonet\common\di\discovery\ConfigDependencyDiscovery;
 use holonet\common\di\discovery\DependencyDiscovery;
 use holonet\common\error\BadEnvironmentException;
 use holonet\common\collection\ConfigRegistry;
+use Throwable;
 
 /**
  * Factory class that is supposed to initialise a container based on a configuration.

@@ -12,6 +12,7 @@ namespace holonet\common\discovery;
 use RuntimeException;
 use DirectoryIterator;
 use InvalidArgumentException;
+use function holonet\common\is_abstract;
 
 /**
  * Class discovery utility class.
@@ -51,6 +52,10 @@ abstract class ClassDiscovery {
 
 			if ($fileinfo->getExtension() === $this->scannedExtension) {
 				if (($class = $this->fromFile($fileinfo->getPathname())) !== null) {
+					if (interface_exists($class) || trait_exists($class)) {
+						continue;
+					}
+
 					if ($this->ensureClassExists && !class_exists($class)) {
 						throw new RuntimeException("Discovered class '{$class}' from file '{$fileinfo->getPathname()}', but class does not exist (Autoloading problem?)");
 					}

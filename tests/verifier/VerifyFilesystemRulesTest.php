@@ -140,9 +140,9 @@ class VerifyFilesystemRulesTest extends BaseVerifyTest {
 
 	public function test_verify_array_of_paths(): void {
 		$test = new class(array(
-			__DIR__,
-			'/path/surely/doesnt/exist',
-			__FILE__,
+			'first' => __DIR__,
+			'second' => '/path/surely/doesnt/exist',
+			'third' => __FILE__,
 		)) {
 			public function __construct(
 				#[Readable]
@@ -156,16 +156,16 @@ class VerifyFilesystemRulesTest extends BaseVerifyTest {
 		$proof = verify($test);
 
 		$this->assertProofFailedForAttribute($proof, 'paths');
-		$this->assertProofPassed($proof, 'paths.0');
-		$this->assertProofFailedForAttribute($proof, 'paths.1');
-		$this->assertProofPassed($proof, 'paths.2');
+		$this->assertProofPassed($proof, 'paths.first');
+		$this->assertProofFailedForAttribute($proof, 'paths.second');
+		$this->assertProofPassed($proof, 'paths.third');
 
-		$this->assertProofContainsError($proof, 'paths', "'/path/surely/doesnt/exist' is not readable");
-		$this->assertProofContainsError($proof, 'paths.1', "'/path/surely/doesnt/exist' is not readable");
-		$this->assertProofContainsError($proof, 'paths', "'/path/surely/doesnt/exist' is not writable");
-		$this->assertProofContainsError($proof, 'paths.1', "'/path/surely/doesnt/exist' is not writable");
-		$this->assertProofContainsError($proof, 'paths', "'/path/surely/doesnt/exist' is not a valid path");
-		$this->assertProofContainsError($proof, 'paths.1', "'/path/surely/doesnt/exist' is not a valid path");
+		$this->assertProofContainsError($proof, 'paths', "[second]: '/path/surely/doesnt/exist' is not readable");
+		$this->assertProofContainsError($proof, 'paths.second', "'/path/surely/doesnt/exist' is not readable");
+		$this->assertProofContainsError($proof, 'paths', "[second]: '/path/surely/doesnt/exist' is not writable");
+		$this->assertProofContainsError($proof, 'paths.second', "'/path/surely/doesnt/exist' is not writable");
+		$this->assertProofContainsError($proof, 'paths', "[second]: '/path/surely/doesnt/exist' is not a valid path");
+		$this->assertProofContainsError($proof, 'paths.second', "'/path/surely/doesnt/exist' is not a valid path");
 	}
 
 }

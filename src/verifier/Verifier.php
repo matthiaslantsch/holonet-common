@@ -30,6 +30,10 @@ class Verifier {
 			$this->verifyAttribute($obj, $proof, $property);
 		}
 
+		if ($obj instanceof VerifiesState) {
+			$obj->verify($proof);
+		}
+
 		return $proof;
 	}
 

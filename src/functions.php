@@ -85,6 +85,57 @@ if (!function_exists(__NAMESPACE__.'\\array_head_keys')) {
 	}
 }
 
+
+if (!function_exists(__NAMESPACE__.'\\dot_key_flatten')) {
+	function dot_key_flatten(object|array $position, string $separator = '.', string $keyPrefix = ''): array {
+		$flat = array();
+
+		if (is_object($position)) {
+			$position = (array)$position;
+		}
+
+		foreach ($position as $key => $value) {
+			$key = "{$keyPrefix}{$key}";
+			if (is_object($value) || (is_array($value) && !array_is_list($value))) {
+				$flat = array_merge($flat, dot_key_flatten($value, $separator, "{$key}{$separator}"));
+			} else {
+				$flat[$key] = $value;
+			}
+		}
+
+		return $flat;
+	}
+}
+
+
+if (!function_exists(__NAMESPACE__.'\\dot_key_array_merge')) {
+	function dot_key_array_merge(object|array &$position, string $key, array $value = array(), string $separator = '.'): void {
+		$current = dot_key_get($position, $key, null, $separator);
+		if ($current === null) {
+			dot_key_set($position, $key, $value, $separator);
+
+			return;
+		}
+
+		if (!is_array($current)) {
+			throw new InvalidArgumentException("The key {$key} is not an array cannot merge with another array");
+		}
+
+		if (array_is_list($current) && array_is_list($value)) {
+			dot_key_set($position, $key, array_merge($current, $value), $separator);
+			return;
+		}
+
+		foreach ($value as $subKey => $subValue) {
+			if (is_array($subValue) && isset($current[$subKey]) && is_array($current[$subKey])) {
+				dot_key_array_merge($position, "{$key}{$separator}{$subKey}", $subValue, $separator);
+			} else {
+				dot_key_set($position, "{$key}{$separator}{$subKey}", $subValue, $separator);
+			}
+		}
+	}
+}
+
 if (!function_exists(__NAMESPACE__.'\\dot_key_set')) {
 	function dot_key_set(object|array &$position, string $key, mixed $value = null, string $separator = '.'): void {
 		$parts = explode($separator, $key);
@@ -124,6 +175,9 @@ if (!function_exists(__NAMESPACE__.'\\dot_key_get')) {
 				return $default;
 			}
 			$position = $position[$subLevel];
+			if (is_object($position)) {
+				$position = (array)$position;
+			}
 		}
 
 		return $position;

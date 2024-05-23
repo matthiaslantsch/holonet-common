@@ -175,19 +175,19 @@ class VerifyStringRulesTest extends BaseVerifyTest {
 		$this->assertProofFailedForAttribute($proof, 'testProp.1');
 		$this->assertProofFailedForAttribute($proof, 'testProp.2');
 
-		$this->assertProofContainsError($proof, 'testProp', 'testProp.1 must be at most 5 characters long');
+		$this->assertProofContainsError($proof, 'testProp', '[1]: testProp.1 must be at most 5 characters long');
 		$this->assertProofContainsError($proof, 'testProp.1', 'testProp.1 must be at most 5 characters long');
-		$this->assertProofContainsError($proof, 'testProp', 'testProp.1 must be exactly 4 characters long');
+		$this->assertProofContainsError($proof, 'testProp', '[1]: testProp.1 must be exactly 4 characters long');
 		$this->assertProofContainsError($proof, 'testProp.1', 'testProp.1 must be exactly 4 characters long');
-		$this->assertProofContainsError($proof, 'testProp', 'the length of testProp.1 must be between 2 and 5 characters');
+		$this->assertProofContainsError($proof, 'testProp', '[1]: the length of testProp.1 must be between 2 and 5 characters');
 		$this->assertProofContainsError($proof, 'testProp.1', 'the length of testProp.1 must be between 2 and 5 characters');
-		$this->assertProofContainsError($proof, 'testProp', 'testProp.2 must be at least 2 characters long');
+		$this->assertProofContainsError($proof, 'testProp', '[2]: testProp.2 must be at least 2 characters long');
 		$this->assertProofContainsError($proof, 'testProp.2', 'testProp.2 must be at least 2 characters long');
-		$this->assertProofContainsError($proof, 'testProp', 'testProp.2 must be exactly 4 characters long');
+		$this->assertProofContainsError($proof, 'testProp', '[2]: testProp.2 must be exactly 4 characters long');
 		$this->assertProofContainsError($proof, 'testProp.2', 'testProp.2 must be exactly 4 characters long');
-		$this->assertProofContainsError($proof, 'testProp', 'the length of testProp.2 must be between 2 and 5 characters');
+		$this->assertProofContainsError($proof, 'testProp', '[2]: the length of testProp.2 must be between 2 and 5 characters');
 		$this->assertProofContainsError($proof, 'testProp.2', 'the length of testProp.2 must be between 2 and 5 characters');
-		$this->assertProofContainsError($proof, 'testProp', "testProp.2 is not strictly word characters ('/^\\w+$/')");
+		$this->assertProofContainsError($proof, 'testProp', "[2]: testProp.2 is not strictly word characters ('/^\\w+$/')");
 		$this->assertProofContainsError($proof, 'testProp.2', "testProp.2 is not strictly word characters ('/^\\w+$/')");
 	}
 }

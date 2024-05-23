@@ -24,7 +24,9 @@ use holonet\common\verifier\rules\TransformValueRuleInterface;
 #[CoversClass(TransformValueRuleInterface::class)]
 class BaseVerifyTest extends TestCase {
 	public function assertProofContainsError(Proof $actual, string $attr, string $error): void {
-		$this->assertContains($error, $actual->flat(), sprintf('Instead contains: %s', stringify($actual->flat())));
+		$errors = $actual->flat();
+		$this->assertArrayHasKey($attr, $errors);
+		$this->assertStringContainsString($error, $errors[$attr], sprintf('Errors on flat attribute errors were instead %s', $errors[$attr]));
 		$this->assertContains($error, $actual->attr($attr), sprintf('Instead contains: %s', stringify($actual->attr($attr))));
 	}
 

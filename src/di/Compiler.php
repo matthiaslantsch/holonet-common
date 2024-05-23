@@ -15,6 +15,7 @@ use holonet\common\di\autowire\provider\ConfigAutoWireProvider;
 use holonet\common\di\autowire\provider\ContainerAutoWireProvider;
 use holonet\common\di\autowire\provider\ForwardAutoWireProvider;
 use holonet\common\di\autowire\provider\ParamAutoWireProvider;
+use holonet\holofw\tasks\cache\CacheRefreshCommand;
 use ReflectionClass;
 use Psr\Container\ContainerInterface;
 use holonet\common\di\autowire\AutoWire;
@@ -26,6 +27,7 @@ use ReflectionNamedType;
 use ReflectionObject;
 use ReflectionParameter;
 use ReflectionUnionType;
+use Throwable;
 use function holonet\common\get_class_short;
 use function holonet\common\indentText;
 
@@ -76,8 +78,6 @@ class Compiler {
 	}
 
 	public function compile(): string {
-		$methods[] = $this->compileInstanceMethod();
-
 		foreach ($this->wiring as $alias => $constructor) {
 			list($class, $params) = $this->wiring[$alias];
 
@@ -86,8 +86,30 @@ class Compiler {
 				continue;
 			}
 
-			$methods[] = $this->compileWiringMakeMethod($alias, $class, $params, $reflection);
+			try {
+				$methods[$alias] = $this->compileWiringMakeMethod($alias, $class, $params, $reflection);
+			} catch (Throwable $e) {
+				if ($e instanceof AutoWireException) {
+					throw $e;
+				}
+
+				// ignore the exception. The dependency will be lazily created and either work then or throw then
+				// we don't want to throw it now since this is the bootstrapping stage
+				$userWarning = sprintf('Error when compiling static make method for %s: %s', $alias, str_replace('\'', '\\\'', $e->getMessage()));
+				$methods[$alias] = <<<PHP
+				protected function {$this->serviceMakeMethodName($alias)}(array \$params): {$class} {
+					if (\$this->registry->get('di.warn_on_inefficient_instantiation')) {
+						trigger_error('{$userWarning}', E_USER_WARNING);
+					}
+					return parent::instance($class::class, \$params);
+				}
+				PHP;
+
+				continue;
+			}
 		}
+
+		array_unshift($methods, $this->compileInstanceMethod($methods));
 
 		$methods = implode("\n\t", explode("\n", implode("\n\n", $methods)));
 
@@ -119,10 +141,13 @@ class Compiler {
 	/**
 	 * Compile a static version of the instance() method of a container
 	 */
-	private function compileInstanceMethod(): string {
+	private function compileInstanceMethod(array $makeMethods): string {
 		$matchStatements = array();
 
 		foreach ($this->wiring as $abstract => $constructor) {
+			if (!isset($makeMethods[$abstract])) {
+				continue;
+			}
 			$makeStatement = sprintf('$this->%s($params)', $this->serviceMakeMethodName($abstract));
 			$matchStatements[$makeStatement][] = $abstract;
 		}

@@ -146,11 +146,11 @@ class VerifyNumericRulesTest extends BaseVerifyTest {
 		$this->assertProofFailedForAttribute($proof, 'testProp.3');
 
 		$this->assertProofContainsError($proof, 'testProp.1', 'testProp.1 must be less or equal to 5');
-		$this->assertProofContainsError($proof, 'testProp', 'testProp.1 must be less or equal to 5');
+		$this->assertProofContainsError($proof, 'testProp', '[1]: testProp.1 must be less or equal to 5');
 		$this->assertProofContainsError($proof, 'testProp.2', 'testProp.2 must be greater or equal to 2');
-		$this->assertProofContainsError($proof, 'testProp', 'testProp.2 must be greater or equal to 2');
+		$this->assertProofContainsError($proof, 'testProp', '[2]: testProp.2 must be greater or equal to 2');
 		$this->assertProofContainsError($proof, 'testProp.3', 'testProp.3 must be numeric');
-		$this->assertProofContainsError($proof, 'testProp', 'testProp.3 must be numeric');
+		$this->assertProofContainsError($proof, 'testProp', '[3]: testProp.3 must be numeric');
 	}
 
 

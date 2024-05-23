@@ -88,7 +88,7 @@ class VerifyInArrayTest extends BaseVerifyTest {
 	}
 
 	public function test_array_of_values(): void {
-		$test = new class(['test', 'test', 'not in there']) {
+		$test = new class(['f' => 'test', 's' => 'test', 't' => 'not in there']) {
 			public function __construct(
 				#[InArray(array('test', 'given', 'values'))]
 				public array $testProp
@@ -99,12 +99,12 @@ class VerifyInArrayTest extends BaseVerifyTest {
 		$proof = verify($test);
 
 		$this->assertProofFailedForAttribute($proof, 'testProp');
-		$this->assertProofPassed($proof, 'testProp.0');
-		$this->assertProofPassed($proof, 'testProp.1');
-		$this->assertProofFailedForAttribute($proof, 'testProp.2');
+		$this->assertProofPassed($proof, 'testProp.f');
+		$this->assertProofPassed($proof, 'testProp.s');
+		$this->assertProofFailedForAttribute($proof, 'testProp.t');
 
-		$this->assertProofContainsError($proof, 'testProp', 'testProp.2 must be one of [\'test\', \'given\', \'values\']');
-		$this->assertProofContainsError($proof, 'testProp.2', 'testProp.2 must be one of [\'test\', \'given\', \'values\']');
+		$this->assertProofContainsError($proof, 'testProp', '[t]: testProp.t must be one of [\'test\', \'given\', \'values\']');
+		$this->assertProofContainsError($proof, 'testProp.t', 'testProp.t must be one of [\'test\', \'given\', \'values\']');
 	}
 
 }

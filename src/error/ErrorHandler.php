@@ -39,7 +39,7 @@ class ErrorHandler {
 		\E_USER_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_USER_DEPRECATED'),
 	);
 
-	private ?LoggerInterface $logger;
+	protected ?LoggerInterface $logger;
 
 	public function __construct(?LoggerInterface $logger = null) {
 		$this->logger = $logger;
@@ -51,28 +51,26 @@ class ErrorHandler {
 	 * @param int $errno The error number of the thrown error
 	 * @param string $msg The error message
 	 * @param string $file The file the error was caused in
-	 * @param int $line The line the error was caused on
-	 * @return bool|null To advise the spl to continue error handling or not
+	 * @param int|null $line The line the error was caused on
+	 * @return bool To advise the spl to continue error handling or not
 	 */
-	public function handleError(int $errno, string $msg = '', string $file = '', ?int $line = null): ?bool {
+	public function handleError(int $errno, string $msg = '', string $file = '', ?int $line = null): bool {
 		if (!(error_reporting() & $errno)) {
 			// This error code is not included in error_reporting
-			return null;
+			return false;
 		}
 
 		list('level' => $level, 'name' => $name) = (self::ERROR_LEVEL_LOOKUP[$errno] ?? self::ERROR_LEVEL_LOOKUP[\E_ERROR]);
 
-		if ($this->logger !== null) {
-			$this->logger->log(
-				$level,
-				"{$name}: {$msg}",
-				array(
-					'code' => $errno,
-					'file' => $file,
-					'line' => $line,
-				)
-			);
-		}
+		$this->logError(
+			$level,
+			"{$name}: {$msg}",
+			array(
+				'code' => $errno,
+				'file' => $file,
+				'line' => $line,
+			)
+		);
 
 		return true;
 	}
@@ -91,10 +89,28 @@ class ErrorHandler {
 			$exception->getLine()
 		);
 
-		if ($this->logger !== null) {
-			$this->logger->log(LogLevel::ERROR, $message, array('exception' => $exception));
+		$this->logError(LogLevel::ERROR, $message, array('exception' => $exception));
+
+		exit(255);
+	}
+
+	protected function logError(string $logLevel, string $message, array $context): void {
+		if ($this->logger === null) {
+			fwrite(STDERR, "{$message}\n");
+			return;
 		}
 
+		$this->logger?->log(
+			$logLevel, $message, $context
+		);
+	}
+
+	public function register(): void {
+		set_error_handler($this->handleError(...));
+		set_exception_handler($this->handleException(...));
+	}
+
+	public function handleShutdown(): void {
 		exit(255);
 	}
 }

@@ -101,7 +101,7 @@ class Compiler {
 					if (\$this->registry->get('di.warn_on_inefficient_instantiation')) {
 						trigger_error('{$userWarning}', E_USER_WARNING);
 					}
-					return parent::instance($class::class, \$params);
+					return parent::makeWithReflection($class::class, '{$alias}', \$params);
 				}
 				PHP;
 

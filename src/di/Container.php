@@ -268,6 +268,11 @@ class Container implements ContainerInterface {
 
 		// assume the given alias is a class the user wants to have made
 		$class ??= $alias;
+
+		return $this->makeWithReflection($class, $alias, $params);
+	}
+
+	protected function makeWithReflection(string $class, string $alias, array $params): object {
 		if (!class_exists($class)) {
 			throw new DependencyInjectionException("No idea how to make '{$alias}'. Class does not exist and no wire directive was set");
 		}

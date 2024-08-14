@@ -96,7 +96,8 @@ class ErrorHandler {
 
 	protected function logError(string $logLevel, string $message, array $context): void {
 		if ($this->logger === null) {
-			fwrite(STDERR, "{$message}\n");
+			$context = json_encode($context, JSON_PRETTY_PRINT);
+			fwrite(STDERR, "{$message}\n{$context}\n");
 			return;
 		}
 

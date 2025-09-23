@@ -12,7 +12,7 @@ namespace holonet\common\di\autowire\provider;
 use ReflectionNamedType;
 use ReflectionParameter;
 use holonet\common\di\Container;
-use holonet\common\di\DependencyInjectionException;
+use holonet\common\di\error\DependencyInjectionException;
 
 class ContainerAutoWireProvider implements ParamAutoWireProvider {
 	/**
@@ -21,7 +21,15 @@ class ContainerAutoWireProvider implements ParamAutoWireProvider {
 	public function provide(Container $container, ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): mixed {
 		if (class_exists($type->getName()) || interface_exists($type->getName())) {
 			try {
-				return $container->byType($type->getName(), $param->getName());
+				// first we assume the parameter name is an actual hint as to which service is wanted
+				if ($container->has($param->getName())) {
+					$containerType = $container->resolve($param->getName());
+					if (is_a($containerType, $type->getName(), true)) {
+						return $container->get($param->getName());
+					}
+				}
+
+				return $container->instance($type->getName());
 			} catch (DependencyInjectionException $e) {
 				if (!$type->allowsNull() && !$param->isOptional()) {
 					throw $e;
@@ -36,6 +44,6 @@ class ContainerAutoWireProvider implements ParamAutoWireProvider {
 	 * {@inheritDoc}
 	 */
 	public function compile(ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string {
-		return "\$this->byType({$type->getName()}::class, '{$param->getName()}')";
+		return "\$this->instance({$type->getName()}::class)";
 	}
 }

@@ -9,100 +9,94 @@
 
 namespace holonet\common\tests\di;
 
-use Countable;
-use holonet\common\di\Provider;
-use Stringable;
-use PHPUnit\Framework\TestCase;
 use holonet\common\di\Container;
-use holonet\common\di\autowire\AutoWire;
+use holonet\common\di\error\DependencyInjectionException;
+use holonet\common\di\Provider;
 use PHPUnit\Framework\Attributes\CoversClass;
-use holonet\common\di\autowire\AutoWireException;
-use holonet\common\di\DependencyNotFoundException;
-use holonet\common\di\DependencyInjectionException;
+use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Container::class)]
 #[CoversClass(Provider::class)]
 class ProviderTest extends TestCase {
 
-	public function testProviderSetForService(): void {
+	public function test_provider_set_for_service(): void {
 		$container = new Container();
 
-		$container->set('test_dep', TestProvider::class);
+		$container->set('test_dep', holonet_common_tests_TestProvider::class);
 
 		$result = $container->get('test_dep');
 
-		$this->assertInstanceOf(ProvidedDependency::class, $result);
+		$this->assertInstanceOf(holonet_common_tests_ProvidedDependency::class, $result);
 		$this->assertTrue($result === $container->get('test_dep'));
+
+		$result = $container->instance(holonet_common_tests_ProvidedDependency::class);
+
+		$this->assertInstanceOf(holonet_common_tests_ProvidedDependency::class, $result);
+		$this->assertTrue($result === $container->instance(holonet_common_tests_ProvidedDependency::class));
 	}
 
-	public function testProviderForWireMake(): void {
+	public function test_provider_for_wire_instance(): void {
 		$container = new Container();
 
-		$container->wire(TestProvider::class, array(), 'dep');
+		$container->wire(holonet_common_tests_TestProvider::class, array(), 'dep');
 
-		$result = $container->make('dep');
+		$result = $container->instance('dep');
 
-		$this->assertInstanceOf(ProvidedDependency::class, $result);
-		$this->assertFalse($result === $container->make('dep'));
+		$this->assertInstanceOf(holonet_common_tests_ProvidedDependency::class, $result);
+		$this->assertFalse($result === $container->instance('dep'));
+
+		$result = $container->instance(holonet_common_tests_ProvidedDependency::class);
+
+		$this->assertInstanceOf(holonet_common_tests_ProvidedDependency::class, $result);
+		$this->assertFalse($result === $container->instance(holonet_common_tests_ProvidedDependency::class));
 	}
 
-	public function testProviderServiceByType(): void {
+	public function test_provider_service_by_type(): void {
 		$container = new Container();
 
-		$container->set('test_dep', new TestProvider($container));
+		$container->set('test_dep', new holonet_common_tests_TestProvider($container));
 
-		$result = $container->byType(ProvidedDependency::class);
+		$result = $container->instance(holonet_common_tests_ProvidedDependency::class);
 
-		$this->assertInstanceOf(ProvidedDependency::class, $result);
-		$this->assertTrue($result === $container->byType(ProvidedDependency::class));
+		$this->assertInstanceOf(holonet_common_tests_ProvidedDependency::class, $result);
+		$this->assertTrue($result === $container->instance(holonet_common_tests_ProvidedDependency::class));
 	}
 
-	public function testProviderByProvidedClass(): void {
-		$container = new Container();
-
-		$container->wire(TestProvider::class);
-
-		$result = $container->make(ProvidedDependency::class);
-
-		$this->assertInstanceOf(ProvidedDependency::class, $result);
-		$this->assertFalse($result === $container->make(ProvidedDependency::class));
-	}
-
-	public function testMakeWithBadProviderWithoutTypehintCausesException(): void {
+	public function test_error_instance_with_bad_provider_without_typehint_causes_exception(): void {
 		$this->expectException(DependencyInjectionException::class);
-		$this->expectExceptionMessage('Provider factory method holonet\common\tests\di\BadProviderWithoutTypehint::make() has no return type');
+		$this->expectExceptionMessage('\'holonet\common\tests\di\holonet_common_tests_BadProviderWithoutTypehint::make()\' has an invalid return type: \'object\'.');
 
 		$container = new Container();
 
-		$container->wire(BadProviderWithoutTypehint::class);
+		$container->wire(holonet_common_tests_BadProviderWithoutTypehint::class);
 	}
 
-	public function testSetWithBadProviderWithoutTypehintCausesException(): void {
+	public function test_error_set_with_bad_provider_without_typehint_causes_exception(): void {
 		$this->expectException(DependencyInjectionException::class);
-		$this->expectExceptionMessage('Provider factory method holonet\common\tests\di\BadProviderWithoutTypehint::make() has no return type');
+		$this->expectExceptionMessage('\'holonet\common\tests\di\holonet_common_tests_BadProviderWithoutTypehint::make()\' has an invalid return type: \'object\'.');
 
 		$container = new Container();
 
-		$container->set('test', BadProviderWithoutTypehint::class);
+		$container->set('test', holonet_common_tests_BadProviderWithoutTypehint::class);
 	}
 }
 
-class TestProvider extends Provider {
+class holonet_common_tests_TestProvider extends Provider {
 
-	public function make(): ProvidedDependency {
-		return new ProvidedDependency();
+	public function make(): holonet_common_tests_ProvidedDependency {
+		return new holonet_common_tests_ProvidedDependency();
 	}
 
 }
 
-class BadProviderWithoutTypehint extends Provider {
+class holonet_common_tests_BadProviderWithoutTypehint extends Provider {
 
 	public function make(): object {
-		return new ProvidedDependency();
+		return new holonet_common_tests_ProvidedDependency();
 	}
 
 }
 
-class ProvidedDependency {
+class holonet_common_tests_ProvidedDependency {
 
 }

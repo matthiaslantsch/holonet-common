@@ -10,17 +10,15 @@
 namespace holonet\common\di;
 
 use holonet\common\collection\Registry;
-use holonet\common\di\autowire\CannotAutowireException;
 use holonet\common\di\autowire\provider\ConfigAutoWireProvider;
 use holonet\common\di\autowire\provider\ContainerAutoWireProvider;
 use holonet\common\di\autowire\provider\ForwardAutoWireProvider;
 use holonet\common\di\autowire\provider\ParamAutoWireProvider;
+use holonet\common\di\error\AutoWireException;
+use holonet\common\di\error\CannotAutowireException;
+use holonet\common\di\error\DependencyInjectionException;
 use holonet\holofw\tasks\cache\CacheRefreshCommand;
 use ReflectionClass;
-use Psr\Container\ContainerInterface;
-use holonet\common\di\autowire\AutoWire;
-use holonet\common\collection\ConfigRegistry;
-use holonet\common\di\autowire\AutoWireException;
 use ReflectionFunctionAbstract;
 use ReflectionIntersectionType;
 use ReflectionNamedType;
@@ -28,7 +26,6 @@ use ReflectionObject;
 use ReflectionParameter;
 use ReflectionUnionType;
 use Throwable;
-use function holonet\common\get_class_short;
 use function holonet\common\indentText;
 
 /**
@@ -37,30 +34,40 @@ use function holonet\common\indentText;
 class Compiler {
 
 	/**
-	 * @var array<string, string> $aliases key mapping with all available services on the container
-	 */
-	protected array $aliases = array();
-
-	/**
 	 * @var ParamAutoWireProvider[]
 	 */
 	protected array $paramProviders;
 
 	/**
-	 * @var array<string, array{string, array}> $wiring Wiring information on how to make certain types of objects.
-	 * Mapped by name / type => class abstract (array with class name and parameters).
+	 * Arbitrary class name aliases to abstract classes or interfaces.
+	 * Alias => abstract
+	 * @var array<string, string>
 	 */
-	protected array $wiring = array();
+	private array $aliases = array();
 
 	/**
-	 * @var array<string, string> $providers Provider classes mapping from alias => class name
+	 * Mapping from abstract class or interface names to concrete class names.
+	 * Abstract class / interface => concrete class
+	 * @var array<string, string>
 	 */
-	protected array $providers = array();
+	private array $contracts = array();
 
 	/**
 	 * @var string[] $services All alias keys that are services
 	 */
 	protected array $services = array();
+
+	/**
+	 * @var array<string, array> $wiring Wiring information on how to make certain types of objects.
+	 * Mapped by name / type => class abstract (array with class name and parameters).
+	 */
+	private array $wiring = array();
+
+	/**
+	 * @var array <string,string> $providers Mapping from abstracts to whatever provider class makes them.
+	 */
+	private array $providers = array();
+
 
 	public function __construct(protected Container $container) {
 		$reflection = new ReflectionObject($this->container);
@@ -69,6 +76,7 @@ class Compiler {
 		$this->wiring = $reflection->getProperty('wiring')->getValue($container);
 		$this->providers = $reflection->getProperty('providers')->getValue($container);
 		$this->services = $reflection->getProperty('services')->getValue($container);
+		$this->contracts = $reflection->getProperty('contracts')->getValue($container);
 
 		$this->paramProviders = array(
 			new ForwardAutoWireProvider(),
@@ -78,16 +86,14 @@ class Compiler {
 	}
 
 	public function compile(): string {
-		foreach ($this->wiring as $alias => $constructor) {
-			list($class, $params) = $this->wiring[$alias];
-
+		foreach ($this->wiring as $class => $params) {
 			$reflection = new ReflectionClass($class);
 			if ($reflection->isAbstract()) {
 				continue;
 			}
 
 			try {
-				$methods[$alias] = $this->compileWiringMakeMethod($alias, $class, $params, $reflection);
+				$methods[$class] = $this->compileWiringInstantiateMethod($class, $params, $reflection);
 			} catch (Throwable $e) {
 				if ($e instanceof AutoWireException) {
 					throw $e;
@@ -95,13 +101,13 @@ class Compiler {
 
 				// ignore the exception. The dependency will be lazily created and either work then or throw then
 				// we don't want to throw it now since this is the bootstrapping stage
-				$userWarning = sprintf('Error when compiling static make method for %s: %s', $alias, str_replace('\'', '\\\'', $e->getMessage()));
-				$methods[$alias] = <<<PHP
-				protected function {$this->serviceMakeMethodName($alias)}(array \$params): {$class} {
+				$userWarning = sprintf('Error when compiling static make method for %s: %s', $class, str_replace('\'', '\\\'', $e->getMessage()));
+				$methods[$class] = <<<PHP
+				protected function {$this->serviceInstantiateMethodName($class)}(array \$params): {$class} {
 					if (\$this->registry->get('di.warn_on_inefficient_instantiation')) {
 						trigger_error('{$userWarning}', E_USER_WARNING);
 					}
-					return parent::makeWithReflection($class::class, '{$alias}', \$params);
+					return parent::instantiate($class::class, \$params);
 				}
 				PHP;
 
@@ -109,17 +115,14 @@ class Compiler {
 			}
 		}
 
-		array_unshift($methods, $this->compileInstanceMethod($methods));
+		array_unshift($methods, $this->compileInstantiateMethod($methods));
 
 		$methods = implode("\n\t", explode("\n", implode("\n\n", $methods)));
 
-		$aliases = sprintf('protected array $aliases = %s;',
-			str_replace(array('  ', 'array ('), array("\t", 'array('), indentText(var_export($this->aliases, true)))
-		);
-
-		$services = sprintf('protected array $services = %s;',
-			str_replace(array('  ', 'array ('), array("\t", 'array('), indentText(var_export($this->services, true)))
-		);
+		$aliases = $this->compileArrayProperty('$aliases', $this->aliases);
+		$services = $this->compileArrayProperty('$services', $this->services);
+		$contracts = $this->compileArrayProperty('$contracts', $this->contracts);
+		$providers = $this->compileArrayProperty('$providers', $this->providers);
 
 		return <<<PHP
 		if (!isset(\$config) || !\$config instanceof \holonet\common\collection\ConfigRegistry) {
@@ -133,32 +136,57 @@ class Compiler {
 			
 			{$services}
 			
+			{$contracts}
+			
+			{$providers}
+			
 			{$methods}
 		};
 		PHP;
 	}
 
+	private function compileArrayProperty(string $name, array $values): string {
+		return sprintf('protected array %s = %s;',
+			$name, $this->exportArray($values)
+		);
+	}
+
+	public static function exportArray(array $values): string	{
+		$val = str_replace("array(\n\t)", 'array()', // empty array reduce to one line
+			str_replace(array('  ', 'array ('), array("\t", 'array('), // fix annoying syntax / indent
+				indentText(var_export($values, true))
+			)
+		);
+
+		if (array_is_list($values)) {
+			// remove indexes from simple lists
+			$val = preg_replace("/\d => /", '', $val);
+		}
+
+		return $val;
+	}
+
 	/**
-	 * Compile a static version of the instance() method of a container
+	 * Compile a static version of the instantiate() method of a container
 	 */
-	private function compileInstanceMethod(array $makeMethods): string {
+	private function compileInstantiateMethod(array $makeMethods): string {
 		$matchStatements = array();
 
 		foreach ($this->wiring as $abstract => $constructor) {
 			if (!isset($makeMethods[$abstract])) {
 				continue;
 			}
-			$makeStatement = sprintf('$this->%s($params)', $this->serviceMakeMethodName($abstract));
+			$makeStatement = sprintf('$this->%s($params)', $this->serviceInstantiateMethodName($abstract));
 			$matchStatements[$makeStatement][] = $abstract;
 		}
 
 		foreach ($this->providers as $alias => $provider) {
-			$makeStatement = sprintf('$this->%s($params)->make()', $this->serviceMakeMethodName($provider));
+			$makeStatement = sprintf('$this->%s($params)->make()', $this->serviceInstantiateMethodName($provider));
 			$matchStatements[$makeStatement][] = $alias;
 		}
 
 		foreach ($this->aliases as $alias => $aliased) {
-			$makeStatement = $this->serviceMakeMethodName($aliased);
+			$makeStatement = $this->serviceInstantiateMethodName($aliased);
 			if (isset($matchStatements[$makeStatement])) {
 				$matchStatements[$makeStatement][] = $alias;
 			}
@@ -179,11 +207,11 @@ class Compiler {
 			);
 		}
 
-		$compiledMatchStatements[] = "\t\tdefault => parent::instance(\$class, \$params)";
+		$compiledMatchStatements[] = "\t\tdefault => parent::instantiate(\$class, \$params)";
 
 		$compiledMatchStatements = implode(",\n", $compiledMatchStatements);
 		return <<<PHP
-		protected function instance(string \$class, array \$params = array()): object {
+		protected function instantiate(string \$class, array \$params = array()): object {
 			return match (\$class) {
 		$compiledMatchStatements
 			};
@@ -191,16 +219,16 @@ class Compiler {
 		PHP;
 	}
 
-	private function serviceMakeMethodName(string $alias): string {
-		return sprintf('make_%s', str_replace('\\', '_', $alias));
+	private function serviceInstantiateMethodName(string $alias): string {
+		return sprintf('instantiate_%s', str_replace('\\', '_', $alias));
 	}
 
-	private function compileWiringMakeMethod(string $alias, string $class, array $params, ReflectionClass $reflection): string {
+	private function compileWiringInstantiateMethod(string $class, array $params, ReflectionClass $reflection): string {
 		$wiringMakeMethodBodyStatements = $this->compileWiringMakeMethodBody($class, $params, $reflection);
 
 		$wiringMakeMethodBodyStatements = implode(";\n\t", $wiringMakeMethodBodyStatements);
 		return <<<PHP
-		protected function {$this->serviceMakeMethodName($alias)}(array \$params): {$class} {
+		protected function {$this->serviceInstantiateMethodName($class)}(array \$params): {$class} {
 			{$wiringMakeMethodBodyStatements};
 		}
 		PHP;

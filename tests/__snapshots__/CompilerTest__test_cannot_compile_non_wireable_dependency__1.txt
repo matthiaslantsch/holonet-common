@@ -11,18 +11,22 @@ return new class($config, $initialServices) extends \holonet\common\di\Container
 	);
 	
 	protected array $services = array(
-		0 => 'container',
-		1 => 'registry',
+		'container',
+		'registry',
 	);
 	
-	protected function instance(string $class, array $params = array()): object {
+	protected array $contracts = array();
+	
+	protected array $providers = array();
+	
+	protected function instantiate(string $class, array $params = array()): object {
 		return match ($class) {
-			holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency::class => $this->make_holonet_common_tests_di_holonet_common_tests_CompilerTest_NonWireableDependency($params),
-			default => parent::instance($class, $params)
+			holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency::class => $this->instantiate_holonet_common_tests_di_holonet_common_tests_CompilerTest_NonWireableDependency($params),
+			default => parent::instantiate($class, $params)
 		};
 	}
 	
-	protected function make_holonet_common_tests_di_holonet_common_tests_CompilerTest_NonWireableDependency(array $params): holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency {
+	protected function instantiate_holonet_common_tests_di_holonet_common_tests_CompilerTest_NonWireableDependency(array $params): holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency {
 		$params['param'] ?? throw new \InvalidArgumentException('Cannot instantiate \'holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency\': Missing parameter \'param\' of type \'string)\'');
 		return new holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency(...$params);
 	}

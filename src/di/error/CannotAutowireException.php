@@ -7,13 +7,7 @@
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
-namespace holonet\common\di\autowire;
-
-use ReflectionClass;
-use ReflectionMethod;
-use ReflectionParameter;
-use ReflectionFunctionAbstract;
-use holonet\common\di\DependencyInjectionException;
+namespace holonet\common\di\error;
 
 class CannotAutowireException extends AutoWireException {
 }

@@ -9,13 +9,13 @@
 
 namespace holonet\common\tests\di;
 
-use PHPUnit\Framework\TestCase;
-use holonet\common\di\Container;
 use holonet\common\di\autowire\AutoWire;
-use PHPUnit\Framework\Attributes\CoversClass;
-use holonet\common\di\autowire\AutoWireException;
-use holonet\common\di\DependencyInjectionException;
 use holonet\common\di\autowire\provider\ForwardAutoWireProvider;
+use holonet\common\di\Container;
+use holonet\common\di\error\AutoWireException;
+use holonet\common\di\error\DependencyInjectionException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Container::class)]
 #[CoversClass(ForwardAutoWireProvider::class)]
@@ -23,7 +23,7 @@ use holonet\common\di\autowire\provider\ForwardAutoWireProvider;
 #[CoversClass(AutoWireException::class)]
 #[CoversClass(DependencyInjectionException::class)]
 class ForwardAutoWireProviderTest extends TestCase {
-	public function testBasicScalarParameterForwarding(): void {
+	public function test_basic_scalar_parameter_forwarding(): void {
 		$container = new Container();
 
 		$params = array(
@@ -34,63 +34,63 @@ class ForwardAutoWireProviderTest extends TestCase {
 			'array' => array('value1', 'value2')
 		);
 
-		$result = $container->make(DependencyForwardAutoWire::class, $params);
+		$result = $container->instance(holonet_common_tests_DependencyForwardAutoWire::class, $params);
 
 		$this->assertSame($params, get_object_vars($result));
 	}
 
-	public function testObjectTypesForwarding(): void {
+	public function test_object_types_forwarding(): void {
 		$container = new Container();
 
-		$apples = new Apples();
-		$result = $container->make(DependencyWithObjectParam::class, array('apples' => $apples));
+		$apples = new holonet_common_tests_Apples();
+		$result = $container->instance(holonet_common_tests_DependencyWithObjectParam::class, array('apples' => $apples));
 
 		$this->assertSame($apples, $result->apples);
 	}
 
-	public function testObjectTypesForwardingUnionTypes(): void {
+	public function test_object_types_forwarding_union_types(): void {
 		$container = new Container();
 
-		$apples = new Apples();
-		$other = new DependencyWithUnionTypeHints();
+		$apples = new holonet_common_tests_Apples();
+		$other = new holonet_common_tests_DependencyWithUnionTypeHints();
 
-		$one = $container->make(DependencyWithUnionTypeHintsObjects::class, array('other' => $apples));
-		$two = $container->make(DependencyWithUnionTypeHintsObjects::class, array('other' => $other));
+		$one = $container->instance(holonet_common_tests_DependencyWithUnionTypeHintsObjects::class, array('other' => $apples));
+		$two = $container->instance(holonet_common_tests_DependencyWithUnionTypeHintsObjects::class, array('other' => $other));
 
 		$this->assertSame($apples, $one->other);
 		$this->assertSame($other, $two->other);
 	}
 
-	public function testScalarUnionTypesForwarding(): void {
+	public function test_scalar_union_types_forwarding(): void {
 		$container = new Container();
 
-		$one = $container->make(DependencyWithUnionTypeHints::class, array('testUnion' => 'string_value'));
-		$two = $container->make(DependencyWithUnionTypeHints::class, array('testUnion' => 5.4));
+		$one = $container->instance(holonet_common_tests_DependencyWithUnionTypeHints::class, array('testUnion' => 'string_value'));
+		$two = $container->instance(holonet_common_tests_DependencyWithUnionTypeHints::class, array('testUnion' => 5.4));
 
 		$this->assertSame('string_value', $one->testUnion);
 		$this->assertSame(5.4, $two->testUnion);
 	}
 }
 
-class DependencyForwardAutoWire {
+class holonet_common_tests_DependencyForwardAutoWire {
 	public function __construct(public string $string, public int $int, public float $float, public bool $boolean, public array $array) {
 	}
 }
 
-class DependencyWithObjectParam {
-	public function __construct(public Apples $apples) {
+class holonet_common_tests_DependencyWithObjectParam {
+	public function __construct(public holonet_common_tests_Apples $apples) {
 	}
 }
 
-class Apples {
+class holonet_common_tests_Apples {
 }
 
-class DependencyWithUnionTypeHints {
+class holonet_common_tests_DependencyWithUnionTypeHints {
 	public function __construct(public string|float $testUnion = 5.0) {
 	}
 }
 
-class DependencyWithUnionTypeHintsObjects {
-	public function __construct(public Apples|DependencyWithUnionTypeHints $other) {
+class holonet_common_tests_DependencyWithUnionTypeHintsObjects {
+	public function __construct(public holonet_common_tests_Apples|holonet_common_tests_DependencyWithUnionTypeHints $other) {
 	}
 }

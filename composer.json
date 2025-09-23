@@ -9,7 +9,7 @@
 		}
 	],
 	"require": {
-		"php": ">=8.1",
+		"php": ">=8.2",
 		"monolog/monolog": "^2.0",
 		"psr/container": "^2.0.2"
 	},
@@ -24,7 +24,7 @@
 	"repositories": [
 		{
 			"type": "composer",
-			"url": "https://holonet.easylabs.ch/hgit/composer/"
+			"url": "https://holonetz.synology.me/hgit/composer/"
 		}
 	],
 	"minimum-stability": "dev",
@@ -54,14 +54,14 @@
 	},
 	"scripts": {
 		"fix": [
-			"@composer normalize --diff",
-			"@php -d memory_limit=-1 vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --verbose --ansi"
+			"@composer normalize --diff --ansi",
+			"@php -d memory_limit=-1 vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --verbose --ansi --diff"
 		],
 		"test": [
-			"@composer validate",
-			"@composer normalize --dry-run --diff",
+			"@composer validate --ansi",
+			"@composer normalize --dry-run --diff --ansi",
 			"@php -d xdebug.mode=coverage -d memory_limit=-1 vendor/phpunit/phpunit/phpunit -c phpunit.xml",
-			"@php -d memory_limit=-1 vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --verbose --dry-run --ansi",
+			"@php -d memory_limit=-1 vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --verbose --dry-run --ansi --diff",
 			"@php -d memory_limit=-1 vendor/vimeo/psalm/psalm"
 		]
 	}

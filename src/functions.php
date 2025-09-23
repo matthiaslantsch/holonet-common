@@ -223,7 +223,7 @@ if (!function_exists(__NAMESPACE__.'\\reflection_get_attributes')) {
 
 		$attrs = array_filter($attrs, fn($attr) => is_a($attr->getName(), $class, true));
 
-		// instanciate the attributes
+		// instantiate the attributes
 		return array_map(fn($attr) => $attr->newInstance(), $attrs);
 	}
 }

@@ -18,7 +18,7 @@ use PHPUnit\Framework\Attributes\CoversFunction;
 #[CoversFunction('holonet\common\dot_key_get')]
 #[CoversFunction('holonet\common\dot_key_set')]
 class RegistryTest extends TestCase {
-	public function testGetMultilevel(): void {
+	public function test_get_multilevel(): void {
 		$registry = new Registry();
 
 		$data = array(
@@ -38,7 +38,7 @@ class RegistryTest extends TestCase {
 		$this->assertNull($registry->get('array.lowerval.stillnotexisting'));
 	}
 
-	public function testPlaceholders(): void {
+	public function test_placeholders(): void {
 		$registry = new Registry();
 
 		$registry->set('app.name', 'coolapp');
@@ -50,7 +50,7 @@ class RegistryTest extends TestCase {
 		$this->assertSame(array('app' => array('name' => 'coolapp', 'environment' => 'coolapp-test', 'testing' => 'inside-%not-existing-placeholder%-testing')), $registry->all());
 	}
 
-	public function testReset(): void {
+	public function test_reset(): void {
 		$registry = new Registry();
 
 		$data = array(
@@ -68,7 +68,7 @@ class RegistryTest extends TestCase {
 		$this->assertEmpty($registry->all());
 	}
 
-	public function testSetMultilevel(): void {
+	public function test_set_multilevel(): void {
 		$registry = new Registry();
 
 		//test multi level set
@@ -87,7 +87,7 @@ class RegistryTest extends TestCase {
 		$this->assertSame($expected, $registry->all());
 	}
 
-	public function testSetSublevelKeyWithoutOverwrite(): void {
+	public function test_set_sublevel_key_without_overwrite(): void {
 		$registry = new Registry();
 		$registry->set('app', array(
 			'db' => array('host' => '127.0.0.1', 'port' => '224')
@@ -102,7 +102,7 @@ class RegistryTest extends TestCase {
 		$this->assertSame(array('host' => 'localhost', 'port' => '224'), $registry->get('app.db'));
 	}
 
-	public function testSimplePair(): void {
+	public function test_simple_pair(): void {
 		$registry = new Registry();
 		$registry->set('test', 'value');
 

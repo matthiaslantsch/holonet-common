@@ -23,21 +23,6 @@ use holonet\common\verifier\rules\TransformValueRuleInterface;
 #[CoversClass(CheckValueRuleInterface::class)]
 #[CoversClass(TransformValueRuleInterface::class)]
 class BaseVerifyTest extends TestCase {
-	public function assertProofContainsError(Proof $actual, string $attr, string $error): void {
-		$errors = $actual->flat();
-		$this->assertArrayHasKey($attr, $errors);
-		$this->assertStringContainsString($error, $errors[$attr], sprintf('Errors on flat attribute errors were instead %s', $errors[$attr]));
-		$this->assertContains($error, $actual->attr($attr), sprintf('Instead contains: %s', stringify($actual->attr($attr))));
-	}
-
-	public function assertProofFailedForAttribute(Proof $actual, string $attr): void {
-		$this->assertFalse($actual->passed($attr), "Failed asserting that verification for '{$attr}' didn't pass");
-	}
-
-	public function assertProofPassed(Proof $actual, string $attr): void {
-		$failMessage = "Failed asserting that verification for '%s' passed; Got errors: %s";
-		$this->assertTrue($actual->passed($attr), sprintf($failMessage, $attr, stringify($actual->attr($attr))));
-	}
 
 	public function test_base_default_message(): void {
 		$test = new class() {
@@ -78,6 +63,22 @@ class BaseVerifyTest extends TestCase {
 		$proof = verify($test);
 		$this->assertProofPassed($proof, 'testProp');
 		$this->assertSame('this-is-a-normal-sentence', $test->testProp);
+	}
+
+	protected function assertProofContainsError(Proof $actual, string $attr, string $error): void {
+		$errors = $actual->flat();
+		$this->assertArrayHasKey($attr, $errors);
+		$this->assertStringContainsString($error, $errors[$attr], sprintf('Errors on flat attribute errors were instead %s', $errors[$attr]));
+		$this->assertContains($error, $actual->attr($attr), sprintf('Instead contains: %s', stringify($actual->attr($attr))));
+	}
+
+	protected function assertProofFailedForAttribute(Proof $actual, string $attr): void {
+		$this->assertFalse($actual->passed($attr), "Failed asserting that verification for '{$attr}' didn't pass");
+	}
+
+	protected function assertProofPassed(Proof $actual, string $attr): void {
+		$failMessage = "Failed asserting that verification for '%s' passed; Got errors: %s";
+		$this->assertTrue($actual->passed($attr), sprintf($failMessage, $attr, stringify($actual->attr($attr))));
 	}
 }
 

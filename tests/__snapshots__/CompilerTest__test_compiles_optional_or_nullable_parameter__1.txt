@@ -11,18 +11,22 @@ return new class($config, $initialServices) extends \holonet\common\di\Container
 	);
 	
 	protected array $services = array(
-		0 => 'container',
-		1 => 'registry',
+		'container',
+		'registry',
 	);
 	
-	protected function instance(string $class, array $params = array()): object {
+	protected array $contracts = array();
+	
+	protected array $providers = array();
+	
+	protected function instantiate(string $class, array $params = array()): object {
 		return match ($class) {
-			holonet\common\tests\di\holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency::class => $this->make_holonet_common_tests_di_holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency($params),
-			default => parent::instance($class, $params)
+			holonet\common\tests\di\holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency::class => $this->instantiate_holonet_common_tests_di_holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency($params),
+			default => parent::instantiate($class, $params)
 		};
 	}
 	
-	protected function make_holonet_common_tests_di_holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency(array $params): holonet\common\tests\di\holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency {
+	protected function instantiate_holonet_common_tests_di_holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency(array $params): holonet\common\tests\di\holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency {
 		$params['param1'] ??= null;
 		return new holonet\common\tests\di\holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency(...$params);
 	}

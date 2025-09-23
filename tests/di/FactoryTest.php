@@ -13,20 +13,16 @@ use holonet\common\collection\ConfigRegistry;
 use holonet\common\di\Container;
 use holonet\common\di\Factory;
 use holonet\common\error\BadEnvironmentException;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
-use holonet\common\di\autowire\AutoWireException;
-use holonet\common\di\DependencyNotFoundException;
-use holonet\common\di\DependencyInjectionException;
+use PHPUnit\Framework\TestCase;
 use ReflectionObject;
-use function holonet\common\get_class_short;
 
 #[CoversClass(Factory::class)]
 class FactoryTest extends TestCase {
 
-	public function testCompilerDisabledFactory(): void {
+	public function test_compiler_disabled_factory(): void {
 		$registry = new ConfigRegistry();
-		$registry->set('di.services', ['service1' => [Dependency::class]]);
+		$registry->set('di.services', ['service1' => [holonet_common_tests_Dependency::class]]);
 
 		$factory = new Factory($registry);
 
@@ -34,11 +30,11 @@ class FactoryTest extends TestCase {
 		$this->assertSame(Container::class, get_class($container));
 	}
 
-	public function testFactoryReturnsOldCompiledContainer(): void {
+	public function test_factory_returns_old_compiled_container(): void {
 		$this->assertFileExists(dirname(__DIR__).'/data/container.php');
 
 		$registry = new ConfigRegistry();
-		$registry->set('di.services', ['service1' => [DiAnonDep::class]]);
+		$registry->set('di.services', ['service1' => [holonet_common_tests_DiAnonDep::class]]);
 		$registry->set('di.cache_path', dirname(__DIR__).'/data');
 
 		$factory = new Factory($registry);
@@ -46,17 +42,17 @@ class FactoryTest extends TestCase {
 		$container = $factory->make();
 		$this->assertTrue(str_contains(get_class($container), '@anonymous'));
 		$reflection = new ReflectionObject($container);
-		$this->assertTrue($reflection->hasMethod('make_service1'), 'Factory did not create the make_service1 method');
+		$this->assertTrue($reflection->hasMethod('instantiate_holonet_common_tests_di_holonet_common_tests_DiAnonDep'), 'Factory did not create the instantiate_holonet_common_tests_di_holonet_common_tests_DiAnonDep method');
 		$this->assertInstanceOf(Container::class, $container);
 	}
 
-	public function testCompileContainerToFile(): void {
+	public function test_compile_container_to_file(): void {
 		@unlink(dirname(__DIR__).'/data/container.php');
 
 		$this->assertFileDoesNotExist(dirname(__DIR__).'/data/container.php');
 
 		$registry = new ConfigRegistry();
-		$registry->set('di.services', ['service1' => DiAnonDep::class]);
+		$registry->set('di.services', ['service1' => holonet_common_tests_DiAnonDep::class]);
 		$registry->set('di.cache_path', dirname(__DIR__).'/data');
 
 		$factory = new Factory($registry);
@@ -64,17 +60,17 @@ class FactoryTest extends TestCase {
 		$container = $factory->make();
 		$this->assertTrue(str_contains(get_class($container), '@anonymous'));
 		$reflection = new ReflectionObject($container);
-		$this->assertTrue($reflection->hasMethod('make_service1'), 'Factory did not create the make_service1 method');
+		$this->assertTrue($reflection->hasMethod('instantiate_holonet_common_tests_di_holonet_common_tests_DiAnonDep'), 'Factory did not create the instantiate_holonet_common_tests_di_holonet_common_tests_DiAnonDep method');
 		$this->assertInstanceOf(Container::class, $container);
 		$this->assertFileExists(dirname(__DIR__).'/data/container.php');
 	}
 
-	public function testBadCachePathCausesAnException(): void {
+	public function test_error_bad_cache_path_causes_an_exception(): void {
 		$this->expectException(BadEnvironmentException::class);
 		$this->expectExceptionMessage('Container compile path \'/rubbish/path/does/not/exist\' is not a writable directory');
 
 		$registry = new ConfigRegistry();
-		$registry->set('di.services', ['service1' => DiAnonDep::class]);
+		$registry->set('di.services', ['service1' => holonet_common_tests_DiAnonDep::class]);
 		$registry->set('di.cache_path', '/rubbish/path/does/not/exist');
 
 		$factory = new Factory($registry);

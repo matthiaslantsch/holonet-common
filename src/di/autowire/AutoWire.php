@@ -9,17 +9,18 @@
 
 namespace holonet\common\di\autowire;
 
+use holonet\common\di\autowire\provider\ConfigAutoWireProvider;
+use holonet\common\di\autowire\provider\ContainerAutoWireProvider;
+use holonet\common\di\autowire\provider\ForwardAutoWireProvider;
+use holonet\common\di\autowire\provider\ParamAutoWireProvider;
+use holonet\common\di\Container;
+use holonet\common\di\error\DependencyInjectionException;
+use holonet\common\di\error\AutoWireException;
+use ReflectionFunctionAbstract;
+use ReflectionIntersectionType;
 use ReflectionNamedType;
 use ReflectionParameter;
 use ReflectionUnionType;
-use ReflectionFunctionAbstract;
-use ReflectionIntersectionType;
-use holonet\common\di\Container;
-use holonet\common\di\DependencyInjectionException;
-use holonet\common\di\autowire\provider\ParamAutoWireProvider;
-use holonet\common\di\autowire\provider\ConfigAutoWireProvider;
-use holonet\common\di\autowire\provider\ForwardAutoWireProvider;
-use holonet\common\di\autowire\provider\ContainerAutoWireProvider;
 
 /**
  * Small helper class which uses reflection to try and auto-wire parameters for a function / method.
@@ -112,6 +113,6 @@ class AutoWire {
 
 		$unionType = implode('|', array_keys($errors));
 		$errors = implode("\n", $errors);
-		AutoWireException::failParam($param, "Cannot auto-wire to union type '{$unionType}': \n{$errors}");
+		AutoWireException::failParam($param, "Cannot auto-wire to union type '{$unionType}':\n{$errors}");
 	}
 }

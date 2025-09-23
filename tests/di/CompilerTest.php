@@ -10,26 +10,21 @@
 namespace holonet\common\tests\di;
 
 use Countable;
-use FilesystemIterator;
 use holonet\common\collection\ConfigRegistry;
-use holonet\common\di\autowire\CannotAutowireException;
+use holonet\common\di\autowire\AutoWire;
 use holonet\common\di\autowire\provider\ConfigAutoWireProvider;
 use holonet\common\di\autowire\provider\ContainerAutoWireProvider;
 use holonet\common\di\autowire\provider\ForwardAutoWireProvider;
 use holonet\common\di\Compiler;
-use holonet\common\di\Factory;
+use holonet\common\di\Container;
+use holonet\common\di\error\AutoWireException;
+use holonet\common\di\error\CannotAutowireException;
 use holonet\common\Noun;
 use InvalidArgumentException;
-use ReflectionClass;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
 use Spatie\Snapshots\MatchesSnapshots;
 use Stringable;
-use PHPUnit\Framework\TestCase;
-use holonet\common\di\Container;
-use holonet\common\di\autowire\AutoWire;
-use PHPUnit\Framework\Attributes\CoversClass;
-use holonet\common\di\autowire\AutoWireException;
-use holonet\common\di\DependencyNotFoundException;
-use holonet\common\di\DependencyInjectionException;
 use function holonet\common\dir_path;
 
 #[CoversClass(Container::class)]
@@ -55,14 +50,14 @@ class CompilerTest extends TestCase {
 		$container = $this->assertValidCompiledContainer($actual, $container->registry);
 
 		// assert we can make it if we supply the required parameter
-		$this->assertInstanceOf(holonet_common_tests_CompilerTest_ForwardParamDependency::class, $container->make(holonet_common_tests_CompilerTest_ForwardParamDependency::class, array('testParam' => 'testParamValue')));
+		$this->assertInstanceOf(holonet_common_tests_CompilerTest_ForwardParamDependency::class, $container->instance(holonet_common_tests_CompilerTest_ForwardParamDependency::class, array('testParam' => 'testParamValue')));
 		// assert we can't make it without supplying the required parameter
 		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionMessage('Cannot instantiate \'holonet\common\tests\di\holonet_common_tests_CompilerTest_ForwardParamDependency\': Missing parameter \'testParam\' of type \'string)\'');
-		$container->make(holonet_common_tests_CompilerTest_ForwardParamDependency::class);
+		$container->instance(holonet_common_tests_CompilerTest_ForwardParamDependency::class);
 	}
 
-	public function testParameterForwardCompile(): void {
+	public function test_parameter_forward_compile(): void {
 		$container = new Container();
 
 		$params = array(
@@ -72,7 +67,7 @@ class CompilerTest extends TestCase {
 			'boolean' => true,
 			'array' => array('value1', 'value2')
 		);
-		$container->wire(DependencyForwardAutoWire::class, $params);
+		$container->wire(holonet_common_tests_DependencyForwardAutoWire::class, $params);
 
 		$compiler = new Compiler($container);
 
@@ -82,7 +77,7 @@ class CompilerTest extends TestCase {
 		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
-	public function testClassWithoutConstructorProvidedParams(): void {
+	public function test_class_without_constructor_provided_params(): void {
 		$this->expectException(AutoWireException::class);
 		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\holonet_common_tests_CompilerTest_NoConstructorDependency\': Has no constructor, but 1 parameters were given');
 
@@ -94,7 +89,7 @@ class CompilerTest extends TestCase {
 		$compiler->compile();
 	}
 
-	public function testClassWithoutConstructorCompiles(): void {
+	public function test_class_without_constructor_compiles(): void {
 		$container = new Container();
 
 		$container->wire(holonet_common_tests_CompilerTest_NoConstructorDependency::class);
@@ -107,7 +102,7 @@ class CompilerTest extends TestCase {
 		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
-	public function testIntersectionTypesCannotBeCompiled(): void {
+	public function test_intersection_types_cannot_be_compiled(): void {
 		$this->expectException(CannotAutowireException::class);
 		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\holonet_common_tests_CompilerTest_DependencyWithIntersectionType::__construct\': Parameter #0: param: Cannot auto-wire intersection types');
 
@@ -119,7 +114,7 @@ class CompilerTest extends TestCase {
 		$compiler->compile();
 	}
 
-	public function testCannotAutowireUntypedParameter(): void {
+	public function test_cannot_autowire_untyped_parameter(): void {
 		$this->expectException(AutoWireException::class);
 		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\holonet_common_tests_CompilerTest_UntypedParamsDependency::__construct\': Parameter #0: param1: Can only auto-wire typed parameters');
 
@@ -130,7 +125,7 @@ class CompilerTest extends TestCase {
 		$compiler->compile();
 	}
 
-	public function testCanAutowireUntypedOptionalParameter(): void {
+	public function test_can_autowire_untyped_optional_parameter(): void {
 		$container = new Container();
 		$container->wire(holonet_common_tests_CompilerTest_UntypedParamOptionalDependency::class);
 
@@ -138,7 +133,7 @@ class CompilerTest extends TestCase {
 		$this->assertNotEmpty($compiler->compile());
 	}
 
-	public function testCompilesOptionalOrNullableParameter(): void {
+	public function test_compiles_optional_or_nullable_parameter(): void {
 		$container = new Container();
 		$container->wire(holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency::class);
 
@@ -150,7 +145,7 @@ class CompilerTest extends TestCase {
 		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
-	public function testUnionTypeCanBeCompiled(): void
+	public function test_union_type_can_be_compiled(): void
 	{
 		$container = new Container();
 		$container->wire(holonet_common_tests_CompilerTest_UnionTypeDependency::class);
@@ -163,7 +158,7 @@ class CompilerTest extends TestCase {
 		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
-	public function testCannotCompileNonWireableDependency(): void {
+	public function test_cannot_compile_non_wireable_dependency(): void {
 		$container = new Container();
 		$container->wire(holonet_common_tests_CompilerTest_NonWireableDependency::class);
 
@@ -175,18 +170,7 @@ class CompilerTest extends TestCase {
 		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
-	public function testUnionTypeNonWireable(): void {
-		$this->expectException(AutoWireException::class);
-		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\holonet_common_tests_CompilerTest_DependencyTest::__construct\': Parameter #0: param: Cannot auto-wire to union type \'holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency|string\'');
-
-		$container = new Container();
-		$container->wire(holonet_common_tests_CompilerTest_DependencyTest::class);
-
-		$compiler = new Compiler($container);
-		$compiler->compile();
-	}
-
-	public function testCompileConfigParam(): void {
+	public function test_compile_config_param(): void {
 		$container = new Container();
 
 		$value = array('test', 'cool');
@@ -194,9 +178,9 @@ class CompilerTest extends TestCase {
 		$container->registry->set('service.other', array('stringValue' => 'test'));
 		$container->registry->set('service.config', array('stringValue' => 'test'));
 
-		$container->wire(ServiceWithArrayConfigValue::class);
-		$container->wire(OtherDependency::class);
-		$container->wire(Dependency::class, array('config' => 'service.config'));
+		$container->wire(holonet_common_tests_ServiceWithArrayConfigValue::class);
+		$container->wire(holonet_common_tests_OtherDependency::class);
+		$container->wire(holonet_common_tests_Dependency::class, array('config' => 'service.config'));
 
 		$compiler = new Compiler($container);
 
@@ -206,17 +190,28 @@ class CompilerTest extends TestCase {
 		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
-	public function testCompileNamedService(): void {
+	public function test_compile_named_service(): void {
 		$registry = new ConfigRegistry();
 
 		$container = new Container($registry);
-		$container->set('service1', DiAnonDep::class);
+		$container->set('service1', holonet_common_tests_DiAnonDep::class);
 		$compiler = new Compiler($container);
 
 		$actual = $compiler->compile();
 
 		$this->assertMatchesTextSnapshot($actual);
 		$this->assertValidCompiledContainer($actual, $registry);
+	}
+
+	public function test_error_union_type_non_wireable(): void {
+		$this->expectException(AutoWireException::class);
+		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\holonet_common_tests_CompilerTest_DependencyTest::__construct\': Parameter #0: param: Cannot auto-wire to union type \'holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency|string\'');
+
+		$container = new Container();
+		$container->wire(holonet_common_tests_CompilerTest_DependencyTest::class);
+
+		$compiler = new Compiler($container);
+		$compiler->compile();
 	}
 
 	protected function assertValidCompiledContainer(string $code, ConfigRegistry $config): Container {

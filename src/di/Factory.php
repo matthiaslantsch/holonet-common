@@ -61,7 +61,10 @@ class Factory {
 	}
 
 	private function makeContainer(array $initialServices = array()): Container {
-		$container = new Container($this->registry, $initialServices);
+		$container = new Container($this->registry);
+		foreach ($initialServices as $service) {
+			$container->set($service, $container->get($service));
+		}
 		foreach ($this->discoverers as $discoverer) {
 			$discoverer->discover($container);
 		}

@@ -7,7 +7,7 @@
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
-namespace holonet\common\di;
+namespace holonet\common\di\error;
 
 use RuntimeException;
 use Psr\Container\NotFoundExceptionInterface;

@@ -17,7 +17,7 @@ use holonet\common\error\BadEnvironmentException;
 
 #[CoversClass(BadEnvironmentException::class)]
 class BadEnvironmentExceptionTest extends TestCase {
-	public function testFaultyConfigFactoryMethod(): void {
+	public function test_faulty_config_factory_method(): void {
 		$proof = new Proof();
 		$proof->add('guard_enabled', 'guard_enabled is required');
 

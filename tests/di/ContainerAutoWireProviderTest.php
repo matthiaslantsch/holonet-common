@@ -9,13 +9,13 @@
 
 namespace holonet\common\tests\di;
 
-use PHPUnit\Framework\TestCase;
-use holonet\common\di\Container;
 use holonet\common\di\autowire\AutoWire;
-use PHPUnit\Framework\Attributes\CoversClass;
-use holonet\common\di\autowire\AutoWireException;
-use holonet\common\di\DependencyInjectionException;
 use holonet\common\di\autowire\provider\ContainerAutoWireProvider;
+use holonet\common\di\Container;
+use holonet\common\di\error\AutoWireException;
+use holonet\common\di\error\DependencyInjectionException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Container::class)]
 #[CoversClass(ContainerAutoWireProvider::class)]
@@ -23,46 +23,46 @@ use holonet\common\di\autowire\provider\ContainerAutoWireProvider;
 #[CoversClass(AutoWireException::class)]
 #[CoversClass(DependencyInjectionException::class)]
 class ContainerAutoWireProviderTest extends TestCase {
-	public function testInjectionFailedThrowsException(): void {
+	public function test_injection_failed_throws_exception(): void {
 		$this->expectException(DependencyInjectionException::class);
-		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\DependencyWithParameter::__construct\': Parameter #0: mustBeSuppliedParameter: Cannot auto-wire to type \'string\'');
+		$this->expectExceptionMessage('Failed to auto-wire \'holonet\common\tests\di\holonet_common_tests_DependencyWithParameter::__construct\': Parameter #0: mustBeSuppliedParameter: Cannot auto-wire to type \'string\'');
 
 		$container = new Container();
 
-		$container->make(ServiceMultipleVersionDependencies::class);
+		$container->instance(holonet_common_tests_ServiceMultipleVersionDependencies::class);
 	}
 
-	public function testInjectionIgnoresMissingOptionalParams(): void {
+	public function test_injection_ignores_missing_optional_params(): void {
 		$container = new Container();
 
-		$result = $container->make(ServiceOptionalDep::class);
+		$result = $container->instance(holonet_common_tests_ServiceOptionalDep::class);
 
 		$this->assertNull($result->dependency);
 		$this->assertNotNull($result->optional);
 	}
 
-	public function testInjectionOfMultipleVersionsOfService(): void {
+	public function test_injection_of_multiple_versions_of_service(): void {
 		$container = new Container();
 
-		$serviceOne = new DependencyWithParameter('string_one');
-		$serviceTwo = new DependencyWithParameter('string_two');
+		$serviceOne = new holonet_common_tests_DependencyWithParameter('string_one');
+		$serviceTwo = new holonet_common_tests_DependencyWithParameter('string_two');
 
 		$container->set('serviceOne', $serviceOne);
 		$container->set('serviceTwo', $serviceTwo);
 
-		$result = $container->make(ServiceMultipleVersionDependencies::class);
+		$result = $container->instance(holonet_common_tests_ServiceMultipleVersionDependencies::class);
 
 		$this->assertSame($serviceOne, $result->serviceOne);
 		$this->assertSame($serviceTwo, $result->serviceTwo);
 	}
 
-	public function testInjectionUsingMake(): void {
+	public function test_injection_using_instance(): void {
 		$container = new Container();
 
-		$container->wire(DependencyWithParameter::class, array('mustBeSuppliedParameter' => 'test_string'));
+		$container->wire(holonet_common_tests_DependencyWithParameter::class, array('mustBeSuppliedParameter' => 'test_string'));
 
-		$one = $container->make(ServiceWithDependencyInjectUsingMake::class);
-		$two = $container->make(ServiceWithDependencyInjectUsingMake::class);
+		$one = $container->instance(holonet_common_tests_ServiceWithDependencyInjectUsingMake::class);
+		$two = $container->instance(holonet_common_tests_ServiceWithDependencyInjectUsingMake::class);
 
 		// because it's injected using make, they should be two different instances
 		$this->assertTrue($one->dep !== $two->dep);
@@ -70,44 +70,44 @@ class ContainerAutoWireProviderTest extends TestCase {
 		$this->assertSame('test_string', $two->dep->mustBeSuppliedParameter);
 	}
 
-	public function testServiceInjection(): void {
+	public function test_service_injection(): void {
 		$container = new Container();
 
-		$dependency = new DependencyContainerAutoWire();
+		$dependency = new holonet_common_tests_DependencyContainerAutoWire();
 		$container->set('dependency', $dependency);
 
-		$result = $container->make(Service::class);
+		$result = $container->instance(holonet_common_tests_Service::class);
 
 		$this->assertSame($dependency, $result->dependency);
 	}
 }
 
-class ServiceMultipleVersionDependencies {
-	public function __construct(public DependencyWithParameter $serviceOne, public DependencyWithParameter $serviceTwo) {
+class holonet_common_tests_ServiceMultipleVersionDependencies {
+	public function __construct(public holonet_common_tests_DependencyWithParameter $serviceOne, public holonet_common_tests_DependencyWithParameter $serviceTwo) {
 	}
 }
 
-class ServiceOptionalDep {
-	public function __construct(public ?DependencyWithParameter $dependency = null, public DependencyWithParameter $optional = new DependencyWithParameter('test')) {
+class holonet_common_tests_ServiceOptionalDep {
+	public function __construct(public ?holonet_common_tests_DependencyWithParameter $dependency = null, public holonet_common_tests_DependencyWithParameter $optional = new holonet_common_tests_DependencyWithParameter('test')) {
 	}
 }
 
-class Service {
-	public function __construct(public DependencyContainerAutoWire $dependency) {
+class holonet_common_tests_Service {
+	public function __construct(public holonet_common_tests_DependencyContainerAutoWire $dependency) {
 	}
 }
 
-class ServiceWithDependencyInjectUsingMake {
-	public function __construct(public DependencyWithParameter $dep) {
+class holonet_common_tests_ServiceWithDependencyInjectUsingMake {
+	public function __construct(public holonet_common_tests_DependencyWithParameter $dep) {
 	}
 }
 
-class DependencyContainerAutoWire {
+class holonet_common_tests_DependencyContainerAutoWire {
 	public function __construct() {
 	}
 }
 
-class DependencyWithParameter {
+class holonet_common_tests_DependencyWithParameter {
 	public function __construct(public string $mustBeSuppliedParameter) {
 	}
 }

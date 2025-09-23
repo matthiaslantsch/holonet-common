@@ -87,14 +87,6 @@ class FunctionsTest extends TestCase {
 		$this->assertSame($expected, $array1);
 	}
 
-	public function test_dot_key_array_merge_does_not_merge_over_non_arrays(): void {
-		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('The key a is not an array cannot merge with another array');
-
-		$array1 = array('a' => 'test');
-		dot_key_array_merge($array1, 'a', array('b' => 5));
-	}
-
 	public function test_dot_key_set(): void {
 		$array = array();
 		// setting key in sub array
@@ -205,5 +197,13 @@ class FunctionsTest extends TestCase {
 		// make sure the injected instance stays
 		$proof = verify($test);
 		$this->assertSame(array('test' => 'my message'), $proof->flat());
+	}
+
+	public function test_error_dot_key_array_merge_does_not_merge_over_non_arrays(): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('The key a is not an array cannot merge with another array');
+
+		$array1 = array('a' => 'test');
+		dot_key_array_merge($array1, 'a', array('b' => 5));
 	}
 }

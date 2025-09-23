@@ -9,6 +9,7 @@
 
 namespace holonet\common\di\autowire\provider;
 
+use holonet\common\di\Compiler;
 use ReflectionNamedType;
 use ReflectionParameter;
 use holonet\common\di\Container;
@@ -36,6 +37,10 @@ class ForwardAutoWireProvider implements ParamAutoWireProvider {
 	 * {@inheritDoc}
 	 */
 	public function compile(ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string {
+		if (is_array($givenParam)) {
+			return Compiler::exportArray($givenParam);
+		}
+
 		return var_export($givenParam, true);
 	}
 }

@@ -7,13 +7,12 @@
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
-namespace holonet\common\di\autowire;
+namespace holonet\common\di\error;
 
 use ReflectionClass;
+use ReflectionFunctionAbstract;
 use ReflectionMethod;
 use ReflectionParameter;
-use ReflectionFunctionAbstract;
-use holonet\common\di\DependencyInjectionException;
 
 class AutoWireException extends DependencyInjectionException {
 	private function __construct(ReflectionFunctionAbstract|ReflectionClass $reflection, string $message) {

@@ -9,12 +9,12 @@
 
 namespace holonet\common\di\autowire\provider;
 
+use holonet\common\di\autowire\attribute\ConfigItem;
+use holonet\common\di\Container;
+use holonet\common\di\error\AutoWireException;
 use LogicException;
 use ReflectionNamedType;
 use ReflectionParameter;
-use holonet\common\di\Container;
-use holonet\common\di\autowire\AutoWireException;
-use holonet\common\di\autowire\attribute\ConfigItem;
 use function holonet\common\reflection_get_attribute;
 
 /**

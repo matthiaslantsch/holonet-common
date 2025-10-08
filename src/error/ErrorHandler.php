@@ -89,7 +89,7 @@ class ErrorHandler {
 			$exception->getLine()
 		);
 
-		$this->logError(LogLevel::ERROR, $message, array('exception' => $exception));
+		$this->logError(LogLevel::ERROR, $message, array('exception' => get_class($exception)));
 
 		exit(255);
 	}

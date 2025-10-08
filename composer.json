@@ -60,7 +60,8 @@
 		"test": [
 			"@composer validate --ansi",
 			"@composer normalize --dry-run --diff --ansi",
-			"@php -d xdebug.mode=coverage -d memory_limit=-1 vendor/phpunit/phpunit/phpunit -c phpunit.xml",
+			"@php vendor/bin/hdev sync-dev-stubs --no-interactive",
+			"@php -d xdebug.mode=coverage -d memory_limit=-1 vendor/phpunit/phpunit/phpunit -c phpunit.xml --colors=always",
 			"@php -d memory_limit=-1 vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --verbose --dry-run --ansi --diff",
 			"@php -d memory_limit=-1 vendor/vimeo/psalm/psalm"
 		]

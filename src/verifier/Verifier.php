@@ -50,8 +50,7 @@ class Verifier {
 		}
 
 		$value = $property->getValue($obj);
-		/** @var Rule $rule */
-		foreach (reflection_get_attributes($property, Rule::class) as $rule) {
+		foreach ($this->getRulesForProperty($property) as $rule) {
 			if (is_array($value)) {
 				foreach ($value as $i => $val) {
 					if ($rule instanceof TransformValueRuleInterface) {
@@ -73,6 +72,13 @@ class Verifier {
 				$property->setValue($obj, $value);
 			}
 		}
+	}
+
+	/**
+	 * @return Rule[]
+	 */
+	protected function getRulesForProperty(ReflectionProperty $property): array	{
+		return reflection_get_attributes($property, Rule::class);
 	}
 
 	protected function transformValue(TransformValueRuleInterface&Rule $rule, mixed $value): mixed {

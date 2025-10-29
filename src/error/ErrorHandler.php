@@ -9,6 +9,7 @@
 
 namespace holonet\common\error;
 
+use Monolog\Logger;
 use Throwable;
 use Psr\Log\LogLevel;
 use Psr\Log\LoggerInterface;
@@ -39,9 +40,9 @@ class ErrorHandler {
 		\E_USER_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_USER_DEPRECATED'),
 	);
 
-	protected ?LoggerInterface $logger;
+	protected ?Logger $logger;
 
-	public function __construct(?LoggerInterface $logger = null) {
+	public function __construct(?Logger $logger = null) {
 		$this->logger = $logger;
 	}
 
@@ -89,7 +90,7 @@ class ErrorHandler {
 			$exception->getLine()
 		);
 
-		$this->logError(LogLevel::ERROR, $message, array('exception' => get_class($exception)));
+		$this->logError(LogLevel::ERROR, $message, array());
 
 		exit(255);
 	}

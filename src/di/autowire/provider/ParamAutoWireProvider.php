@@ -37,5 +37,5 @@ interface ParamAutoWireProvider {
 	 * This is used to compile the static container class.
 	 * Assume that $this in the code refers to the container object.
 	 */
-	public function compile(ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string;
+	public function compile(Container $container, ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string;
 }

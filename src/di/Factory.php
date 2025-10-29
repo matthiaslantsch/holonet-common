@@ -50,20 +50,24 @@ class Factory {
 		$config = $this->registry;
 
 		if (file_exists($cacheFile)) {
-			return require $cacheFile;
+			$container = require $cacheFile;
+			foreach ($initialServices as $name => $service) {
+				$container->set($name, $service);
+			}
+			return $container;
 		}
 
 		$container = $this->makeContainer($initialServices);
 		$compiler = new Compiler($container);
 
 		file_put_contents($cacheFile, "<?php\n\n{$compiler->compile()}");
-		return require $cacheFile;
+		return $this->makeCompiledContainer($initialServices);
 	}
 
 	private function makeContainer(array $initialServices = array()): Container {
 		$container = new Container($this->registry);
-		foreach ($initialServices as $service) {
-			$container->set($service, $container->get($service));
+		foreach ($initialServices as $service => $instance) {
+			$container->set($service, $instance);
 		}
 		foreach ($this->discoverers as $discoverer) {
 			$discoverer->discover($container);

@@ -43,7 +43,17 @@ class ContainerAutoWireProvider implements ParamAutoWireProvider {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function compile(ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string {
+	public function compile(Container $container, ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string {
+		// compile the actual service id if it's a service
+		if (class_exists($type->getName()) || interface_exists($type->getName())) {
+			if ($container->has($param->getName())) {
+				$containerType = $container->resolve($param->getName());
+				if (is_a($containerType, $type->getName(), true)) {
+					return "\$this->get('{$param->getName()}')";
+				}
+			}
+		}
+
 		return "\$this->instance({$type->getName()}::class)";
 	}
 }

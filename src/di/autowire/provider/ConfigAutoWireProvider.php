@@ -56,7 +56,7 @@ class ConfigAutoWireProvider implements ParamAutoWireProvider {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function compile(ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string {
+	public function compile(Container $container, ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string {
 		$expectedType = $type->getName();
 
 		// if we got called here, it means provide() has returned something, so we can assume the attribute exists

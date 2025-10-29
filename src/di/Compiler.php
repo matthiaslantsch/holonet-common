@@ -160,7 +160,7 @@ class Compiler {
 
 		if (array_is_list($values)) {
 			// remove indexes from simple lists
-			$val = preg_replace("/\d => /", '', $val);
+			$val = preg_replace("/\d+ => /", '', $val);
 		}
 
 		return $val;
@@ -315,7 +315,7 @@ class Compiler {
 			}
 
 			if ($wiredValue !== null) {
-				return $provider->compile($param, $type, $paramValue);
+				return $provider->compile($this->container, $param, $type, $paramValue);
 			}
 		}
 
@@ -341,7 +341,7 @@ class Compiler {
 					$wiredValue = $provider->provide($this->container, $param, $type, $paramValue);
 
 					if ($wiredValue !== null) {
-						return $provider->compile($param, $type, $paramValue);
+						return $provider->compile($this->container, $param, $type, $paramValue);
 					}
 				} catch (DependencyInjectionException $e) {
 					$errors[$type->getName()] = $e->getMessage();

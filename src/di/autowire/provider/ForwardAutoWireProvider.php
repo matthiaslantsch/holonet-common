@@ -36,7 +36,7 @@ class ForwardAutoWireProvider implements ParamAutoWireProvider {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function compile(ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string {
+	public function compile(Container $container, ReflectionParameter $param, ReflectionNamedType $type, mixed $givenParam): string {
 		if (is_array($givenParam)) {
 			return Compiler::exportArray($givenParam);
 		}

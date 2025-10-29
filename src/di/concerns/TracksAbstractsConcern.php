@@ -22,14 +22,14 @@ trait TracksAbstractsConcern {
 	 * Alias => abstract
 	 * @var array<string, string>
 	 */
-	private array $aliases = array();
+	protected array $aliases = array();
 
 	/**
 	 * Mapping from abstract class or interface names to concrete class names.
 	 * Abstract class / interface => concrete class
 	 * @var array<string, string>
 	 */
-	private array $contracts = array();
+	protected array $contracts = array();
 
 	public function contract(string $contract, string $concrete): void {
 		if (!is_subclass_of($concrete, $contract)) {
@@ -52,7 +52,13 @@ trait TracksAbstractsConcern {
 			return $this->contracts[$abstract];
 		}
 
+		// just a class name => we can make it with reflection
 		if (class_exists($abstract)) {
+			return $abstract;
+		}
+
+		// interface => no contract given but there could be a provider that makes it
+		if (isset($this->providers[$abstract])) {
 			return $abstract;
 		}
 

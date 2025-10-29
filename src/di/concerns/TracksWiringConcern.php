@@ -27,12 +27,12 @@ trait TracksWiringConcern {
 	 * @var array<string, array> $wiring Wiring information on how to make certain types of objects.
 	 * Mapped by name / type => class abstract (array with class name and parameters).
 	 */
-	private array $wiring = array();
+	protected array $wiring = array();
 
 	/**
 	 * @var array <string,string> $providers Mapping from abstracts to whatever provider class makes them.
 	 */
-	private array $providers = array();
+	protected array $providers = array();
 
 	/**
 	 * Central wiring function to teach the container how to make an object.
@@ -59,7 +59,7 @@ trait TracksWiringConcern {
 		if (is_subclass_of($abstract, Provider::class)) {
 			$reflection = new ReflectionClass($abstract);
 			$type = $reflection->getMethod('make')->getReturnType();
-			if (!$type instanceof ReflectionNamedType || !class_exists($type->getName())) {
+			if (!$type instanceof ReflectionNamedType || (!class_exists($type->getName())) && !interface_exists($type->getName())) {
 				throw new DependencyInjectionException("Provider '{$abstract}::make()' has an invalid return type: '{$type->getName()}'.");
 			}
 			$aliasTo = $type->getName();

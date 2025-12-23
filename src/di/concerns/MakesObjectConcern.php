@@ -71,9 +71,9 @@ trait MakesObjectConcern {
 	}
 
 	/**
-	 * @template T
+	 * @template T of object
 	 * @param class-string<T>|string $abstract
-	 * @return T
+	 * @psalm-return T
 	 */
 	public function instance(string $abstract, array $params = array()): object {
 		try {

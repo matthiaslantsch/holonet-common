@@ -25,6 +25,7 @@ use ReflectionNamedType;
 use ReflectionObject;
 use ReflectionParameter;
 use ReflectionUnionType;
+use RuntimeException;
 use Throwable;
 use function holonet\common\indentText;
 
@@ -163,7 +164,7 @@ class Compiler {
 			$val = preg_replace("/\d+ => /", '', $val);
 		}
 
-		return $val;
+		return $val ?? throw new RuntimeException('Could not export array');
 	}
 
 	/**

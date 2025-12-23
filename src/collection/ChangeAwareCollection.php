@@ -56,6 +56,7 @@ class ChangeAwareCollection implements Countable, ArrayAccess, IteratorAggregate
 		if ($key !== null) {
 			$this->changed[] = $key;
 
+			/** @psalm-suppress NonVariableReferenceReturn */
 			return $this->all[$key];
 		}
 

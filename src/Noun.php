@@ -9,6 +9,8 @@
 
 namespace holonet\common;
 
+use RuntimeException;
+
 /**
  * Utils class for string utility concerning nouns (singularise / pluralise).
  */
@@ -121,7 +123,7 @@ class Noun {
 		// check for matches using regular expressions
 		foreach (self::PLURAL as $pattern => $result) {
 			if (preg_match($pattern, $noun) > 0) {
-				return preg_replace($pattern, $result, $noun);
+				return preg_replace($pattern, $result, $noun) ?? throw new RuntimeException("Error during pluralisation of noun '{$noun}'.");
 			}
 		}
 
@@ -147,7 +149,7 @@ class Noun {
 		// check for matches using regular expressions
 		foreach (self::SINGULAR as $pattern => $result) {
 			if (preg_match($pattern, $noun) > 0) {
-				return preg_replace($pattern, $result, $noun);
+				return preg_replace($pattern, $result, $noun) ?? throw new RuntimeException("Error during singularisation of noun '{$noun}'.");
 			}
 		}
 

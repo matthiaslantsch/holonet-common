@@ -112,6 +112,7 @@ class AutoWire {
 		}
 
 		$unionType = implode('|', array_keys($errors));
+		/** @psalm-suppress InvalidArgument */
 		$errors = implode("\n", $errors);
 		AutoWireException::failParam($param, "Cannot auto-wire to union type '{$unionType}':\n{$errors}");
 	}

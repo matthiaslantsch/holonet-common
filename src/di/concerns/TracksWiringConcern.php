@@ -45,7 +45,7 @@ trait TracksWiringConcern {
 	 *  wire(provider, args) => wire a custom factory provider to make an object
 	 *  wire(provider, args, contract / alias) => wire a custom factory provider to make an object and supply
 	 */
-	public function wire(string $abstract, array $args = array(), string $name = null): void {
+	public function wire(string $abstract, array $args = array(), ?string $name = null): void {
 		if ($this->hasAlias($abstract)) {
 			$this->wire($this->resolve($abstract), $args, $name);
 			return;

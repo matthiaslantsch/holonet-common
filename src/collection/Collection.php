@@ -59,6 +59,7 @@ class Collection implements Countable, IteratorAggregate {
 			return $null;
 		}
 
+		/** @psalm-suppress NonVariableReferenceReturn */
 		return $this->data[$key];
 	}
 

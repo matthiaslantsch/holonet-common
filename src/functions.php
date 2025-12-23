@@ -294,6 +294,7 @@ if (!function_exists(__NAMESPACE__.'\\readableDurationString')) {
 	 * function used to transform a duration into a human readable string.
 	 * @param int $time The duration in seconds
 	 * @return string with the duration in a human readable format
+	 * @psalm-suppress InvalidOperand
 	 */
 	function readableDurationString(int $time): string {
 		if ($time >= 86400) {

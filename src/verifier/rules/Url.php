@@ -15,7 +15,7 @@ use Attribute;
 class Url extends Rule implements CheckValueRuleInterface {
 
 	public function __construct(
-		string $message = null, protected bool $host = false, protected bool $path = false,
+		?string $message = null, protected bool $host = false, protected bool $path = false,
 		protected bool $query = false, bool $fragment = false
 	) {
 		parent::__construct($message);

@@ -14,7 +14,7 @@ use Attribute;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class Directory extends PathRule {
 
-	public function __construct(public bool $create = false, public  bool $recursive = false, string $message = null) {
+	public function __construct(public bool $create = false, public  bool $recursive = false, ?string $message = null) {
 		parent::__construct($message);
 	}
 

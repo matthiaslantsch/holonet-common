@@ -33,7 +33,8 @@
 			"holonet\\common\\": "src/"
 		},
 		"files": [
-			"src/functions.php"
+			"src/functions.php",
+			"src/kvm_functions.php"
 		]
 	},
 	"autoload-dev": {

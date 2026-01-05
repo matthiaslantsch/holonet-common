@@ -18,7 +18,7 @@ class OfType extends Rule implements CheckValueRuleInterface {
 
 	public function __construct(
 		public string $type,
-		string $message = null
+		?string $message = null
 	)
 	{
 		parent::__construct($message);

@@ -14,7 +14,7 @@ use function holonet\common\stringify;
 abstract class Rule {
 	public string $message;
 
-	public function __construct(string $message = null) {
+	public function __construct(?string $message = null) {
 		$this->message = $message ?? static::defaultMessage();
 	}
 

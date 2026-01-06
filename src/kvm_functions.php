@@ -52,6 +52,19 @@ function kvm_parse(string $raw): array {
 	return $data;
 }
 
+function kvm_walk_pair(array $kvm, callable $callback): mixed {
+	foreach ($kvm as $key => $value) {
+		if (is_array($value)) {
+			foreach ($value as $val) {
+				$callback($key, $val);
+			}
+		} else {
+			$callback($key, $val);
+		}
+	}
+
+}
+
 function kvm_sanitise_value(string $value): string {
 	$value = str_replace(LIST_SEPARATOR, ' ', $value);
 	while (str_contains($value, BLOCK_SEPARATOR)) {

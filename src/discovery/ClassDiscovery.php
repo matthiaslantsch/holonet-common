@@ -12,6 +12,7 @@ namespace holonet\common\discovery;
 use RuntimeException;
 use DirectoryIterator;
 use InvalidArgumentException;
+use function holonet\common\is_abstract;
 
 /**
  * Class discovery utility class.
@@ -34,9 +35,10 @@ abstract class ClassDiscovery {
 	 * @psalm-suppress MoreSpecificReturnType
 	 * @param string $directory The path to the directory to scan
 	 * @param bool $throwOnFailure Boolean flag whether to throw an exception if a file does not contain a valid class
+	 * @param bool $recursive Boolean flag whether to scan the directory recursively.
 	 * @return array<class-string>
 	 */
-	public function fromDirectory(string $directory, bool $throwOnFailure = false): array {
+	public function fromDirectory(string $directory, bool $throwOnFailure = false, bool $recursive = false): array {
 		if (!is_dir($directory) || !is_readable($directory)) {
 			throw new InvalidArgumentException("Target directory {$directory} does not exist");
 		}
@@ -44,8 +46,16 @@ abstract class ClassDiscovery {
 		$dir = new DirectoryIterator($directory);
 		$classes = array();
 		foreach ($dir as $fileinfo) {
-			if (!$fileinfo->isDot() && $fileinfo->getExtension() === $this->scannedExtension) {
+			if ($fileinfo->isDot()) {
+				continue;
+			}
+
+			if ($fileinfo->getExtension() === $this->scannedExtension) {
 				if (($class = $this->fromFile($fileinfo->getPathname())) !== null) {
+					if (interface_exists($class) || trait_exists($class)) {
+						continue;
+					}
+
 					if ($this->ensureClassExists && !class_exists($class)) {
 						throw new RuntimeException("Discovered class '{$class}' from file '{$fileinfo->getPathname()}', but class does not exist (Autoloading problem?)");
 					}
@@ -53,6 +63,8 @@ abstract class ClassDiscovery {
 				} elseif ($throwOnFailure) {
 					throw new RuntimeException("Could not discover any classes from file '{$fileinfo->getPathname()}'");
 				}
+			} elseif($fileinfo->isDir() && $recursive) {
+				$classes = array_merge($classes, $this->fromDirectory($fileinfo->getPathname(), $throwOnFailure, $recursive));
 			}
 		}
 

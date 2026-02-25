@@ -1,0 +1,45 @@
+if (!isset($config) || !$config instanceof \holonet\common\collection\ConfigRegistry) {
+	throw new \InvalidArgumentException('The config parameter must be an instance of \holonet\common\collection\ConfigRegistry');
+}
+
+$initialServices ??= array();
+
+return new class($config, $initialServices) extends \holonet\common\di\Container {
+	protected array $aliases = array(
+		'container' => 'holonet\\common\\di\\Container',
+		'registry' => 'holonet\\common\\collection\\ConfigRegistry',
+	);
+	
+	protected array $services = array(
+		'container',
+		'registry',
+	);
+	
+	protected array $contracts = array();
+	
+	protected array $providers = array();
+	
+	protected function instantiate(string $class, array $params = array()): object {
+		return match ($class) {
+			holonet\common\tests\di\holonet_common_tests_ServiceWithArrayConfigValue::class => $this->instantiate_holonet_common_tests_di_holonet_common_tests_ServiceWithArrayConfigValue($params),
+			holonet\common\tests\di\holonet_common_tests_OtherDependency::class => $this->instantiate_holonet_common_tests_di_holonet_common_tests_OtherDependency($params),
+			holonet\common\tests\di\holonet_common_tests_Dependency::class => $this->instantiate_holonet_common_tests_di_holonet_common_tests_Dependency($params),
+			default => parent::instantiate($class, $params)
+		};
+	}
+	
+	protected function instantiate_holonet_common_tests_di_holonet_common_tests_ServiceWithArrayConfigValue(array $params): holonet\common\tests\di\holonet_common_tests_ServiceWithArrayConfigValue {
+		$params['value'] ??= $this->registry->get('config.just_an_array_value');
+		return new holonet\common\tests\di\holonet_common_tests_ServiceWithArrayConfigValue(...$params);
+	}
+	
+	protected function instantiate_holonet_common_tests_di_holonet_common_tests_OtherDependency(array $params): holonet\common\tests\di\holonet_common_tests_OtherDependency {
+		$params['config'] ??= $this->registry->verifiedDto('service.other', 'holonet\common\tests\di\holonet_common_tests_Config');
+		return new holonet\common\tests\di\holonet_common_tests_OtherDependency(...$params);
+	}
+	
+	protected function instantiate_holonet_common_tests_di_holonet_common_tests_Dependency(array $params): holonet\common\tests\di\holonet_common_tests_Dependency {
+		$params['config'] ??= $this->registry->asDto('service.config', 'holonet\common\tests\di\holonet_common_tests_Config');
+		return new holonet\common\tests\di\holonet_common_tests_Dependency(...$params);
+	}
+};

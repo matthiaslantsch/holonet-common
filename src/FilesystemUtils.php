@@ -10,6 +10,7 @@
 namespace holonet\common;
 
 use Exception;
+use RuntimeException;
 use DirectoryIterator;
 
 /**
@@ -20,7 +21,7 @@ class FilesystemUtils {
 	 * @param string ...$parts variable number of path elements
 	 * @return string system independent absolute directory path with a trailing separator
 	 */
-	public static function dirpath(...$parts): string {
+	public static function dirpath(string ...$parts): string {
 		return static::filepath(...$parts).\DIRECTORY_SEPARATOR;
 	}
 
@@ -34,10 +35,17 @@ class FilesystemUtils {
 	}
 
 	/**
+	 * Read in the contents of a file and check whether a given string is contained within.
+	 */
+	public static function fileContains(string $path, string $search): bool {
+		return str_contains(static::readFileContents($path), $search);
+	}
+
+	/**
 	 * @param string ...$parts variable number of path elements
 	 * @return string system independent absolute path using the given path parts
 	 */
-	public static function filepath(...$parts): string {
+	public static function filepath(string ...$parts): string {
 		$ret = implode(\DIRECTORY_SEPARATOR, $parts);
 		//prepend a / on linux
 		if ($ret[0] !== \DIRECTORY_SEPARATOR && \DIRECTORY_SEPARATOR === '/') {
@@ -50,6 +58,30 @@ class FilesystemUtils {
 		}
 
 		return $ret;
+	}
+
+	/**
+	 * Wrapper around file_get_contents() which throws an exception if the underlying call failed.
+	 */
+	public static function readFileContents(string $path): string {
+		$contents = @file_get_contents($path);
+		if ($contents === false) {
+			throw new RuntimeException(sprintf("Could not file_get_contents() path '%s': last error on the stack: %s", $path, error_get_last()['message']));
+		}
+
+		return $contents;
+	}
+
+	/**
+	 * Wrapper around file() which throws an exception if the underlying call failed.
+	 */
+	public static function readFileLines(string $path): array {
+		$contents = @file($path);
+		if ($contents === false) {
+			throw new RuntimeException(sprintf("Could not file() path '%s': %s", $path, error_get_last()['message']));
+		}
+
+		return $contents;
 	}
 
 	/**

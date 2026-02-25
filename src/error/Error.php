@@ -45,8 +45,14 @@ class Error {
 	 * @return string with a message describing this error
 	 */
 	public function __toString(): string {
-		return sprintf('[%s] %s(%s): %s in the file %s on line %d',
-			date('D M d H:i:s Y'), mb_strtoupper($this->errorlevel), $this->errorno, $this->errormsg, $this->errorfile, $this->errorline ?? ''
+		return sprintf(
+			'[%s] %s(%s): %s in the file %s on line %d',
+			date('D M d H:i:s Y'),
+			mb_strtoupper($this->errorlevel),
+			$this->errorno,
+			$this->errormsg,
+			$this->errorfile,
+			$this->errorline ?? ''
 		);
 	}
 }

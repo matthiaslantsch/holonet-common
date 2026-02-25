@@ -9,38 +9,83 @@
 
 namespace holonet\common\collection;
 
+use Error;
+use TypeError;
+use function holonet\common\verify;
+use holonet\common\collection\Registry;
+use function holonet\common\set_object_vars;
+use holonet\common\error\BadEnvironmentException;
+
 /**
  * ConfigRegistry adds $_ENV placeholder functionality to the standard Registry.
  */
 class ConfigRegistry extends Registry {
 	/**
-	 * Extend base placeholder logic to replace env variables in config values
-	 * {@inheritDoc}
+	 * @template T
+	 * Get an instance of a config dto class supplied by the user.
+	 * @psalm-param class-string<T>|T $cfgDto
+	 * @return T
 	 */
-	protected function replacePlaceholder($position) {
-		if (is_string($position) && mb_strpos($position, '%') !== false) {
-			$matches = array();
-			preg_match_all('/%(?:env\(|)([^%]+?)(?:\)|)%/', $position, $matches, \PREG_SET_ORDER);
-			foreach ($matches as $placeholderPair) {
-				//check if it is a $_ENV placeholder
-				if (mb_strpos($placeholderPair[0], '%env(') === 0) {
-					//if the placeholder is an offset in the $_ENV, replace it, otherwise return null
-					if (($envval = $_ENV[$placeholderPair[1]] ?? getenv($placeholderPair[1])) !== false) {
-						$position = str_replace($placeholderPair[0], $envval, $position);
-					} else {
-						return;
-					}
-				} else {
-					//if the placeholder is a value in the registry, replace it, otherwise leave it with the % signs
-					$position = str_replace($placeholderPair[0], $this->get($placeholderPair[1], $placeholderPair[0]), $position);
-				}
-			}
-		} elseif (is_array($position)) {
-			foreach ($position as $key => $val) {
-				$position[$key] = $this->replacePlaceholder($val);
-			}
+	public function asDto(string $configKey, string|object $cfgDto): object {
+		if (!$this->has($configKey)) {
+			throw BadEnvironmentException::faultyConfig($configKey, 'Config item doesn\'t exist');
 		}
 
-		return $position;
+		$value = $this->get($configKey);
+		if (!is_array($value)) {
+			$value = array($value);
+		}
+
+		try {
+			if (is_string($cfgDto)) {
+				$cfgDto = new $cfgDto(...$value);
+			} else {
+				set_object_vars($cfgDto, $value);
+			}
+		} catch (TypeError $e) {
+			throw BadEnvironmentException::faultyConfig($configKey, "TypeError: {$e->getMessage()}");
+		} catch (Error $e) {
+			if (str_contains($e->getMessage(), 'Unknown named parameter')) {
+				$unknownKey = str_replace('Unknown named parameter $', '', $e->getMessage());
+				throw BadEnvironmentException::faultyConfig($configKey, "Additional unused config key was specified: '{$configKey}.{$unknownKey}'");
+			}
+
+			throw BadEnvironmentException::faultyConfig($configKey, "Error: {$e->getMessage()}");
+		}
+
+		return $cfgDto;
+	}
+
+	/**
+	 * @template T
+	 * Get a verified instance of a config dto class supplied by the user.
+	 * @psalm-param class-string<T>|T $cfgDto
+	 * @return T
+	 */
+	public function verifiedDto(string $configKey, string|object $cfgDto): object {
+		$cfgDto = $this->asDto($configKey, $cfgDto);
+
+		$proof = verify($cfgDto);
+		if ($proof->pass()) {
+			return $cfgDto;
+		}
+
+		throw BadEnvironmentException::faultyConfigFromProof($configKey, $proof);
+	}
+
+	/**
+	 * Try to resolve placeholder from the env variables of the application process.
+	 */
+	protected function resolvePlaceHolder(string $placeholder): ?string {
+		if (str_starts_with($placeholder, 'env(')) {
+			$envKey = str_replace(array('env(', ')'), '', $placeholder);
+			if (($envVal = $_ENV[$envKey] ?? getenv($envKey)) !== false) {
+				return $envVal;
+			}
+
+			return '';
+		}
+
+		return parent::resolvePlaceHolder($placeholder);
 	}
 }

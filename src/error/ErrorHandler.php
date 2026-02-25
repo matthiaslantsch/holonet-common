@@ -9,6 +9,7 @@
 
 namespace holonet\common\error;
 
+use Monolog\Logger;
 use Throwable;
 use Psr\Log\LogLevel;
 use Psr\Log\LoggerInterface;
@@ -39,11 +40,9 @@ class ErrorHandler {
 		\E_USER_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_USER_DEPRECATED'),
 	);
 
-	protected ?Throwable $lastException = null;
+	protected ?Logger $logger;
 
-	protected ?LoggerInterface $logger;
-
-	public function __construct(?LoggerInterface $logger = null) {
+	public function __construct(?Logger $logger = null) {
 		$this->logger = $logger;
 	}
 
@@ -53,28 +52,26 @@ class ErrorHandler {
 	 * @param int $errno The error number of the thrown error
 	 * @param string $msg The error message
 	 * @param string $file The file the error was caused in
-	 * @param int $line The line the error was caused on
-	 * @return bool|null To advise the spl to continue error handling or not
+	 * @param int|null $line The line the error was caused on
+	 * @return bool To advise the spl to continue error handling or not
 	 */
-	public function handleError(int $errno, string $msg = '', string $file = '', ?int $line = null): ?bool {
+	public function handleError(int $errno, string $msg = '', string $file = '', ?int $line = null): bool {
 		if (!(error_reporting() & $errno)) {
 			// This error code is not included in error_reporting
-			return null;
+			return false;
 		}
 
-		list('level' => $type, 'name' => $name) = (self::ERROR_LEVEL_LOOKUP[$errno] ?? self::ERROR_LEVEL_LOOKUP[\E_ERROR]);
+		list('level' => $level, 'name' => $name) = (self::ERROR_LEVEL_LOOKUP[$errno] ?? self::ERROR_LEVEL_LOOKUP[\E_ERROR]);
 
-		if ($this->logger !== null) {
-			$this->logger->log(
-				$type,
-				"{$name}: {$msg}",
-				array(
-					'code' => $errno,
-					'file' => $file,
-					'line' => $line,
-				)
-			);
-		}
+		$this->logError(
+			$level,
+			"{$name}: {$msg}",
+			array(
+				'code' => $errno,
+				'file' => $file,
+				'line' => $line,
+			)
+		);
 
 		return true;
 	}
@@ -93,38 +90,29 @@ class ErrorHandler {
 			$exception->getLine()
 		);
 
-		if ($this->logger !== null) {
-			$this->logger->log(LogLevel::ERROR, $message, array('exception' => $exception));
-		}
+		$this->logError(LogLevel::ERROR, $message, array());
 
-		$this->lastException = $exception;
+		exit(255);
 	}
 
-	/**
-	 * Shutdown function
-	 * should be changed in extending classes to add more functionality to it.
-	 */
+	protected function logError(string $logLevel, string $message, array $context): void {
+		if ($this->logger === null) {
+			$context = json_encode($context, JSON_PRETTY_PRINT);
+			fwrite(STDERR, "{$message}\n{$context}\n");
+			return;
+		}
+
+		$this->logger->log(
+			$logLevel, $message, $context
+		);
+	}
+
+	public function register(): void {
+		set_error_handler($this->handleError(...));
+		set_exception_handler($this->handleException(...));
+	}
+
 	public function handleShutdown(): void {
-		if (($error = $this->getLastError()) !== null) {
-			echo $error;
-			exit(255);
-		}
-	}
-
-	/**
-	 * Return the last error message if there was one.
-	 * Can be used in fatal shutdown handlers to help.
-	 */
-	protected function getLastError(): ?string {
-		if ($this->lastException !== null) {
-			$class = get_class($this->lastException);
-
-			return "Unwanted crash due to {$class}: {$this->lastException->getMessage()}";
-		}
-		if (($lasterror = error_get_last()) !== null) {
-			return "Unwanted crash due to: {$lasterror['message']} in file {$lasterror['file']} on line {$lasterror['line']}";
-		}
-
-		return null;
+		exit(255);
 	}
 }

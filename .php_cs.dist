@@ -1,9 +1,0 @@
-<?php
-
-$config = require 'vendor/holonet/hdev/.php_cs.dist';
-$config->setFinder(PhpCsFixer\Finder::create()
-	->exclude('vendor')
-	->in(__DIR__)
-);
-
-return $config;

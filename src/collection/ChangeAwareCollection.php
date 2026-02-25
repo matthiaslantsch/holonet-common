@@ -9,24 +9,26 @@
 
 namespace holonet\common\collection;
 
-use Countable;
 use ArrayAccess;
 use ArrayIterator;
+use Countable;
+use Iterator;
 use IteratorAggregate;
-use holonet\common\ComparableInterface;
+use OutOfBoundsException;
 
 /**
  * The ChangeAwareCollection is used as a wrapper around an array
  * it keeps track internally on how it's data changed.
+ * @psalm-suppress MissingTemplateParam
  */
-class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countable, IteratorAggregate {
+class ChangeAwareCollection implements Countable, ArrayAccess, IteratorAggregate {
 	/**
 	 * Array with $all keys of newly added entries.
 	 */
 	protected array $added = array();
 
 	/**
-	 * @var array<int|string, mixed> $all An array containing all entries
+	 * @var array<string|int, mixed> $all An array containing all entries
 	 */
 	protected array $all = array();
 
@@ -49,34 +51,33 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	 * @param mixed $entry Either the key or the value that changes
 	 * @return mixed reference to the value or null if it doesn't exist
 	 */
-	public function &change($entry) {
+	public function &change(mixed $entry): mixed {
 		$key = $this->findKeyForKeyOrEntry($entry);
 		if ($key !== null) {
 			$this->changed[] = $key;
 
+			/** @psalm-suppress NonVariableReferenceReturn */
 			return $this->all[$key];
 		}
+
+		throw new OutOfBoundsException("Entry not found");
 	}
 
 	/**
 	 * @param mixed $val The data entry to be saved
-	 * @param string|null $key The key to save the entry under
+	 * @param ?string $key The key to save the entry under
 	 * @param bool $new Flag marking this entry as not new (not to be saved into $this->added)
 	 */
-	public function add($val, ?string $key = null, bool $new = true): void {
+	public function add(mixed $val, ?string $key, bool $new = true): void {
 		if (is_object($val) && is_subclass_of($val, ChangeAwareInterface::class)) {
 			$val->belongsTo($this);
-			//not every change aware object can know about a unique key
-			if (method_exists($val, 'uniqKey') && $key === null) {
-				$key = $val->uniqKey();
-			}
 		}
 
-		if ($key === null) {
-			$this->all[] = $val;
-			$key = array_search($val, $this->all, true);
-		} else {
+		if ($key !== null) {
 			$this->all[$key] = $val;
+		} else {
+			$this->all[] = $val;
+			$key = array_search($val, $this->all);
 		}
 
 		//if the override flag wasn't given, mark the entry as newly added
@@ -90,8 +91,8 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	 * @param bool $new Flag marking these entries as not new (not to be saved into $this->added)
 	 */
 	public function addAll(array $values, bool $new = true): void {
-		foreach ($values as $val) {
-			$this->add($val, null, $new);
+		foreach ($values as $key => $val) {
+			$this->add($val, $key, $new);
 		}
 	}
 
@@ -107,19 +108,6 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 
 	public function changed(): bool {
 		return !empty($this->added) || !empty($this->removed) || !empty($this->changed);
-	}
-
-	/**
-	 * compare this attribute set to another attribute set.
-	 * @param ComparableInterface $other The other object to compare this one to
-	 * @return bool if this object should be considered the same attribute set as the other one
-	 */
-	public function compareTo(ComparableInterface $other): bool {
-		if (!$other instanceof self) {
-			return false;
-		}
-
-		return $this->compareToCollection($other);
 	}
 
 	/**
@@ -139,10 +127,12 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	 * @param string $key The key for the value
 	 * @return mixed the value from the $this->all array or null if not found
 	 */
-	public function get(string $key) {
+	public function get(string $key): mixed {
 		if (isset($this->all[$key]) && !in_array($key, $this->removed)) {
 			return $this->all[$key];
 		}
+
+		return null;
 	}
 
 	/**
@@ -188,60 +178,8 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 		return $this->all;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function getIterator(): ArrayIterator {
-		return new ArrayIterator($this->getAll());
-	}
-
-	public function has($value): bool {
-		//if the given value is comparable, we can use that to find it
-		if (is_object($value) && $value instanceof ComparableInterface) {
-			foreach ($this->getAll('current') as $entry) {
-				if (is_object($entry) && $entry instanceof ComparableInterface && $entry->compareTo($value)) {
-					return true;
-				}
-			}
-		} else {
-			return in_array($value, $this->getAll('current'), true);
-		}
-
-		return false;
-	}
-
-	/**
-	 * Does not return true for "removed" entries.
-	 * {@inheritDoc}
-	 */
-	public function offsetExists($offset): bool {
-		return isset($this->all[$offset]) && !in_array($offset, $this->removed);
-	}
-
-	/**
-	 * Does only return values that aren't "removed".
-	 * {@inheritDoc}
-	 * @see self::get()
-	 */
-	public function offsetGet($offset) {
-		return $this->get($offset);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * @see self::set()
-	 */
-	public function offsetSet($offset, $value): void {
-		$this->set($offset, $value);
-	}
-
-	/**
-	 * Does only add the entry to "removed".
-	 * {@inheritDoc}
-	 * @see self::remove()
-	 */
-	public function offsetUnset($offset): void {
-		$this->remove($offset);
+	public function has(mixed $value): bool {
+		return $this->findKeyForKeyOrEntry($value) !== null;
 	}
 
 	/**
@@ -249,7 +187,7 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	 * @param mixed $entry Either the key or the value that changes
 	 * @return bool true or false on success or not
 	 */
-	public function remove($entry): bool {
+	public function remove(mixed $entry): bool {
 		$key = $this->findKeyForKeyOrEntry($entry);
 		if ($key !== null) {
 			$this->removed[] = $key;
@@ -271,17 +209,24 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	}
 
 	/**
+	 * Convenience function to clear all the values.
+	 */
+	public function clear(): void {
+		$this->replace(array());
+	}
+
+	/**
 	 * setter function to set a value by its key
 	 * either calls the add function or set the value.
-	 * @param string|null $key The key for the value
+	 * @param string $key The key for the value
 	 * @param mixed $value The value that is to be set
 	 */
-	public function set(?string $key, $value): void {
-		if ($key === null || !array_key_exists($key, $this->all)) {
+	public function set(string $key, mixed $value): void {
+		if (!array_key_exists($key, $this->all)) {
 			$this->add($value, $key);
 		} else {
 			if ($this->all[$key] !== $value) {
-				$this->change($key);
+				$this->changed[] = $key;
 			}
 
 			if (is_object($value) && is_subclass_of($value, ChangeAwareInterface::class)) {
@@ -293,16 +238,6 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	}
 
 	/**
-	 * compare this attribute set to another attribute set.
-	 * @param ChangeAwareCollection $other The other object to compare this one to
-	 * @return bool if this object should be considered the same attribute set as the other one
-	 */
-	private function compareToCollection(self $other): bool {
-		return $this->all === $other->all && $this->changed === $other->changed
-			&& $this->added === $other->added && $this->removed === $other->removed;
-	}
-
-	/**
 	 * helper function to figure out what an argument is
 	 * first assumes the argument is a key
 	 * then assumes the argument is a value
@@ -310,19 +245,51 @@ class ChangeAwareCollection implements ArrayAccess, ComparableInterface, Countab
 	 * @param mixed $entry Either the key or the value
 	 * @return mixed|null the key of the value/the key if it's a key
 	 */
-	private function findKeyForKeyOrEntry($entry) {
+	private function findKeyForKeyOrEntry(mixed $entry): ?string {
 		//check if $entry is an array key (allow null, so no isset)
-		if ((is_string($entry) || is_int($entry)) && array_key_exists($entry, $this->all)) {
+		if (is_string($entry) && array_key_exists($entry, $this->all)) {
 			return $entry;
 		}
-		if (is_object($entry) && $entry instanceof ComparableInterface) {
-			foreach ($this->all as $key => $value) {
-				if ($value instanceof ComparableInterface && $entry->compareTo($value)) {
-					return $key;
-				}
-			}
-		} elseif (($key = array_search($entry, $this->all)) !== false) {
+
+		if (($key = array_search($entry, $this->all, true)) !== false) {
 			return $key;
 		}
+
+		return null;
+	}
+
+	public function offsetExists(mixed $offset): bool {
+		// specifically use isset() in order to return false on null values
+		return isset($this->all[$offset]) && !in_array($offset, $this->removed);
+	}
+
+	/**
+	 * @see self::get()
+	 */
+	public function offsetGet(mixed $offset): mixed {
+		return $this->get($offset);
+	}
+
+	/**
+	 * @see self::set()
+	 */
+	public function offsetSet(mixed $offset, mixed $value): void {
+		$this->set($offset, $value);
+	}
+
+	/**
+	 * @see self::remove()
+	 */
+	public function offsetUnset(mixed $offset): void {
+		$this->remove($offset);
+	}
+
+	public function getIterator(): Iterator {
+		return new ArrayIterator($this->getAll());
+	}
+
+	public function first(): mixed {
+		$all = $this->getAll();
+		return reset($all);
 	}
 }

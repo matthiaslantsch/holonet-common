@@ -1,0 +1,33 @@
+if (!isset($config) || !$config instanceof \holonet\common\collection\ConfigRegistry) {
+	throw new \InvalidArgumentException('The config parameter must be an instance of \holonet\common\collection\ConfigRegistry');
+}
+
+$initialServices ??= array();
+
+return new class($config, $initialServices) extends \holonet\common\di\Container {
+	protected array $aliases = array(
+		'container' => 'holonet\\common\\di\\Container',
+		'registry' => 'holonet\\common\\collection\\ConfigRegistry',
+	);
+	
+	protected array $services = array(
+		'container',
+		'registry',
+	);
+	
+	protected array $contracts = array();
+	
+	protected array $providers = array();
+	
+	protected function instantiate(string $class, array $params = array()): object {
+		return match ($class) {
+			holonet\common\tests\di\holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency::class => $this->instantiate_holonet_common_tests_di_holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency($params),
+			default => parent::instantiate($class, $params)
+		};
+	}
+	
+	protected function instantiate_holonet_common_tests_di_holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency(array $params): holonet\common\tests\di\holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency {
+		$params['param1'] ??= null;
+		return new holonet\common\tests\di\holonet_common_tests_CompilerTest_OptionalAndNullableParamsDependency(...$params);
+	}
+};

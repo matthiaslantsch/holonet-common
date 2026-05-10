@@ -124,7 +124,9 @@ class FilesystemUtils {
 		foreach ($i as $f) {
 			if ($f->isFile()) {
 				static::dirShouldExist(dirname("{$dest}/".$f->getFilename()));
-				rename($f->getRealPath(), "{$dest}/".$f->getFilename());
+				if (!rename($f->getRealPath(), "{$dest}/".$f->getFilename())) {
+					throw new RuntimeException("Could not move {$f->getRealPath()} to {$dest}/{$f->getFilename()}");
+				}
 			} elseif (!$f->isDot() && $f->isDir()) {
 				static::rmove($f->getRealPath(), "{$dest}/{$f}");
 			}

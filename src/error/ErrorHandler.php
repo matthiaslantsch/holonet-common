@@ -34,7 +34,6 @@ class ErrorHandler {
 		\E_USER_ERROR => array('level' => LogLevel::ERROR, 'name' => 'E_USER_ERROR'),
 		\E_USER_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_USER_WARNING'),
 		\E_USER_NOTICE => array('level' => LogLevel::NOTICE, 'name' => 'E_USER_NOTICE'),
-		\E_STRICT => array('level' => LogLevel::NOTICE, 'name' => 'E_STRICT'),
 		\E_RECOVERABLE_ERROR => array('level' => LogLevel::ERROR, 'name' => 'E_RECOVERABLE_ERROR'),
 		\E_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_DEPRECATED'),
 		\E_USER_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_USER_DEPRECATED'),

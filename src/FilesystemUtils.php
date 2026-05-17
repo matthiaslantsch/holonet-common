@@ -114,24 +114,46 @@ class FilesystemUtils {
 	public static function rmove(string $src, string $dest): void {
 		// If source is not a directory just simply move it
 		if (!is_dir($src)) {
-			rename($src, $dest);
-
+			static::dirShouldExist(dirname($dest));
+			if (!@rename($src, $dest)) {
+				$error = error_get_last();
+				throw new RuntimeException("Could not move {$src} to {$dest}: {$error['message']}");
+			}
 			return;
 		}
 
 		// Open the source directory to read in files
 		$i = new DirectoryIterator($src);
+		$moved = 0;
 		foreach ($i as $f) {
+			if ($f->isDot()) {
+				continue;
+			}
+
 			if ($f->isFile()) {
 				static::dirShouldExist(dirname("{$dest}/".$f->getFilename()));
-				if (!rename($f->getRealPath(), "{$dest}/".$f->getFilename())) {
-					throw new RuntimeException("Could not move {$f->getRealPath()} to {$dest}/{$f->getFilename()}");
+				if (!@rename($f->getRealPath(), "{$dest}/".$f->getFilename())) {
+					$error = error_get_last();
+					throw new RuntimeException("Could not move {$f->getRealPath()} to {$dest}/{$f->getFilename()}: {$error['message']}");
 				}
 			} elseif (!$f->isDot() && $f->isDir()) {
 				static::rmove($f->getRealPath(), "{$dest}/{$f}");
 			}
+			$moved++;
 		}
-		rmdir($src);
+		if ($moved === 0) {
+			// empty directory, just move it
+			if (!@rename($src, $dest)) {
+				$error = error_get_last();
+				throw new RuntimeException("Could not move {$src} to {$dest}: {$error['message']}");
+			}
+		} else {
+			// new directory was already created, remove the old directory
+			if (!@rmdir($src)) {
+				$error = error_get_last();
+				throw new RuntimeException("Could not remove directory {$src}: {$error['message']}");
+			}
+		}
 	}
 
 	/**

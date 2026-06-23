@@ -14,6 +14,7 @@ use stdClass;
 use holonet\common as co;
 use PHPUnit\Framework\TestCase;
 use holonet\common\verifier\Proof;
+use function holonet\common\array_head;
 use function holonet\common\verify;
 use holonet\common\FilesystemUtils;
 use holonet\common\verifier\Verifier;
@@ -34,6 +35,7 @@ use PHPUnit\Framework\Attributes\CoversFunction;
 #[CoversFunction('holonet\common\dot_key_get')]
 #[CoversFunction('holonet\common\dot_key_array_merge')]
 #[CoversFunction('holonet\common\dot_key_flatten')]
+#[CoversFunction('holonet\common\array_head')]
 class FunctionsTest extends TestCase {
 	protected function tearDown(): void {
 		verify(new stdClass(), new Verifier());
@@ -197,6 +199,17 @@ class FunctionsTest extends TestCase {
 		// make sure the injected instance stays
 		$proof = verify($test);
 		$this->assertSame(array('test' => 'my message'), $proof->flat());
+	}
+
+	public function test_array_head(): void {
+		$this->assertNull(array_head(array()));
+		$this->assertSame('first', array_head(array('first', 'second')));
+		$this->assertSame('first', array_head(array('a' => 'first', 'b' => 'second')));
+
+		// falsy first elements must be returned as-is, not swallowed into null
+		$this->assertSame(0, array_head(array(0, 1)));
+		$this->assertSame('', array_head(array('', 'second')));
+		$this->assertFalse(array_head(array(false, true)));
 	}
 
 	public function test_error_dot_key_array_merge_does_not_merge_over_non_arrays(): void {

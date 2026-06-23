@@ -60,7 +60,11 @@ function read_php_config_file(string $file, ?string $expectedVariable = null): m
 }
 
 function array_head(array $arr): mixed {
-	return reset($arr) ?: null;
+	if ($arr === array()) {
+		return null;
+	}
+
+	return reset($arr);
 }
 
 function array_head_keys(array $arr): ?array {

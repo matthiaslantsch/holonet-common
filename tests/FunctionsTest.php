@@ -15,6 +15,7 @@ use holonet\common as co;
 use PHPUnit\Framework\TestCase;
 use holonet\common\verifier\Proof;
 use function holonet\common\array_head;
+use function holonet\common\str_lreplace;
 use function holonet\common\verify;
 use holonet\common\FilesystemUtils;
 use holonet\common\verifier\Verifier;
@@ -36,6 +37,7 @@ use PHPUnit\Framework\Attributes\CoversFunction;
 #[CoversFunction('holonet\common\dot_key_array_merge')]
 #[CoversFunction('holonet\common\dot_key_flatten')]
 #[CoversFunction('holonet\common\array_head')]
+#[CoversFunction('holonet\common\str_lreplace')]
 class FunctionsTest extends TestCase {
 	protected function tearDown(): void {
 		verify(new stdClass(), new Verifier());
@@ -210,6 +212,14 @@ class FunctionsTest extends TestCase {
 		$this->assertSame(0, array_head(array(0, 1)));
 		$this->assertSame('', array_head(array('', 'second')));
 		$this->assertFalse(array_head(array(false, true)));
+	}
+
+	public function test_str_lreplace_replaces_only_the_last_occurrence(): void {
+		$this->assertSame('a-b+c', str_lreplace('-', '+', 'a-b-c'));
+		$this->assertSame('unchanged', str_lreplace('x', 'y', 'unchanged'));
+
+		// multibyte subjects must not be corrupted by the byte offset maths
+		$this->assertSame('grüezi wohl, grüezi welt', str_lreplace('wält', 'welt', 'grüezi wohl, grüezi wält'));
 	}
 
 	public function test_error_dot_key_array_merge_does_not_merge_over_non_arrays(): void {

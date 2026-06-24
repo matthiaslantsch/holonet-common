@@ -59,6 +59,29 @@ class VerifyUrlTest extends BaseVerifyTest {
 		$this->assertProofPassed($proof, 'testProp');
 	}
 
+	public function test_url_component_requirements(): void {
+		$test = new class('file:///tmp/storage', 'https://example.com/docs', 'https://example.com/docs#install') {
+			public function __construct(
+				// valid url, but has no host component
+				#[Url(host: true)]
+				public string $noHost,
+				// valid url, but has no fragment component
+				#[Url(fragment: true)]
+				public string $noFragment,
+				// satisfies both requirements
+				#[Url(host: true, fragment: true)]
+				public string $hostAndFragment,
+			) {
+			}
+		};
+
+		$proof = verify($test);
+
+		$this->assertProofFailedForAttribute($proof, 'noHost');
+		$this->assertProofFailedForAttribute($proof, 'noFragment');
+		$this->assertTrue($proof->passed('hostAndFragment'));
+	}
+
 	public function test_custom_message(): void {
 		$test = new class('itsy bitsy') {
 			public function __construct(

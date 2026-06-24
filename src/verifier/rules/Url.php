@@ -16,7 +16,7 @@ class Url extends Rule implements CheckValueRuleInterface {
 
 	public function __construct(
 		?string $message = null, protected bool $host = false, protected bool $path = false,
-		protected bool $query = false, bool $fragment = false
+		protected bool $query = false, protected bool $fragment = false
 	) {
 		parent::__construct($message);
 	}
@@ -27,9 +27,6 @@ class Url extends Rule implements CheckValueRuleInterface {
 
 	public function pass(mixed $value): bool {
 		$options = 0;
-		if ($this->host) {
-			$options |= FILTER_FLAG_HOSTNAME;
-		}
 		if ($this->path) {
 			$options |= FILTER_FLAG_PATH_REQUIRED;
 		}
@@ -37,7 +34,16 @@ class Url extends Rule implements CheckValueRuleInterface {
 			$options |= FILTER_FLAG_QUERY_REQUIRED;
 		}
 
-		return filter_var($value, FILTER_VALIDATE_URL, $options) !== false;
+		if (filter_var($value, FILTER_VALIDATE_URL, $options) === false) {
+			return false;
+		}
+
+		// filter_var() offers no flags for these two requirements, check the url components manually
+		if ($this->host && empty(parse_url($value, \PHP_URL_HOST))) {
+			return false;
+		}
+
+		return !($this->fragment && empty(parse_url($value, \PHP_URL_FRAGMENT)));
 	}
 
 }

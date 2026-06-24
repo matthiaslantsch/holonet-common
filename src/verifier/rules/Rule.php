@@ -47,11 +47,7 @@ abstract class Rule {
 				return $subject;
 			}
 
-			if ($prop === 'not') {
-				$replace = ($this->not ?? false) ? 'not' : '';
-			} else {
-				$replace = stringify($this->{$prop});
-			}
+			$replace = stringify($this->{$prop});
 		}
 
 		return str_replace(":{$prop}", $replace, $subject);

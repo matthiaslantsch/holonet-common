@@ -29,4 +29,12 @@ class InArray extends Rule implements CheckValueRuleInterface {
 	public function pass(mixed $value): bool {
 		return (!$this->not) === in_array($value, $this->values, $this->strict);
 	}
+
+	protected function replacePlaceholder(string $subject, string $prop, string $attr, mixed $value): string {
+		if ($prop === 'not') {
+			return str_replace(":{$prop}", $this->not ? 'not' : '', $subject);
+		}
+
+		return parent::replacePlaceholder($subject, $prop, $attr, $value);
+	}
 }

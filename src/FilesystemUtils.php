@@ -29,8 +29,9 @@ class FilesystemUtils {
 	 * check if a directory exist and create it if it doesn't.
 	 */
 	public static function dirShouldExist(string $directory): void {
-		if (!file_exists($directory) || !is_dir($directory)) {
-			mkdir($directory, 0755, true);
+		// re-check is_dir() after a failed mkdir() in case of a race with another process
+		if (!is_dir($directory) && !@mkdir($directory, 0755, true) && !is_dir($directory)) {
+			throw new RuntimeException(sprintf("Could not create directory '%s': %s", $directory, error_get_last()['message'] ?? 'unknown error'));
 		}
 	}
 
@@ -88,7 +89,7 @@ class FilesystemUtils {
 	 * @param string ...$parts variable number of path elements
 	 * @return string system independent directory path relative to the calling file with a trailing separator
 	 */
-	public static function reldirpath(...$parts): string {
+	public static function reldirpath(string ...$parts): string {
 		$bt = debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 		array_unshift($parts, dirname($bt[0]['file']));
 
@@ -99,7 +100,7 @@ class FilesystemUtils {
 	 * @param string ...$parts variable number of path elements
 	 * @return string system independent file path relative to the calling file
 	 */
-	public static function relfilepath(...$parts): string {
+	public static function relfilepath(string ...$parts): string {
 		$bt = debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 		array_unshift($parts, dirname($bt[0]['file']));
 
@@ -167,27 +168,20 @@ class FilesystemUtils {
 		}
 
 		if (is_dir($directory)) {
-			$objects = scandir($directory);
-			foreach ($objects as $object) {
+			foreach (scandir($directory) as $object) {
 				if ($object !== '.' && $object !== '..') {
-					if (is_dir($directory.\DIRECTORY_SEPARATOR.$object)) {
-						static::rrmdir($directory.\DIRECTORY_SEPARATOR.$object);
-					} else {
-						static::rrmdir($directory.\DIRECTORY_SEPARATOR.$object);
-					}
+					static::rrmdir($directory.\DIRECTORY_SEPARATOR.$object, $throw);
 				}
 			}
 			if (!@rmdir($directory) && $throw) {
 				$msg = error_get_last()['message'];
 
-				throw new Exception("Could not rmdir '{$directory}': {$msg}", 100);
+				throw new Exception("Could not rmdir '{$directory}': {$msg}");
 			}
-		} else {
-			if ((!@unlink($directory) && $throw) || file_exists($directory)) {
-				$msg = error_get_last()['message'];
+		} elseif (!@unlink($directory) && $throw) {
+			$msg = error_get_last()['message'];
 
-				throw new Exception("Could not unlink '{$directory}': {$msg}", 100);
-			}
+			throw new Exception("Could not unlink '{$directory}': {$msg}");
 		}
 	}
 }

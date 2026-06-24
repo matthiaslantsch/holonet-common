@@ -23,39 +23,59 @@ class TokeniserClassDiscovery extends ClassDiscovery {
 		$fp = fopen($filename, 'rb');
 		$class = $namespace = $buffer = '';
 		$i = 0;
-		while (!$class) {
-			if (feof($fp)) {
-				throw new RuntimeException("Could not find class token in file '{$filename}'");
-			}
+		if ($fp === false) {
+			throw new RuntimeException("Could not open file '{$filename}'");
+		}
 
-			$buffer .= fread($fp, 512);
-			$tokens = token_get_all($buffer);
+		try {
+			$class = $namespace = $buffer = '';
+			$i = 0;
+			while (!$class) {
+				if (feof($fp)) {
+					throw new RuntimeException("Could not find class token in file '{$filename}'");
+				}
 
-			if (mb_strpos($buffer, '{') === false) {
-				continue;
-			}
+				$buffer .= fread($fp, 512);
+				$tokens = token_get_all($buffer);
 
-			for (; $i < count($tokens); $i++) {
-				if ($tokens[$i][0] === \T_NAMESPACE) {
-					for ($j = $i + 1; $j < count($tokens); $j++) {
-						if ($tokens[$j][0] === \T_STRING || $tokens[$j][0] === \T_NAME_QUALIFIED) {
-							$namespace .= '\\'.$tokens[$j][1];
-						} elseif ($tokens[$j] === '{' || $tokens[$j] === ';') {
+				if (mb_strpos($buffer, '{') === false) {
+					continue;
+				}
+
+				for (; $i < count($tokens); $i++) {
+					if ($tokens[$i][0] === \T_NAMESPACE) {
+						for ($j = $i + 1; $j < count($tokens); $j++) {
+							if ($tokens[$j][0] === \T_STRING || $tokens[$j][0] === \T_NAME_QUALIFIED) {
+								$namespace .= '\\'.$tokens[$j][1];
+							} elseif ($tokens[$j] === '{' || $tokens[$j] === ';') {
+								break;
+							}
+						}
+					}
+
+					// a T_CLASS token preceded by :: is a ClassName::class constant, not a declaration
+					if ($tokens[$i][0] === \T_CLASS && ($i === 0 || $tokens[$i - 1][0] !== \T_DOUBLE_COLON)) {
+						for ($j = $i + 1; $j < count($tokens); $j++) {
+							if ($tokens[$j] === '{') {
+								// anonymous classes ("new class {") have no T_STRING name token
+								$name = $tokens[$i + 2] ?? null;
+								if (is_array($name) && $name[0] === \T_STRING) {
+									$class = $name[1];
+								}
+
+								break;
+							}
+						}
+
+						if ($class !== '') {
 							break;
 						}
 					}
 				}
-
-				if ($tokens[$i][0] === \T_CLASS) {
-					for ($j = $i + 1; $j < count($tokens); $j++) {
-						if ($tokens[$j] === '{') {
-							$class = $tokens[$i + 2][1];
-						}
-					}
-				}
 			}
+			return "{$namespace}\\{$class}";
+		} finally {
+			fclose($fp);
 		}
-
-		return "{$namespace}\\{$class}";
 	}
 }

@@ -15,5 +15,5 @@ use Psr\Container\NotFoundExceptionInterface;
 /**
  * Dependency Injection not found exception conforming with PSR-11.
  */
-class DependencyNotFoundException extends RuntimeException implements NotFoundExceptionInterface {
+class DependencyNotFoundException extends DependencyInjectionException implements NotFoundExceptionInterface {
 }

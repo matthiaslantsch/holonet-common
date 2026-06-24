@@ -23,7 +23,7 @@ class AutoWireException extends DependencyInjectionException {
 		parent::__construct("Failed to auto-wire '{$identifier}': {$message}");
 	}
 
-	public static function failNoConstructor(ReflectionClass $reflection, array $params): void {
+	public static function failNoConstructor(ReflectionClass $reflection, array $params): never {
 		throw new static($reflection, sprintf('Has no constructor, but %d parameters were given', count($params)));
 	}
 

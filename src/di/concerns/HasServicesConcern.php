@@ -21,7 +21,7 @@ trait HasServicesConcern {
 	use TracksRecursionConcern;
 
 	/**
-	 * @var array<string, object|null>
+	 * @var array<string, object>
 	 */
 	protected array $instances = array();
 
@@ -33,11 +33,7 @@ trait HasServicesConcern {
 	/**
 	 * Method from the interface. Only concerns services.
 	 */
-	public function get(string $id) {
-		$concrete = $this->resolve($id);
-
-		$this->recursionCheck($id);
-
+	public function get(string $id): object {
 		if (!$this->has($id)) {
 			throw new DependencyNotFoundException("Container has no service called '{$id}'");
 		}
@@ -46,6 +42,10 @@ trait HasServicesConcern {
 		if (isset($this->instances[$id])) {
 			return $this->instances[$id];
 		}
+
+		$concrete = $this->resolve($id);
+
+		$this->recursionCheck($id);
 
 		try {
 			$this->recursionPush($id);
@@ -74,7 +74,9 @@ trait HasServicesConcern {
 	 * If the given value is a string a class name is assumed and the class / argument combination will be saved for later instantiation.
 	 */
 	public function set(string $id, object|string $value, array $params = array()): void {
-		$this->services[] = $id;
+		if (!$this->has($id)) {
+			$this->services[] = $id;
+		}
 
 		if (is_object($value)) {
 			if ($value instanceof Provider) {

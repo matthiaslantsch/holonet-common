@@ -59,7 +59,11 @@ trait TracksWiringConcern {
 		if (is_subclass_of($abstract, Provider::class)) {
 			$reflection = new ReflectionClass($abstract);
 			$type = $reflection->getMethod('make')->getReturnType();
-			if (!$type instanceof ReflectionNamedType || (!class_exists($type->getName())) && !interface_exists($type->getName())) {
+			if (!$type instanceof ReflectionNamedType) {
+				throw new DependencyInjectionException("Provider '{$abstract}::make()' has an invalid return type.");
+			}
+
+			if ((!class_exists($type->getName())) && !interface_exists($type->getName())) {
 				throw new DependencyInjectionException("Provider '{$abstract}::make()' has an invalid return type: '{$type->getName()}'.");
 			}
 			$aliasTo = $type->getName();

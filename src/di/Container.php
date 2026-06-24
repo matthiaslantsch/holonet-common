@@ -52,12 +52,12 @@ class Container implements ContainerInterface {
 		// first we assume the parameter name is an actual hint as to which service is wanted
 		if ($this->has($hint)) {
 			$containerType = $this->resolve($hint);
-			if (is_a($containerType, $hint, true)) {
+			if (is_a($containerType, $type, true)) {
 				return $this->get($hint);
 			}
 		}
 
-		return $this->instance($hint);
+		return $this->instance($type);
 	}
 
 }

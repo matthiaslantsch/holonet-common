@@ -27,7 +27,7 @@ return new class($config, $initialServices) extends \holonet\common\di\Container
 	}
 	
 	protected function instantiate_holonet_common_tests_di_holonet_common_tests_CompilerTest_NonWireableDependency(array $params): holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency {
-		$params['param'] ?? throw new \InvalidArgumentException('Cannot instantiate \'holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency\': Missing parameter \'param\' of type \'string)\'');
+		$params['param'] ?? throw new \InvalidArgumentException('Cannot instantiate \'holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency\': Missing parameter \'param\' of type \'string\'');
 		return new holonet\common\tests\di\holonet_common_tests_CompilerTest_NonWireableDependency(...$params);
 	}
 };

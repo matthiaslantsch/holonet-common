@@ -204,8 +204,8 @@ class ContainerTest extends TestCase {
 	}
 
 	public function test_error_get_non_existing_dependency(): void {
-		$this->expectException(DependencyInjectionException::class);
-		$this->expectExceptionMessage("'kaudermelsh' is not a valid abstract (neither alias nor implementation contract)");
+		$this->expectException(DependencyNotFoundException::class);
+		$this->expectExceptionMessage("Container has no service called 'kaudermelsh'");
 
 		$container = new Container();
 		$container->get('kaudermelsh');

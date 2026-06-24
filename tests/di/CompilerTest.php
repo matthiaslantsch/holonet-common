@@ -53,7 +53,7 @@ class CompilerTest extends TestCase {
 		$this->assertInstanceOf(holonet_common_tests_CompilerTest_ForwardParamDependency::class, $container->instance(holonet_common_tests_CompilerTest_ForwardParamDependency::class, array('testParam' => 'testParamValue')));
 		// assert we can't make it without supplying the required parameter
 		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('Cannot instantiate \'holonet\common\tests\di\holonet_common_tests_CompilerTest_ForwardParamDependency\': Missing parameter \'testParam\' of type \'string)\'');
+		$this->expectExceptionMessage('Cannot instantiate \'holonet\common\tests\di\holonet_common_tests_CompilerTest_ForwardParamDependency\': Missing parameter \'testParam\' of type \'string\'');
 		$container->instance(holonet_common_tests_CompilerTest_ForwardParamDependency::class);
 	}
 
@@ -190,6 +190,39 @@ class CompilerTest extends TestCase {
 		$this->assertValidCompiledContainer($actual, $container->registry);
 	}
 
+	public function test_compiled_hail_mary_by_type_lookup_works_at_runtime(): void {
+		$container = new Container();
+		$container->wire(holonet_common_tests_CompilerTest_HailMaryDependent::class);
+
+		$compiler = new Compiler($container);
+		$actual = $compiler->compile();
+
+		// the dependency cannot be wired at compile time, so a runtime byType() lookup is compiled
+		$this->assertStringContainsString('$this->byType(', $actual);
+
+		// at runtime, byType() must instantiate based on the parameter type
+		$container = $this->assertValidCompiledContainer($actual, new ConfigRegistry());
+		$container->wire(holonet_common_tests_CompilerTest_NonWireableDependency::class, array('param' => 'now wireable'));
+		$this->assertInstanceOf(
+			holonet_common_tests_CompilerTest_HailMaryDependent::class,
+			$container->instance(holonet_common_tests_CompilerTest_HailMaryDependent::class)
+		);
+
+		// a service whose name matches the parameter name and whose type fits is preferred
+		$container = $this->assertValidCompiledContainer($actual, new ConfigRegistry());
+		$service = new holonet_common_tests_CompilerTest_NonWireableDependency('from service');
+		$container->set('dependency', $service);
+		$this->assertSame($service, $container->instance(holonet_common_tests_CompilerTest_HailMaryDependent::class)->dependency);
+	}
+
+	public function test_compile_empty_container(): void {
+		$container = new Container();
+
+		$compiler = new Compiler($container);
+
+		$this->assertValidCompiledContainer($compiler->compile(), new ConfigRegistry());
+	}
+
 	public function test_compile_named_service(): void {
 		$registry = new ConfigRegistry();
 
@@ -271,6 +304,14 @@ class holonet_common_tests_CompilerTest_UntypedParamsDependency
 
 class holonet_common_tests_CompilerTest_NoConstructorDependency
 {
+}
+
+class holonet_common_tests_CompilerTest_HailMaryDependent
+{
+	public function __construct(
+		public holonet_common_tests_CompilerTest_NonWireableDependency $dependency = new holonet_common_tests_CompilerTest_NonWireableDependency('default')
+	) {
+	}
 }
 
 class holonet_common_tests_CompilerTest_DependencyWithIntersectionType

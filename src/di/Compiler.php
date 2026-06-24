@@ -87,6 +87,8 @@ class Compiler {
 	}
 
 	public function compile(): string {
+		$methods = array();
+
 		foreach ($this->wiring as $class => $params) {
 			$reflection = new ReflectionClass($class);
 			if ($reflection->isAbstract()) {
@@ -266,7 +268,7 @@ class Compiler {
 			if ($compiledValue !== null) {
 				$compiled[] = "\$params['{$param->getName()}'] ??= {$compiledValue}";
 			} elseif (!$param->isOptional()) {
-				$compiled[] = "\$params['{$param->getName()}'] ?? throw new \InvalidArgumentException('Cannot instantiate \'{$class}\': Missing parameter \'{$param->getName()}\' of type \'{$param->getType()})\'')";
+				$compiled[] = "\$params['{$param->getName()}'] ?? throw new \InvalidArgumentException('Cannot instantiate \'{$class}\': Missing parameter \'{$param->getName()}\' of type \'{$param->getType()}\'')";
 			}
 		}
 

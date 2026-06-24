@@ -39,10 +39,7 @@ class ErrorHandler {
 		\E_USER_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_USER_DEPRECATED'),
 	);
 
-	protected ?Logger $logger;
-
-	public function __construct(?Logger $logger = null) {
-		$this->logger = $logger;
+	public function __construct(protected ?LoggerInterface $logger = null) {
 	}
 
 	/**
@@ -109,9 +106,13 @@ class ErrorHandler {
 	public function register(): void {
 		set_error_handler($this->handleError(...));
 		set_exception_handler($this->handleException(...));
+		register_shutdown_function($this->handleShutdown(...));
 	}
 
 	public function handleShutdown(): void {
-		exit(255);
+		$error = error_get_last();
+		if ($error !== null && (\E_ERROR | \E_PARSE | \E_CORE_ERROR | \E_COMPILE_ERROR) & $error['type']) {
+			$this->handleError($error['type'], $error['message'], $error['file'], $error['line']);
+		}
 	}
 }

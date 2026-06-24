@@ -45,13 +45,14 @@ class ErrorDispatcher {
 	 * registers our callbacks as error handlers/exception handlers/shutdown function with the SPL.
 	 */
 	public function __construct() {
-		/**
-		 * @psalm-suppress InvalidArgument
-		 */
-		set_error_handler(function (...$args): void {
+		// return true if any handler reported the error as handled, so php's
+		// internal error handler does not print / log the error a second time
+		set_error_handler(function (...$args): bool {
+			$handled = false;
 			foreach ($this->errorHandlers as $handler) {
-				$handler(...$args);
+				$handled = $handler(...$args) || $handled;
 			}
+			return $handled;
 		});
 
 		set_exception_handler(function (...$args): void {

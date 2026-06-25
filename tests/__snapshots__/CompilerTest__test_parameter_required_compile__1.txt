@@ -28,7 +28,7 @@ return new class($config, $initialServices) extends \holonet\common\di\Container
 	
 	protected function instantiate_holonet_common_tests_di_holonet_common_tests_CompilerTest_ForwardParamDependency(array $params): holonet\common\tests\di\holonet_common_tests_CompilerTest_ForwardParamDependency {
 		$params['dependency'] ??= $this->instance(holonet\common\tests\di\holonet_common_tests_CompilerTest_NoConstructorDependency::class);
-		$params['testParam'] ?? throw new \InvalidArgumentException('Cannot instantiate \'holonet\common\tests\di\holonet_common_tests_CompilerTest_ForwardParamDependency\': Missing parameter \'testParam\' of type \'string)\'');
+		$params['testParam'] ?? throw new \InvalidArgumentException('Cannot instantiate \'holonet\common\tests\di\holonet_common_tests_CompilerTest_ForwardParamDependency\': Missing parameter \'testParam\' of type \'string\'');
 		$params['testParamTwo'] ??= 'testParamTwoValue';
 		return new holonet\common\tests\di\holonet_common_tests_CompilerTest_ForwardParamDependency(...$params);
 	}

@@ -20,6 +20,7 @@ use function holonet\common\kvm_parse_query;
 use function holonet\common\kvm_serialise;
 
 use PHPUnit\Framework\Attributes\CoversFunction;
+use function holonet\common\kvm_walk_pair;
 
 /**
  * @internal
@@ -31,6 +32,7 @@ use PHPUnit\Framework\Attributes\CoversFunction;
 #[CoversFunction('holonet\common\kvm_match')]
 #[CoversFunction('holonet\common\kvm_sanitise_value')]
 #[CoversFunction('holonet\common\kvm_parse_query')]
+#[CoversFunction('holonet\common\kvm_walk_pair')]
 class KVMTest extends TestCase {
 	public function test_error_invalid_condition_empty(): void {
 		$this->expectException(RuntimeException::class);
@@ -99,7 +101,7 @@ class KVMTest extends TestCase {
 		), $query);
 	}
 
-	public function test_multiline_value_and_list_separator_being_sanitised_properly(): void {
+	public function test_kvm_serialise_multiline_value_and_list_separator_being_sanitised_properly(): void {
 		$value = <<<'VALUE'
 		test
 		
@@ -130,7 +132,7 @@ class KVMTest extends TestCase {
 		META, $serialised);
 	}
 
-	public function test_multiple_conditions(): void {
+	public function test_kvm_match_multiple_conditions(): void {
 		$data = array(
 			'foo' => 'bar',
 			'count' => 5,
@@ -140,7 +142,7 @@ class KVMTest extends TestCase {
 		$this->assertFalse(kvm_match('foo/count=10', $data));
 	}
 
-	public function test_multiple_values(): void {
+	public function test_kvm_append_multiple_values(): void {
 		$kvm = array();
 
 		kvm_append('foo', 'bar', $kvm);
@@ -165,7 +167,7 @@ class KVMTest extends TestCase {
 		META);
 	}
 
-	public function test_singular_values(): void {
+	public function test_kvm_append_singular_values(): void {
 		$kvm = array();
 
 		kvm_append('foo', 'bar', $kvm);
@@ -180,6 +182,35 @@ class KVMTest extends TestCase {
 		foo
 		baz
 		META);
+	}
+
+	public function test_kvm_walk_pair(): void {
+		$kvm = array('foo' => 'bar', 'qux' => array('1', '2'));
+
+		$actual = array();
+		kvm_walk_pair($kvm, function ($key, $value) use (&$actual) {
+			$actual[] = "$key=$value";
+		});
+
+		$this->assertSame(array('foo=bar', 'qux=1', 'qux=2'), $actual);
+	}
+
+	public function test_kvm_parse_empty_block(): void {
+		$raw = <<<'KVM'
+		test
+		value
+		
+		
+		
+		other
+		test
+		KVM;
+
+		$parsed = kvm_parse($raw);
+		$this->assertSame(array(
+			'test' => 'value',
+			'other' => 'test',
+		), $parsed);
 	}
 
 	private function assertkvm(array $kvm, string $expectedSerialised): void {

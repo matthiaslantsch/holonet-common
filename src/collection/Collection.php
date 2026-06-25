@@ -9,6 +9,7 @@
 
 namespace holonet\common\collection;
 
+use ArrayAccess;
 use Countable;
 use ArrayIterator;
 use IteratorAggregate;
@@ -20,8 +21,9 @@ use IteratorAggregate;
  * @template T
  *
  * @implements IteratorAggregate<array-key, T>
+ * @implements ArrayAccess<array-key, T>
  */
-class Collection implements Countable, IteratorAggregate {
+class Collection implements Countable, ArrayAccess, IteratorAggregate {
 	protected array $data = array();
 
 	public function __construct(array $initial = array()) {
@@ -78,7 +80,7 @@ class Collection implements Countable, IteratorAggregate {
 		return empty($this->data);
 	}
 
-	public function get(string $key, $default = null) {
+	public function get(string $key, mixed $default = null): mixed {
 		return $this->data[$key] ?? $default;
 	}
 
@@ -120,11 +122,39 @@ class Collection implements Countable, IteratorAggregate {
 		$this->data = $data;
 	}
 
-	public function set(?string $key, $value): void {
+	public function set(?string $key, mixed $value): void {
 		if ($key === null) {
 			$this->data[] = $value;
 		} else {
 			$this->data[$key] = $value;
 		}
+	}
+
+	/**
+	 * Uses the same array_key_exists() semantics as has(), so a key holding null is considered to exist.
+	 */
+	public function offsetExists(mixed $offset): bool {
+		return $this->has($offset);
+	}
+
+	/**
+	 * @see self::get()
+	 */
+	public function offsetGet(mixed $offset): mixed {
+		return $this->get($offset);
+	}
+
+	/**
+	 * @see self::set()
+	 */
+	public function offsetSet(mixed $offset, mixed $value): void {
+		$this->set($offset, $value);
+	}
+
+	/**
+	 * @see self::remove()
+	 */
+	public function offsetUnset(mixed $offset): void {
+		$this->remove($offset);
 	}
 }

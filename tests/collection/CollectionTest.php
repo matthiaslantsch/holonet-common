@@ -7,11 +7,11 @@
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
-namespace holonet\common\tests;
+namespace holonet\common\tests\collection;
 
 use holonet\common\collection\Collection;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Collection::class)]
 class CollectionTest extends TestCase {
@@ -168,6 +168,27 @@ class CollectionTest extends TestCase {
 		$collection = new Collection(['key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3']);
 
 		$this->assertEquals(['key1' => 'value1', 'key3' => 'value3'], $collection->all(['key1', 'key3']));
+	}
+
+	public function test_array_access(): void {
+		$collection = new Collection(['key1' => 'value1']);
+
+		$this->assertSame('value1', $collection['key1']);
+		$this->assertTrue(isset($collection['key1']));
+		$this->assertFalse(isset($collection['nonExistingKey']));
+		$this->assertNull($collection['nonExistingKey']);
+
+		$collection['key2'] = 'value2';
+		$this->assertSame('value2', $collection->get('key2'));
+
+		$collection[] = 'appended';
+		$this->assertSame('appended', $collection->get(0));
+
+		unset($collection['key1']);
+		$this->assertFalse($collection->has('key1'));
+
+		$collection['nullKey'] = null;
+		$this->assertTrue(isset($collection['nullKey']));
 	}
 
 }

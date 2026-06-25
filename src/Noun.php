@@ -3,7 +3,7 @@
  * This file is part of the holonet common library
  * (c) Matthias Lantsch.
  *
- * @license http://opensource.org/licenses/gpl-license.php  GNU Public License
+ * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
@@ -18,7 +18,7 @@ class Noun {
 	/**
 	 * @var array IRREGULAR Array with irregular plural forms
 	 */
-	private const IRREGULAR = array(
+	private const array IRREGULAR = array(
 		'move' => 'moves',
 		'foot' => 'feet',
 		'goose' => 'geese',
@@ -32,10 +32,10 @@ class Noun {
 	/**
 	 * @var array PLURAL Array with pluralization mappings
 	 */
-	private const PLURAL = array(
+	private const array PLURAL = array(
 		'/(quiz)$/i' => '$1zes',
 		'/^(ox)$/i' => '$1en',
-		'/([m|l])ouse$/i' => '$1ice',
+		'/([ml])ouse$/i' => '$1ice',
 		'/(matr|vert|ind)ix|ex$/i' => '$1ices',
 		'/(x|ch|ss|sh)$/i' => '$1es',
 		'/([^aeiouy]|qu)y$/i' => '$1ies',
@@ -57,7 +57,7 @@ class Noun {
 	/**
 	 * @var array SINGULAR Array with singularization mappings
 	 */
-	private const SINGULAR = array(
+	private const array SINGULAR = array(
 		'/(quiz)zes$/i' => '$1',
 		'/(matr)ices$/i' => '$1ix',
 		'/(vert|ind)ices$/i' => '$1ex',
@@ -68,7 +68,7 @@ class Noun {
 		'/(shoe)s$/i' => '$1',
 		'/(o)es$/i' => '$1',
 		'/(bus)es$/i' => '$1',
-		'/([m|l])ice$/i' => '$1ouse',
+		'/([ml])ice$/i' => '$1ouse',
 		'/(x|ch|ss|sh)es$/i' => '$1',
 		'/(m)ovies$/i' => '$1ovie',
 		'/(s)eries$/i' => '$1eries',
@@ -92,7 +92,7 @@ class Noun {
 	/**
 	 * @var array UNCOUNTABLE Array with uncountable nouns
 	 */
-	private const UNCOUNTABLE = array(
+	private const array UNCOUNTABLE = array(
 		'sheep',
 		'fish',
 		'deer',

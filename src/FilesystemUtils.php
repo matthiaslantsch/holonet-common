@@ -3,7 +3,7 @@
  * This file is part of the holonet common library
  * (c) Matthias Lantsch.
  *
- * @license http://opensource.org/licenses/gpl-license.php  GNU Public License
+ * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
@@ -29,8 +29,9 @@ class FilesystemUtils {
 	 * check if a directory exist and create it if it doesn't.
 	 */
 	public static function dirShouldExist(string $directory): void {
-		if (!file_exists($directory) || !is_dir($directory)) {
-			mkdir($directory, 0755, true);
+		// re-check is_dir() after a failed mkdir() in case of a race with another process
+		if (!is_dir($directory) && !@mkdir($directory, 0755, true) && !is_dir($directory)) {
+			throw new RuntimeException(sprintf("Could not create directory '%s': %s", $directory, error_get_last()['message'] ?? 'unknown error'));
 		}
 	}
 
@@ -88,7 +89,7 @@ class FilesystemUtils {
 	 * @param string ...$parts variable number of path elements
 	 * @return string system independent directory path relative to the calling file with a trailing separator
 	 */
-	public static function reldirpath(...$parts): string {
+	public static function reldirpath(string ...$parts): string {
 		$bt = debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 		array_unshift($parts, dirname($bt[0]['file']));
 
@@ -99,7 +100,7 @@ class FilesystemUtils {
 	 * @param string ...$parts variable number of path elements
 	 * @return string system independent file path relative to the calling file
 	 */
-	public static function relfilepath(...$parts): string {
+	public static function relfilepath(string ...$parts): string {
 		$bt = debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 		array_unshift($parts, dirname($bt[0]['file']));
 
@@ -114,22 +115,46 @@ class FilesystemUtils {
 	public static function rmove(string $src, string $dest): void {
 		// If source is not a directory just simply move it
 		if (!is_dir($src)) {
-			rename($src, $dest);
-
+			static::dirShouldExist(dirname($dest));
+			if (!@rename($src, $dest)) {
+				$error = error_get_last();
+				throw new RuntimeException("Could not move {$src} to {$dest}: {$error['message']}");
+			}
 			return;
 		}
 
 		// Open the source directory to read in files
 		$i = new DirectoryIterator($src);
+		$moved = 0;
 		foreach ($i as $f) {
+			if ($f->isDot()) {
+				continue;
+			}
+
 			if ($f->isFile()) {
 				static::dirShouldExist(dirname("{$dest}/".$f->getFilename()));
-				rename($f->getRealPath(), "{$dest}/".$f->getFilename());
+				if (!@rename($f->getRealPath(), "{$dest}/".$f->getFilename())) {
+					$error = error_get_last();
+					throw new RuntimeException("Could not move {$f->getRealPath()} to {$dest}/{$f->getFilename()}: {$error['message']}");
+				}
 			} elseif (!$f->isDot() && $f->isDir()) {
 				static::rmove($f->getRealPath(), "{$dest}/{$f}");
 			}
+			$moved++;
 		}
-		rmdir($src);
+		if ($moved === 0) {
+			// empty directory, just move it
+			if (!@rename($src, $dest)) {
+				$error = error_get_last();
+				throw new RuntimeException("Could not move {$src} to {$dest}: {$error['message']}");
+			}
+		} else {
+			// new directory was already created, remove the old directory
+			if (!@rmdir($src)) {
+				$error = error_get_last();
+				throw new RuntimeException("Could not remove directory {$src}: {$error['message']}");
+			}
+		}
 	}
 
 	/**
@@ -143,29 +168,20 @@ class FilesystemUtils {
 		}
 
 		if (is_dir($directory)) {
-			$objects = scandir($directory);
-			foreach ($objects as $object) {
+			foreach (scandir($directory) as $object) {
 				if ($object !== '.' && $object !== '..') {
-					if (is_dir($directory.\DIRECTORY_SEPARATOR.$object)) {
-						static::rrmdir($directory.\DIRECTORY_SEPARATOR.$object);
-					} else {
-						static::rrmdir($directory.\DIRECTORY_SEPARATOR.$object);
-					}
+					static::rrmdir($directory.\DIRECTORY_SEPARATOR.$object, $throw);
 				}
 			}
 			if (!@rmdir($directory) && $throw) {
-				$err = error_get_last();
-				$msg = ($err !== null ? $err['message'] : 'No Error');
+				$msg = error_get_last()['message'];
 
-				throw new Exception("Could not rmdir '{$directory}': {$msg}", 100);
+				throw new Exception("Could not rmdir '{$directory}': {$msg}");
 			}
-		} else {
-			if ((!@unlink($directory) && $throw) || file_exists($directory)) {
-				$err = error_get_last();
-				$msg = ($err !== null ? $err['message'] : 'No Error');
+		} elseif (!@unlink($directory) && $throw) {
+			$msg = error_get_last()['message'];
 
-				throw new Exception("Could not unlink '{$directory}': {$msg}", 100);
-			}
+			throw new Exception("Could not unlink '{$directory}': {$msg}");
 		}
 	}
 }

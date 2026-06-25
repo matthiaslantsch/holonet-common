@@ -3,7 +3,7 @@
  * This file is part of the holonet common library
  * (c) Matthias Lantsch.
  *
- * @license http://opensource.org/licenses/gpl-license.php  GNU Public License
+ * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
@@ -47,11 +47,7 @@ abstract class Rule {
 				return $subject;
 			}
 
-			if ($prop === 'not') {
-				$replace = ($this->not ?? false) ? 'not' : '';
-			} else {
-				$replace = stringify($this->{$prop});
-			}
+			$replace = stringify($this->{$prop});
 		}
 
 		return str_replace(":{$prop}", $replace, $subject);

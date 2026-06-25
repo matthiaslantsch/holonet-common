@@ -3,7 +3,7 @@
  * This file is part of the holonet common library
  * (c) Matthias Lantsch.
  *
- * @license http://opensource.org/licenses/gpl-license.php  GNU Public License
+ * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
@@ -36,13 +36,15 @@ class Factory {
 	public function make(array $initialServices = array()): Container {
 		$warnAboutInefficientInstantiation = $this->registry->get('di.warn_on_inefficient_instantiation', false);
 		$this->registry->set('di.warn_on_inefficient_instantiation', false);
-		if ($this->registry->has('di.cache_path')) {
-			$container = $this->makeCompiledContainer($initialServices);
-		} else {
-			$container = $this->makeContainer($initialServices);
+		try {
+			if ($this->registry->has('di.cache_path')) {
+				return $this->makeCompiledContainer($initialServices);
+			}
+
+			return $this->makeContainer($initialServices);
+		} finally {
+			$this->registry->set('di.warn_on_inefficient_instantiation', $warnAboutInefficientInstantiation);
 		}
-		$this->registry->set('di.warn_on_inefficient_instantiation', $warnAboutInefficientInstantiation);
-		return $container;
 	}
 
 	private function makeCompiledContainer(array $initialServices = array()): Container {
@@ -60,7 +62,9 @@ class Factory {
 		$container = $this->makeContainer($initialServices);
 		$compiler = new Compiler($container);
 
-		file_put_contents($cacheFile, "<?php\n\n{$compiler->compile()}");
+		// LOCK_EX so two processes bootstrapping concurrently cannot interleave
+		// their writes and corrupt the cache file
+		file_put_contents($cacheFile, "<?php\n\n{$compiler->compile()}", LOCK_EX);
 		return $this->makeCompiledContainer($initialServices);
 	}
 

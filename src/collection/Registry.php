@@ -10,8 +10,10 @@
 namespace holonet\common\collection;
 
 use ArrayAccess;
+use RuntimeException;
 use function holonet\common\dot_key_get;
 use function holonet\common\dot_key_set;
+use function holonet\common\stringify;
 
 /**
  * Registry is a key value storage collection class that allows for multilevel keys and placeholders
@@ -23,6 +25,11 @@ class Registry {
 	 * @var array<string, mixed> $data Multilevel array with key=value pairs
 	 */
 	private array $data = array();
+
+	/**
+	 * @var array<string, true> $resolving Placeholder keys currently being resolved (cycle guard)
+	 */
+	private array $resolving = array();
 
 	public function __construct(public string $separator = '.') {
 	}
@@ -96,6 +103,30 @@ class Registry {
 	 * Treat it as a key for a given value in here.
 	 */
 	protected function resolvePlaceHolder(string $placeholder): ?string {
-		return $this->get($placeholder);
+		if (isset($this->resolving[$placeholder])) {
+			$cycle = implode(' => ', array_keys($this->resolving));
+
+			throw new RuntimeException("Recursive placeholder definition detected: {$cycle} => {$placeholder}");
+		}
+
+		$this->resolving[$placeholder] = true;
+
+		try {
+			$resolved = $this->get($placeholder);
+		} finally {
+			unset($this->resolving[$placeholder]);
+		}
+
+		if ($resolved === null) {
+			return null;
+		}
+
+		if ((is_object($resolved) && method_exists($resolved, '__toString')) || is_scalar($resolved)) {
+			$resolved = (string) $resolved;
+		} else {
+			throw new RuntimeException(sprintf('Placeholder \'%s\' resolved to a non-string value of type %s', $placeholder, gettype($resolved)));
+		}
+
+		return $resolved;
 	}
 }

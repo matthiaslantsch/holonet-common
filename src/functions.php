@@ -60,7 +60,11 @@ function read_php_config_file(string $file, ?string $expectedVariable = null): m
 }
 
 function array_head(array $arr): mixed {
-	return reset($arr) ?: null;
+	if ($arr === array()) {
+		return null;
+	}
+
+	return reset($arr);
 }
 
 function array_head_keys(array $arr): ?array {
@@ -348,10 +352,12 @@ function dir_path(string ...$parts): string {
  * Courtesy of https://stackoverflow.com/a/3835653.
  */
 function str_lreplace(string $search, string $replace, string $subject): string {
-	$pos = mb_strrpos($subject, $search);
+	// deliberately use byte-based functions throughout: substr_replace() works on
+	// byte offsets, so the offset and length must be byte-based as well
+	$pos = strrpos($subject, $search);
 
 	if ($pos !== false) {
-		$subject = substr_replace($subject, $replace, $pos, mb_strlen($search));
+		$subject = substr_replace($subject, $replace, $pos, strlen($search));
 	}
 
 	return $subject;

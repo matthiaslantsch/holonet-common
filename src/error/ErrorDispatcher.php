@@ -25,11 +25,6 @@ class ErrorDispatcher {
 	private array $exceptionHandlers = array();
 
 	/**
-	 * @var ErrorHandler $finalHandler Last error handler to be called
-	 */
-	private ?ErrorHandler $finalHandler = null;
-
-	/**
 	 * @var callable[] $shutdownHandlers
 	 */
 	private array $shutdownHandlers = array();
@@ -50,26 +45,19 @@ class ErrorDispatcher {
 	 * registers our callbacks as error handlers/exception handlers/shutdown function with the SPL.
 	 */
 	public function __construct() {
-		/**
-		 * @psalm-suppress InvalidArgument
-		 */
-		set_error_handler(function (...$args): void {
+		// return true if any handler reported the error as handled, so php's
+		// internal error handler does not print / log the error a second time
+		set_error_handler(function (...$args): bool {
+			$handled = false;
 			foreach ($this->errorHandlers as $handler) {
-				$handler(...$args);
+				$handled = $handler(...$args) || $handled;
 			}
-
-			if ($this->finalHandler !== null) {
-				$this->finalHandler->handleError(...$args);
-			}
+			return $handled;
 		});
 
 		set_exception_handler(function (...$args): void {
 			foreach ($this->exceptionHandlers as $handler) {
 				$handler(...$args);
-			}
-
-			if ($this->finalHandler !== null) {
-				$this->finalHandler->handleException(...$args);
 			}
 		});
 
@@ -80,14 +68,6 @@ class ErrorDispatcher {
 			foreach ($this->shutdownHandlers as $handler) {
 				$handler(...$args);
 			}
-
-			if ($this->finalHandler !== null) {
-				$this->finalHandler->handleShutdown(...$args);
-			}
 		});
-	}
-
-	public function setFinalHandler(ErrorHandler $finalHandler): void {
-		$this->finalHandler = $finalHandler;
 	}
 }

@@ -39,7 +39,11 @@ function kvm_parse(string $raw): array {
 	$blocks = explode(BLOCK_SEPARATOR, $raw);
 	$data = array();
 	foreach ($blocks as $block) {
-		list($key, $value) = explode("\n", $block, 2);
+		if (mb_trim($block) === '') {
+			continue;
+		}
+
+		list($key, $value) = array_pad(explode("\n", $block, 2), 2, '');
 		$value = mb_trim($value);
 		$value = explode(LIST_SEPARATOR, $value);
 		if (count($value) === 1) {
@@ -52,17 +56,16 @@ function kvm_parse(string $raw): array {
 	return $data;
 }
 
-function kvm_walk_pair(array $kvm, callable $callback): mixed {
+function kvm_walk_pair(array $kvm, callable $callback): void {
 	foreach ($kvm as $key => $value) {
 		if (is_array($value)) {
 			foreach ($value as $val) {
 				$callback($key, $val);
 			}
 		} else {
-			$callback($key, $val);
+			$callback($key, $value);
 		}
 	}
-
 }
 
 function kvm_sanitise_value(string $value): string {

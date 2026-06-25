@@ -3,7 +3,7 @@
  * This file is part of the holonet common library
  * (c) Matthias Lantsch.
  *
- * @license http://opensource.org/licenses/gpl-license.php  GNU Public License
+ * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
@@ -23,7 +23,7 @@ class AutoWireException extends DependencyInjectionException {
 		parent::__construct("Failed to auto-wire '{$identifier}': {$message}");
 	}
 
-	public static function failNoConstructor(ReflectionClass $reflection, array $params): void {
+	public static function failNoConstructor(ReflectionClass $reflection, array $params): never {
 		throw new static($reflection, sprintf('Has no constructor, but %d parameters were given', count($params)));
 	}
 

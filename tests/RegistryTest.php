@@ -13,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use holonet\common\collection\Registry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversFunction;
+use RuntimeException;
 
 #[CoversClass(Registry::class)]
 #[CoversFunction('holonet\common\dot_key_get')]
@@ -112,5 +113,40 @@ class RegistryTest extends TestCase {
 		$this->assertSame(array('test' => 'value'), $registry->all());
 		$registry->unset('test');
 		$this->assertNull($registry->get('test'));
+	}
+
+	public function test_error_recursive_placeholders_are_detected(): void {
+		$registry = new Registry();
+
+		$registry->set('app.one', '%app.two%');
+		$registry->set('app.two', '%app.one%');
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('Recursive placeholder definition detected: app.two => app.one => app.two');
+
+		$registry->get('app.one');
+	}
+
+	public function test_error_self_referential_placeholder_is_detected(): void {
+		$registry = new Registry();
+
+		$registry->set('app.name', 'my-%app.name%');
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('Recursive placeholder definition detected: app.name => app.name');
+
+		$registry->get('app.name');
+	}
+
+	public function test_error_placeholder_with_non_string_value(): void {
+		$registry = new Registry();
+
+		$registry->set('app.config', array('test' => 'test value'));
+		$registry->set('app.name', 'my-%app.config%');
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('Placeholder \'app.config\' resolved to a non-string value of type array');
+
+		$registry->get('app.name');
 	}
 }

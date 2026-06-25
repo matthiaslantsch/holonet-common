@@ -3,7 +3,7 @@
  * This file is part of the holonet common library
  * (c) Matthias Lantsch.
  *
- * @license http://opensource.org/licenses/gpl-license.php  GNU Public License
+ * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
@@ -52,12 +52,12 @@ class Container implements ContainerInterface {
 		// first we assume the parameter name is an actual hint as to which service is wanted
 		if ($this->has($hint)) {
 			$containerType = $this->resolve($hint);
-			if (is_a($containerType, $hint, true)) {
+			if (is_a($containerType, $type, true)) {
 				return $this->get($hint);
 			}
 		}
 
-		return $this->instance($hint);
+		return $this->instance($type);
 	}
 
 }

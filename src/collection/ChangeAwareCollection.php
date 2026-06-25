@@ -49,8 +49,9 @@ class ChangeAwareCollection implements Countable, ArrayAccess, IteratorAggregate
 	/**
 	 * change function to change an entry (add to $this->changed).
 	 * @param mixed $entry Either the key or the value that changes
-	 * @return mixed reference to the value or null if it doesn't exist
-	 */
+	 * @return mixed reference to the value
+	 * @throws OutOfBoundsException if the entry is not part of the collection
+ 	 */
 	public function &change(mixed $entry): mixed {
 		$key = $this->findKeyForKeyOrEntry($entry);
 		if ($key !== null) {
@@ -69,15 +70,19 @@ class ChangeAwareCollection implements Countable, ArrayAccess, IteratorAggregate
 	 * @param bool $new Flag marking this entry as not new (not to be saved into $this->added)
 	 */
 	public function add(mixed $val, ?string $key, bool $new = true): void {
-		if (is_object($val) && is_subclass_of($val, ChangeAwareInterface::class)) {
+		if ($val instanceof ChangeAwareInterface) {
 			$val->belongsTo($this);
 		}
 
 		if ($key !== null) {
 			$this->all[$key] = $val;
+			// re-adding a previously removed key revives the entry
+			if (in_array($key, $this->removed)) {
+				$this->removed = array_values(array_diff($this->removed, array($key)));
+			}
 		} else {
 			$this->all[] = $val;
-			$key = array_search($val, $this->all);
+			$key = array_key_last($this->all);
 		}
 
 		//if the override flag wasn't given, mark the entry as newly added
@@ -224,17 +229,22 @@ class ChangeAwareCollection implements Countable, ArrayAccess, IteratorAggregate
 	public function set(string $key, mixed $value): void {
 		if (!array_key_exists($key, $this->all)) {
 			$this->add($value, $key);
-		} else {
-			if ($this->all[$key] !== $value) {
-				$this->changed[] = $key;
-			}
-
-			if (is_object($value) && is_subclass_of($value, ChangeAwareInterface::class)) {
-				$value->belongsTo($this);
-			}
-
-			$this->all[$key] = $value;
+			return;
 		}
+
+		// setting a previously removed key revives the entry
+		if (in_array($key, $this->removed)) {
+			$this->removed = array_values(array_diff($this->removed, array($key)));
+			$this->changed[] = $key;
+		} elseif ($this->all[$key] !== $value) {
+			$this->changed[] = $key;
+		}
+
+		if ($value instanceof ChangeAwareInterface) {
+			$value->belongsTo($this);
+		}
+
+		$this->all[$key] = $value;
 	}
 
 	/**

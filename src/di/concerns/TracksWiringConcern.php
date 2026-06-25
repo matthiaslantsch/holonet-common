@@ -3,7 +3,7 @@
  * This file is part of the holonet common library
  * (c) Matthias Lantsch.
  *
- * @license http://opensource.org/licenses/gpl-license.php  GNU Public License
+ * @license http://www.wtfpl.net/ Do what the fuck you want Public License
  * @author  Matthias Lantsch <matthias.lantsch@bluewin.ch>
  */
 
@@ -59,7 +59,11 @@ trait TracksWiringConcern {
 		if (is_subclass_of($abstract, Provider::class)) {
 			$reflection = new ReflectionClass($abstract);
 			$type = $reflection->getMethod('make')->getReturnType();
-			if (!$type instanceof ReflectionNamedType || (!class_exists($type->getName())) && !interface_exists($type->getName())) {
+			if (!$type instanceof ReflectionNamedType) {
+				throw new DependencyInjectionException("Provider '{$abstract}::make()' has an invalid return type.");
+			}
+
+			if ((!class_exists($type->getName())) && !interface_exists($type->getName())) {
 				throw new DependencyInjectionException("Provider '{$abstract}::make()' has an invalid return type: '{$type->getName()}'.");
 			}
 			$aliasTo = $type->getName();

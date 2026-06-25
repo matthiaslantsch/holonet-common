@@ -34,16 +34,12 @@ class ErrorHandler {
 		\E_USER_ERROR => array('level' => LogLevel::ERROR, 'name' => 'E_USER_ERROR'),
 		\E_USER_WARNING => array('level' => LogLevel::WARNING, 'name' => 'E_USER_WARNING'),
 		\E_USER_NOTICE => array('level' => LogLevel::NOTICE, 'name' => 'E_USER_NOTICE'),
-		\E_STRICT => array('level' => LogLevel::NOTICE, 'name' => 'E_STRICT'),
 		\E_RECOVERABLE_ERROR => array('level' => LogLevel::ERROR, 'name' => 'E_RECOVERABLE_ERROR'),
 		\E_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_DEPRECATED'),
 		\E_USER_DEPRECATED => array('level' => LogLevel::WARNING, 'name' => 'E_USER_DEPRECATED'),
 	);
 
-	protected ?Logger $logger;
-
-	public function __construct(?Logger $logger = null) {
-		$this->logger = $logger;
+	public function __construct(protected ?LoggerInterface $logger = null) {
 	}
 
 	/**
@@ -110,9 +106,13 @@ class ErrorHandler {
 	public function register(): void {
 		set_error_handler($this->handleError(...));
 		set_exception_handler($this->handleException(...));
+		register_shutdown_function($this->handleShutdown(...));
 	}
 
 	public function handleShutdown(): void {
-		exit(255);
+		$error = error_get_last();
+		if ($error !== null && (\E_ERROR | \E_PARSE | \E_CORE_ERROR | \E_COMPILE_ERROR) & $error['type']) {
+			$this->handleError($error['type'], $error['message'], $error['file'], $error['line']);
+		}
 	}
 }

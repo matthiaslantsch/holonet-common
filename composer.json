@@ -10,13 +10,13 @@
 	],
 	"require": {
 		"php": ">=8.4",
-		"monolog/monolog": "^2.0",
-		"psr/container": "^2.0.2"
+		"psr/container": "^2.0.2",
+		"psr/log": "^1.1 || ^2.0 || ^3.0"
 	},
 	"require-dev": {
 		"holonet/hdev": "~1.1.0@dev",
 		"phpunit/phpunit": "^10.0.0",
-		"spatie/phpunit-snapshot-assertions": "dev-main"
+		"spatie/phpunit-snapshot-assertions": "^5.0"
 	},
 	"provide": {
 		"psr/container-implementation": "^2.0.2"
@@ -28,6 +28,7 @@
 		}
 	],
 	"minimum-stability": "dev",
+	"prefer-stable": true,
 	"autoload": {
 		"psr-4": {
 			"holonet\\common\\": "src/"
@@ -49,8 +50,8 @@
 	},
 	"extra": {
 		"branch-alias": {
-			"dev-develop": "1.5.x-dev",
-			"dev-master": "1.4.x-dev"
+			"dev-develop": "1.6.x-dev",
+			"dev-master": "1.5.x-dev"
 		}
 	},
 	"scripts": {
